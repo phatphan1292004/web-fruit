@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Search, User, Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -13,8 +13,21 @@ const navLinks = [
 ];
 
 const Header = () => {
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const readCookie = (name: string) => {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  const handleLogout = () => {
+    document.cookie = 'userId=; path=/; Max-Age=0; SameSite=Lax';
+    setUserId(null);
+    navigate('/');
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -22,6 +35,10 @@ const Header = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    setUserId(readCookie('userId'));
   }, []);
 
   return (
@@ -72,13 +89,24 @@ const Header = () => {
             </span>
           </button>
 
-          <Link
-            to="/login"
-            className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
-          >
-            <User className="w-4 h-4" />
-            <span>Login</span>
-          </Link>
+          {userId ? (
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+            >
+              <User className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+            >
+              <User className="w-4 h-4" />
+              <span>Login</span>
+            </Link>
+          )}
 
           <button 
             className="md:hidden p-2 text-foreground"
@@ -129,14 +157,28 @@ const Header = () => {
                   <Search className="w-5 h-5" />
                   <span>Search</span>
                 </button>
-                <Link
-                  to="/login"
-                  className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <User className="w-5 h-5" />
-                  <span>Login</span>
-                </Link>
+                {userId ? (
+                  <button
+                    type="button"
+                    className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <User className="w-5 h-5" />
+                    <span>Logout</span>
+                  </button>
+                ) : (
+                  <Link
+                    to="/login"
+                    className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <User className="w-5 h-5" />
+                    <span>Login</span>
+                  </Link>
+                )}
               </div>
             </motion.div>
           </>

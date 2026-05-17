@@ -17,7 +17,12 @@ const LoginPage = () => {
     setIsSubmitting(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password,
+      );
+      document.cookie = `userId=${userCredential.user.uid}; path=/; SameSite=Lax`;
       navigate("/");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Login failed.";
