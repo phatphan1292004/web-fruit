@@ -1,9 +1,16 @@
-import HomePage from './features/home/HomePage';
+import { Routes, Route } from 'react-router-dom';
+import HomePage from './features/home/components/HomePage';
+import LoginPage from './features/login';
+import RegisterPage from './features/register';
 
 function App() {
   return (
     <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
-      <HomePage />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Routes>
     </div>
   );
 }

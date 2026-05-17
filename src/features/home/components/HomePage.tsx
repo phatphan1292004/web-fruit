@@ -1,12 +1,11 @@
-import Header from '../../components/layout/Header';
-import Footer from '../../components/layout/Footer';
-import HeroBanner from './ui/HeroBanner';
-import ProductSection from './ui/ProductSection';
-import PromoBanner from './ui/PromoBanner';
-import Features from './ui/Features';
-import Testimonials from './ui/Testimonials';
-
+import Header from '../../../components/layout/Header';
+import Footer from '../../../components/layout/Footer';
 import { Fragment } from 'react';
+import HeroBanner from './HeroBanner';
+import Features from './Features';
+import ProductSection from './ProductSection';
+import PromoBanner from './PromoBanner';
+import Testimonials from './Testimonials';
 
 const HomePage = () => {
   return (

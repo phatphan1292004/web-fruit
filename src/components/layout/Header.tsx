@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShoppingBag, Search, User, Menu, X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -71,10 +72,13 @@ const Header = () => {
             </span>
           </button>
 
-          <button className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium">
+          <Link
+            to="/login"
+            className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+          >
             <User className="w-4 h-4" />
             <span>Login</span>
-          </button>
+          </Link>
 
           <button 
             className="md:hidden p-2 text-foreground"
@@ -125,10 +129,14 @@ const Header = () => {
                   <Search className="w-5 h-5" />
                   <span>Search</span>
                 </button>
-                <button className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md">
+                <Link
+                  to="/login"
+                  className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   <User className="w-5 h-5" />
                   <span>Login</span>
-                </button>
+                </Link>
               </div>
             </motion.div>
           </>
