@@ -30,7 +30,7 @@ const LoginPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 pt-24 pb-16">
+      <main className="flex-1 pt-40 pb-16">
         <div className="container mx-auto px-4 md:px-8 max-w-md">
           <div className="bg-white shadow-xl rounded-3xl border border-border p-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">Login</h1>
@@ -40,7 +40,10 @@ const LoginPage = () => {
 
             <form className="space-y-5" onSubmit={handleSubmit}>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground" htmlFor="email">
+                <label
+                  className="text-sm font-medium text-foreground"
+                  htmlFor="email"
+                >
                   Email
                 </label>
                 <input
@@ -50,13 +53,16 @@ const LoginPage = () => {
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="you@example.com"
                 />
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground" htmlFor="password">
+                <label
+                  className="text-sm font-medium text-foreground"
+                  htmlFor="password"
+                >
                   Password
                 </label>
                 <input
@@ -66,7 +72,7 @@ const LoginPage = () => {
                   required
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Your password"
                 />
               </div>
@@ -87,8 +93,11 @@ const LoginPage = () => {
             </form>
 
             <p className="text-sm text-foreground/70 mt-6 text-center">
-              New here?{" "}
-              <Link className="text-primary font-semibold hover:underline" to="/register">
+              You don't have an account?{" "}
+              <Link
+                className="text-primary font-semibold hover:underline"
+                to="/register"
+              >
                 Create an account
               </Link>
             </p>

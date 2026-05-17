@@ -40,9 +40,9 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 pt-24 pb-16">
+      <main className="flex-1 pt-40 pb-16">
         <div className="container mx-auto px-4 md:px-8 max-w-md">
-          <div className="bg-white shadow-xl rounded-3xl border border-border p-8">
+          <div className="bg-white shadow-xl rounded-lg border border-border p-8">
             <h1 className="text-3xl font-bold text-foreground mb-2">
               Register
             </h1>
@@ -65,7 +65,7 @@ const RegisterPage = () => {
                   required
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Your name"
                 />
               </div>
@@ -84,7 +84,7 @@ const RegisterPage = () => {
                   required
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="you@example.com"
                 />
               </div>
@@ -103,7 +103,7 @@ const RegisterPage = () => {
                   required
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                  className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                   placeholder="Create a password"
                 />
               </div>
