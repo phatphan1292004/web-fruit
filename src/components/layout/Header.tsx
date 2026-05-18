@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { ShoppingBag, Search, User, Menu, X } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
@@ -12,16 +12,19 @@ const navLinks = [
   { name: 'Contact', href: '#contact' },
 ];
 
+const readCookie = (name: string) => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  const readCookie = (name: string) => {
-    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-    return match ? decodeURIComponent(match[1]) : null;
-  };
+  const [userId, setUserId] = useState<string | null>(() => readCookie('userId'));
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   const handleLogout = () => {
     document.cookie = 'userId=; path=/; Max-Age=0; SameSite=Lax';
@@ -38,8 +41,29 @@ const Header = () => {
   }, []);
 
   useEffect(() => {
-    setUserId(readCookie('userId'));
-  }, []);
+    const nextUserId = readCookie('userId');
+    if (nextUserId !== userId) {
+      setUserId(nextUserId);
+    }
+  }, [location.pathname, userId]);
+
+  useEffect(() => {
+    if (!userMenuOpen) {
+      return undefined;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!userMenuRef.current) {
+        return;
+      }
+      if (!userMenuRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userMenuOpen]);
 
   return (
     <header
@@ -50,7 +74,7 @@ const Header = () => {
     >
       <div className="container mx-auto px-4 md:px-8 flex items-center justify-between">
         {/* Logo */}
-        <a href="#" className="flex items-center gap-2 group">
+        <a href="/" className="flex items-center gap-2 group">
           <motion.div
             whileHover={{ rotate: 10 }}
             className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg"
@@ -82,22 +106,98 @@ const Header = () => {
             <Search className="w-5 h-5" />
           </button>
           
-          <button className="p-2 text-foreground/80 hover:text-primary transition-colors relative group">
+          <Link
+            to="/cart"
+            className="p-2 text-foreground/80 hover:text-primary transition-colors relative group"
+          >
             <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
             <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
               3
             </span>
-          </button>
+          </Link>
 
           {userId ? (
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
-            >
-              <User className="w-4 h-4" />
-              <span>Logout</span>
-            </button>
+            <div className="relative hidden sm:block" ref={userMenuRef}>
+              <button
+                type="button"
+                onClick={() => setUserMenuOpen((prev) => !prev)}
+                className="flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-4 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                aria-expanded={userMenuOpen}
+                aria-haspopup="menu"
+              >
+                <User className="w-4 h-4" />
+                <span>Tài khoản</span>
+              </button>
+
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    className="absolute right-0 mt-3 w-72 rounded-3xl border border-border/60 bg-white shadow-2xl z-50 overflow-hidden"
+                    role="menu"
+                  >
+                    <div className="p-4">
+                      <div className="flex items-center justify-between gap-3 border border-primary/40 bg-primary/5 rounded-2xl px-4 py-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
+                            M
+                          </div>
+                          <span className="text-sm font-semibold text-foreground">Tài khoản</span>
+                        </div>
+                        <span className="text-primary text-lg">›</span>
+                      </div>
+
+                      <div className="mt-4 border-b border-border/60 pb-3">
+                        <h4 className="text-sm font-semibold text-foreground">Menu</h4>
+                      </div>
+
+                      <div className="mt-3 flex flex-col gap-1">
+                        <Link
+                          to="/profile"
+                          className="flex font-semibold items-center justify-between px-4 py-2 rounded-xl text-sm text-foreground/80 hover:bg-muted transition-colors"
+                          role="menuitem"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <span>Thông tin cá nhân</span>
+                          <span className="text-foreground/40">›</span>
+                        </Link>
+                        <Link
+                          to="/orders"
+                          className="flex font-semibold items-center justify-between px-4 py-2 rounded-xl text-sm text-foreground/80 hover:bg-muted transition-colors"
+                          role="menuitem"
+                          onClick={() => setUserMenuOpen(false)}
+                        >
+                          <span>Lịch sử đơn hàng</span>
+                          <span className="text-foreground/40">›</span>
+                        </Link>
+                        <button
+                          type="button"
+                          className="w-full text-left flex font-semibold items-center justify-between px-4 py-2 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-colors"
+                          role="menuitem"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            handleLogout();
+                          }}
+                        >
+                          <span>Đăng xuất</span>
+                          <span className="text-destructive/70">›</span>
+                        </button>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="mt-4 w-full py-2 text-sm font-semibold text-primary border-t border-border/60"
+                      >
+                        Đóng
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ) : (
             <Link
               to="/login"
@@ -158,17 +258,33 @@ const Header = () => {
                   <span>Search</span>
                 </button>
                 {userId ? (
-                  <button
-                    type="button"
-                    className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      handleLogout();
-                    }}
-                  >
-                    <User className="w-5 h-5" />
-                    <span>Logout</span>
-                  </button>
+                  <div className="flex flex-col gap-3">
+                    <Link
+                      to="/profile"
+                      className="w-full py-3 flex items-center justify-center gap-2 border border-border rounded-full hover:bg-muted transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <User className="w-5 h-5" />
+                      <span>Thong tin ca nhan</span>
+                    </Link>
+                    <Link
+                      to="/orders"
+                      className="w-full py-3 flex items-center justify-center gap-2 border border-border rounded-full hover:bg-muted transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <span>Don hang da dat</span>
+                    </Link>
+                    <button
+                      type="button"
+                      className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        handleLogout();
+                      }}
+                    >
+                      <span>Dang xuat</span>
+                    </button>
+                  </div>
                 ) : (
                   <Link
                     to="/login"

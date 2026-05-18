@@ -1,6 +1,4 @@
-import Header from '../../../components/layout/Header';
-import Footer from '../../../components/layout/Footer';
-import { Fragment } from 'react';
+import DefaultLayout from '../../../components/layout/layout';
 import HeroBanner from './HeroBanner';
 import Features from './Features';
 import ProductSection from './ProductSection';
@@ -9,17 +7,13 @@ import Testimonials from './Testimonials';
 
 const HomePage = () => {
   return (
-    <Fragment>
-      <Header />
-      <main className="flex-1 w-full bg-background relative pt-20">
-        <HeroBanner />
-        <Features />
-        <ProductSection />
-        <PromoBanner />
-        <Testimonials />
-      </main>
-      <Footer />
-    </Fragment>
+    <DefaultLayout mainClassName="bg-background relative pt-20">
+      <HeroBanner />
+      <Features />
+      <ProductSection />
+      <PromoBanner />
+      <Testimonials />
+    </DefaultLayout>
   );
 };
 
