@@ -5,11 +5,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
 const navLinks = [
-  { name: 'Home', href: '#' },
-  { name: 'Fruits', href: '#fruits' },
+  { name: 'Trang chủ', href: '#' },
+  { name: 'Trái cây', href: '#fruits' },
   { name: 'Combo', href: '#combo' },
-  { name: 'About', href: '#about' },
-  { name: 'Contact', href: '#contact' },
+  { name: 'Giới thiệu', href: '#about' },
+  { name: 'Liên hệ', href: '#contact' },
 ];
 
 const readCookie = (name: string) => {
@@ -72,21 +72,30 @@ const Header = () => {
         isScrolled ? 'py-3 glass' : 'py-5 bg-transparent'
       )}
     >
-      <div className="container mx-auto px-4 md:px-8 flex items-center justify-between">
-        {/* Logo */}
-        <a href="/" className="flex items-center gap-2 group">
-          <motion.div
-            whileHover={{ rotate: 10 }}
-            className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg"
-          >
-            M
-          </motion.div>
-          <span className="text-xl md:text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
-            Morning Fruit
-          </span>
-        </a>
+      <div className="container mx-auto px-4 md:px-8 flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 lg:gap-6 min-w-0 flex-1">
+          <a href="/" className="flex items-center gap-2 group shrink-0">
+            <motion.div
+              whileHover={{ rotate: 10 }}
+              className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg"
+            >
+              M
+            </motion.div>
+            <span className="text-xl md:text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+              Morning Fruit
+            </span>
+          </a>
 
-        {/* Desktop Navigation */}
+          <div className="hidden lg:flex flex-1 max-w-md items-center rounded-full border border-border/60 bg-white/80 backdrop-blur-md px-4 py-2 shadow-sm">
+            <Search className="w-5 h-5 text-foreground/50" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm trái cây, combo..."
+              className="ml-3 w-full bg-transparent text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
+            />
+          </div>
+        </div>
+
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <a
@@ -100,15 +109,15 @@ const Header = () => {
           ))}
         </nav>
 
-        {/* Actions */}
-        <div className="flex items-center gap-4">
-          <button className="p-2 text-foreground/80 hover:text-primary transition-colors hidden sm:block">
+        <div className="flex items-center gap-3 shrink-0">
+          <button className="p-2 text-foreground/80 hover:text-primary transition-colors hidden lg:block">
             <Search className="w-5 h-5" />
           </button>
-          
+
           <Link
             to="/cart"
             className="p-2 text-foreground/80 hover:text-primary transition-colors relative group"
+            aria-label="Giỏ hàng"
           >
             <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
             <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
@@ -204,20 +213,20 @@ const Header = () => {
               className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
             >
               <User className="w-4 h-4" />
-              <span>Login</span>
+              <span>Tài khoản</span>
             </Link>
           )}
 
-          <button 
+          <button
             className="md:hidden p-2 text-foreground"
             onClick={() => setMobileMenuOpen(true)}
+            aria-label="Mở menu"
           >
             <Menu className="w-6 h-6" />
           </button>
         </div>
       </div>
 
-      {/* Mobile Menu */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <>
@@ -235,8 +244,9 @@ const Header = () => {
               transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
               className="fixed top-0 right-0 bottom-0 w-3/4 sm:w-1/2 bg-background z-50 p-6 flex flex-col shadow-2xl md:hidden"
             >
-              <div className="flex justify-end mb-8">
-                <button onClick={() => setMobileMenuOpen(false)} className="p-2">
+              <div className="flex justify-between items-center mb-8">
+                <span className="font-semibold text-foreground">Menu</span>
+                <button onClick={() => setMobileMenuOpen(false)} className="p-2" aria-label="Đóng menu">
                   <X className="w-6 h-6 text-foreground/70 hover:text-primary" />
                 </button>
               </div>
@@ -252,11 +262,19 @@ const Header = () => {
                   </a>
                 ))}
               </div>
-              <div className="mt-auto flex flex-col gap-4">
-                <button className="w-full py-3 flex items-center justify-center gap-2 border border-border rounded-full hover:bg-muted transition-colors">
-                  <Search className="w-5 h-5" />
-                  <span>Search</span>
-                </button>
+              <div className="mt-8 flex flex-col gap-4">
+                <div className="w-full rounded-full border border-border px-4 py-3 flex items-center gap-3">
+                  <Search className="w-5 h-5 text-foreground/50" />
+                  <span className="text-sm text-foreground/60">Tìm kiếm</span>
+                </div>
+                <Link
+                  to="/cart"
+                  className="w-full py-3 flex items-center justify-center gap-2 border border-border rounded-full hover:bg-muted transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <ShoppingBag className="w-5 h-5" />
+                  <span>Giỏ hàng</span>
+                </Link>
                 {userId ? (
                   <div className="flex flex-col gap-3">
                     <Link
@@ -265,14 +283,14 @@ const Header = () => {
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       <User className="w-5 h-5" />
-                      <span>Thong tin ca nhan</span>
+                      <span>Tài khoản</span>
                     </Link>
                     <Link
                       to="/orders"
                       className="w-full py-3 flex items-center justify-center gap-2 border border-border rounded-full hover:bg-muted transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      <span>Don hang da dat</span>
+                      <span>Đơn hàng đã đặt</span>
                     </Link>
                     <button
                       type="button"
@@ -282,7 +300,7 @@ const Header = () => {
                         handleLogout();
                       }}
                     >
-                      <span>Dang xuat</span>
+                      <span>Đăng xuất</span>
                     </button>
                   </div>
                 ) : (
@@ -292,7 +310,7 @@ const Header = () => {
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     <User className="w-5 h-5" />
-                    <span>Login</span>
+                    <span>Tài khoản</span>
                   </Link>
                 )}
               </div>
