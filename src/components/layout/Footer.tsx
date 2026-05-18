@@ -14,7 +14,7 @@ const Footer = () => {
               <span className="text-2xl font-bold tracking-tight text-white">Morning Fruit</span>
             </a>
             <p className="text-background/70 leading-relaxed text-sm">
-              Giao những loại trái cây hữu cơ cao cấp, tươi ngon nhất từ các nông trại bền vững đến tận cửa nhà bạn.
+              Chúng tôi mang đến những loại trái cây hữu cơ cao cấp, tươi ngon nhất từ các nông trại bền vững đến tận cửa nhà bạn.
             </p>
             <div className="flex items-center gap-4 mt-2">
               <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300"><FaFacebook className="w-5 h-5" /></a>

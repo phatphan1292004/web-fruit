@@ -3,73 +3,73 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Star, Plus } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 
-const categories = ['All', 'Imported', 'Tropical', 'Best Seller', 'Organic'];
+const categories = ['Tất cả', 'Nhập khẩu', 'Nhiệt đới', 'Bán chạy', 'Hữu cơ'];
 
 const products = [
   {
     id: 1,
-    name: 'Premium Japanese Strawberry',
-    category: 'Imported',
+    name: 'Dâu tây Nhật cao cấp',
+    category: 'Nhập khẩu',
     price: 24.99,
     rating: 5.0,
     image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=500&auto=format&fit=crop',
-    badge: 'Best Seller',
+    badge: 'Bán chạy',
   },
   {
     id: 2,
-    name: 'Organic Hass Avocado',
-    category: 'Organic',
-    price: 8.50,
+    name: 'Bơ Hass hữu cơ',
+    category: 'Hữu cơ',
+    price: 8.5,
     rating: 4.8,
     image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=500&auto=format&fit=crop',
   },
   {
     id: 3,
-    name: 'Fresh Thai Mango',
-    category: 'Tropical',
-    price: 12.00,
+    name: 'Xoài Thái tươi',
+    category: 'Nhiệt đới',
+    price: 12.0,
     rating: 4.9,
     image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=500&auto=format&fit=crop',
-    badge: 'Seasonal',
+    badge: 'Theo mùa',
   },
   {
     id: 4,
-    name: 'Sweet Cherries',
-    category: 'Imported',
+    name: 'Anh đào ngọt',
+    category: 'Nhập khẩu',
     price: 18.99,
     rating: 4.7,
     image: 'https://images.unsplash.com/photo-1528821128474-27f963b062bf?w=500&auto=format&fit=crop',
   },
   {
     id: 5,
-    name: 'Organic Dragon Fruit',
-    category: 'Tropical',
+    name: 'Thanh long hữu cơ',
+    category: 'Nhiệt đới',
     price: 9.99,
     rating: 4.6,
     image: 'https://images.unsplash.com/photo-1527310562375-a8f15724a2f0?w=500&auto=format&fit=crop',
   },
   {
     id: 6,
-    name: 'Fuji Apples Pack',
-    category: 'Best Seller',
-    price: 15.00,
+    name: 'Táo Fuji đóng gói',
+    category: 'Bán chạy',
+    price: 15.0,
     rating: 4.9,
     image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6fd6c?w=500&auto=format&fit=crop',
   },
   {
     id: 7,
-    name: 'Fresh Blueberries',
-    category: 'Organic',
-    price: 14.50,
+    name: 'Việt quất tươi',
+    category: 'Hữu cơ',
+    price: 14.5,
     rating: 4.8,
     image: 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=500&auto=format&fit=crop',
-    badge: 'Organic',
+    badge: 'Hữu cơ',
   },
   {
     id: 8,
-    name: 'Premium Kiwi',
-    category: 'Imported',
-    price: 11.20,
+    name: 'Kiwi cao cấp',
+    category: 'Nhập khẩu',
+    price: 11.2,
     rating: 4.7,
     image: 'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=500&auto=format&fit=crop',
   },
@@ -79,7 +79,7 @@ const ProductSection = () => {
   const [activeCategory, setActiveCategory] = useState('All');
 
   const filteredProducts = products.filter(
-    (product) => activeCategory === 'All' || product.category === activeCategory || (activeCategory === 'Best Seller' && product.badge === 'Best Seller')
+    (product) => activeCategory === 'Tất cả' || product.category === activeCategory || (activeCategory === 'Bán chạy' && product.badge === 'Bán chạy')
   );
 
   return (
@@ -92,7 +92,7 @@ const ProductSection = () => {
             viewport={{ once: true }}
             className="text-primary font-semibold tracking-wider uppercase text-sm mb-3"
           >
-            Fresh & Premium
+            Tươi ngon & cao cấp
           </motion.span>
           <motion.h2 
             initial={{ opacity: 0, y: 10 }}
@@ -101,7 +101,7 @@ const ProductSection = () => {
             transition={{ delay: 0.1 }}
             className="text-4xl md:text-5xl font-bold text-center mb-10"
           >
-            Our Featured Fruits
+            Trái cây nổi bật của chúng tôi
           </motion.h2>
 
           {/* Filter Tabs */}
@@ -189,7 +189,7 @@ const ProductSection = () => {
         
         <div className="mt-16 text-center">
            <button className="border-2 border-primary text-primary px-10 py-3.5 rounded-full font-semibold hover:bg-primary hover:text-white transition-colors duration-300">
-             View All Products
+             Xem tất cả sản phẩm
            </button>
         </div>
       </div>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "tertiary": "#735c00",
+              "on-primary": "#ffffff",
+              "secondary-fixed-dim": "#76d6d5",
+              "secondary": "#006a6a",
+              "on-tertiary": "#ffffff",
+              "on-primary-fixed": "#410001",
+              "error-container": "#ffdad6",
+              "surface-container-high": "#e8e8e8",
+              "surface": "#f9f9f9",
+              "surface-variant": "#e2e2e2",
+              "on-background": "#1a1c1c",
+              "on-secondary-fixed": "#002020",
+              "on-primary-container": "#6f0205",
+              "inverse-on-surface": "#f1f1f1",
+              "outline-variant": "#e0bfbb",
+              "on-surface-variant": "#58413e",
+              "surface-container-lowest": "#ffffff",
+              "on-tertiary-container": "#413300",
+              "inverse-primary": "#ffb4aa",
+              "surface-dim": "#dadada",
+              "surface-container": "#eeeeee",
+              "secondary-fixed": "#93f2f2",
+              "on-tertiary-fixed-variant": "#574500",
+              "surface-tint": "#ac332a",
+              "on-secondary-fixed-variant": "#004f4f",
+              "on-secondary-container": "#006e6e",
+              "primary-container": "#ff6f61",
+              "on-secondary": "#ffffff",
+              "on-error-container": "#93000a",
+              "primary-fixed-dim": "#ffb4aa",
+              "primary": "#ac332a",
+              "inverse-surface": "#2f3131",
+              "tertiary-container": "#bc9920",
+              "background": "#f9f9f9",
+              "surface-bright": "#f9f9f9",
+              "on-surface": "#1a1c1c",
+              "on-error": "#ffffff",
+              "tertiary-fixed": "#ffe088",
+              "tertiary-fixed-dim": "#e9c349",
+              "on-tertiary-fixed": "#241a00",
+              "primary-fixed": "#ffdad5",
+              "on-primary-fixed-variant": "#8b1a16",
+              "outline": "#8c716d",
+              "secondary-container": "#90efef",
+              "surface-container-low": "#f3f3f3",
+              "surface-container-highest": "#e2e2e2",
+              "error": "#ba1a1a"
+            },
+            fontFamily: {
+              "headline": ["Plus Jakarta Sans"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-surface font-body text-on-surface">
+<!-- Top Navigation Shell -->
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-[0px_10px_30px_rgba(88,65,62,0.06)] px-6 py-4 flex justify-between items-center max-w-full mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-2xl font-black text-rose-600 dark:text-rose-500 font-headline tracking-tight">Ceremonia</span>
+<div class="hidden md:flex gap-6 items-center">
+<a class="text-rose-600 dark:text-rose-400 font-bold border-b-2 border-rose-600 font-headline tracking-tight" href="discover-packages.html">Khám phá</a>
+<a class="text-zinc-600 dark:text-zinc-400 hover:text-rose-500 transition-colors font-headline tracking-tight" href="discover-packages.html">Nhà cung cấp</a>
+<a class="text-zinc-600 dark:text-zinc-400 hover:text-rose-500 transition-colors font-headline tracking-tight" href="appointment-manager.html">Lập kế hoạch</a>
+<a class="text-zinc-600 dark:text-zinc-400 hover:text-rose-500 transition-colors font-headline tracking-tight" href="#">Ưu đãi</a>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<div class="relative hidden sm:block">
+<input class="bg-surface-container-low border-none rounded-full px-5 py-2 w-64 focus:ring-2 focus:ring-primary-fixed text-sm outline-none" placeholder="Tìm kiếm sự kiện..." type="text"/>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">search</span>
+</div>
+<div class="flex gap-2">
+<button class="p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant">shopping_cart</span>
+</button>
+<button class="p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded-full transition-all active:scale-95">
+<span class="material-symbols-outlined text-on-surface-variant">notifications</span>
+</button>
+</div>
+<img alt="User profile avatar" class="w-10 h-10 rounded-full object-cover ring-2 ring-primary-fixed" data-alt="professional headshot of a smiling woman with a warm friendly expression and soft studio lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuALjb1c33VkT-hgyAbpALvVfluwDCZSz9Ke7X67Xgdb71xePGkuCZYjySPOtAmDti8BfiYayU4s2fEG4q5zsD95iWx-fHojHufz75Tx8z-F6j5xOgVdkPVhFMtorRWkLcvpU6TPw24ttldSDRnpXcro0bIREQlL-iAw-C__y1SadtI6V_2zA0X6COXFrDIYlvwSHdaL9XtJy7EmTkvCeIPsX6t7N6uaBuQejUzl7saJ8FvOkXdsV0ngbGKISG56okpEqqewd0AD9VJK"/>
+</div>
+</nav>
+<main class="pt-24 pb-20 px-4 md:px-8 max-w-7xl mx-auto flex gap-8">
+<!-- Advanced Sidebar Filters -->
+<aside class="hidden lg:block w-72 flex-shrink-0 space-y-8">
+<div>
+<h3 class="font-headline font-bold text-lg mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">tune</span> Bộ lọc
+                </h3>
+<!-- Event Category -->
+<div class="space-y-4 mb-8">
+<p class="font-headline font-semibold text-sm text-on-surface-variant uppercase tracking-widest">Danh mục sự kiện</p>
+<div class="flex flex-wrap gap-2">
+<span class="bg-secondary-container text-on-secondary-container px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer">Đám cưới</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer hover:bg-surface-container-high">Doanh nghiệp</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer hover:bg-surface-container-high">Dạ tiệc</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer hover:bg-surface-container-high">Sinh nhật</span>
+<span class="bg-surface-container-highest text-on-surface-variant px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer hover:bg-surface-container-high">Tiệc riêng tư</span>
+</div>
+</div>
+<!-- Price Range -->
+<div class="space-y-4 mb-8">
+<div class="flex justify-between items-center">
+<p class="font-headline font-semibold text-sm text-on-surface-variant uppercase tracking-widest">Khoảng giá</p>
+<span class="text-primary font-bold text-sm">2.5tr - 15tr+</span>
+</div>
+<input class="w-full accent-primary h-1.5 bg-surface-container-highest rounded-full appearance-none" type="range"/>
+<div class="flex justify-between text-[10px] text-on-surface-variant font-medium uppercase">
+<span>Ngân sách tối thiểu</span>
+<span>Cao cấp</span>
+</div>
+</div>
+<!-- Guest Count -->
+<div class="space-y-4 mb-8">
+<p class="font-headline font-semibold text-sm text-on-surface-variant uppercase tracking-widest">Số lượng khách</p>
+<div class="grid grid-cols-2 gap-2">
+<label class="flex items-center gap-2 p-3 rounded-lg bg-surface-container-low cursor-pointer hover:bg-surface-container-high">
+<input class="rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-xs font-medium">1-50</span>
+</label>
+<label class="flex items-center gap-2 p-3 rounded-lg bg-surface-container-low cursor-pointer hover:bg-surface-container-high">
+<input checked="" class="rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-xs font-medium">50-150</span>
+</label>
+<label class="flex items-center gap-2 p-3 rounded-lg bg-surface-container-low cursor-pointer hover:bg-surface-container-high">
+<input class="rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-xs font-medium">150-300</span>
+</label>
+<label class="flex items-center gap-2 p-3 rounded-lg bg-surface-container-low cursor-pointer hover:bg-surface-container-high">
+<input class="rounded border-outline-variant text-secondary focus:ring-secondary" type="checkbox"/>
+<span class="text-xs font-medium">300+</span>
+</label>
+</div>
+</div>
+<!-- Premium Badge Filter -->
+<div class="p-4 bg-gradient-to-br from-tertiary/10 to-transparent rounded-xl border border-tertiary/20">
+<div class="flex items-center gap-2 mb-2">
+<span class="material-symbols-outlined text-tertiary" style="font-variation-settings: 'FILL' 1;">workspace_premium</span>
+<span class="text-tertiary font-bold text-sm">Nhà cung cấp đã xác minh</span>
+</div>
+<p class="text-[11px] text-on-surface-variant leading-relaxed">Chỉ hiển thị những chuyên gia được chọn lọc, xếp hạng cao với chất lượng đảm bảo.</p>
+</div>
+</div>
+</aside>
+<!-- Main Content Area -->
+<section class="flex-1">
+<!-- Header & Sort -->
+<div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+<div>
+<h1 class="font-headline font-extrabold text-3xl tracking-tight text-on-surface mb-1">Gói trang trí chọn lọc</h1>
+<p class="text-on-surface-variant text-sm">Khám phá 124 sự kết hợp sự kiện được tuyển chọn cho ngày hoàn hảo của bạn.</p>
+</div>
+<div class="flex items-center gap-3 bg-surface-container-lowest p-1.5 rounded-lg shadow-sm">
+<span class="text-xs font-bold text-on-surface-variant ml-2">Sắp xếp:</span>
+<select class="border-none bg-transparent text-sm font-semibold text-primary focus:ring-0 cursor-pointer py-1 pr-8">
+<option>Được đề xuất</option>
+<option>Giá: Thấp đến Cao</option>
+<option>Giá: Cao đến Thấp</option>
+<option>Mới nhất</option>
+</select>
+</div>
+</div>
+<!-- Bento/Grid of Event Combos -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
+<!-- Product Card 1 -->
+<div class="group relative bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0px_10px_30px_rgba(88,65,62,0.12)]">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="elegant outdoor wedding reception with floral arrangements, hanging lights, and long wooden tables in a garden setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAM7h8ooulUjhb5vY5F25rSbKgGOc9m0UVnQA7_7XxTu09yxnOscSqEfvL4FuB1oW--lbrDqgd_1WnclMkJi7dWy36oSt84v3e2V1iuLT-Buh4dBSyislt2wCUXAGuQEvYPRRCv2jCh2jgOVh8tVhSZS7dE-dfo3rThg4wxFaiWdO8jOLrOlNgBL7VK0kLwB5ml1CIRoQ-r3ImmsGdveoQsAPjfNX7x_EeFWvb3QHaBZwBKFiJMyJTYE755PxjIKjZF1jiJUqtpjITN"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider text-rose-600 shadow-sm">Nổi bật</span>
+</div>
+<button class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full text-rose-500 shadow-sm active:scale-90 transition-transform">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">favorite</span>
+</button>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline font-bold text-xl text-on-surface leading-tight">Đám cưới Sân vườn Ethereal</h3>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-sm text-tertiary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-xs font-bold text-on-surface">4.9</span>
+<span class="text-xs text-on-surface-variant">(128 đánh giá)</span>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-tighter">Giá từ</p>
+<p class="text-xl font-black text-primary">$8,500</p>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant line-clamp-2 mb-4 leading-relaxed">Bao gồm địa điểm thực vật rực rỡ, tiệc buffet bền vững cho 100 khách và ban nhạc jazz biểu diễn trực tiếp cho giờ tiệc cocktail.</p>
+<div class="flex items-center justify-between pt-4 border-t border-surface-container-high">
+<div class="flex -space-x-2">
+<img class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="portrait of a professional chef in white uniform" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDMNOeRF3oZWdX0l2u_Q-vuhPa19DMtIlX3lxpz9SgTpy2GwTR6o08rOSpZQx_83MyBCOX4f2zMhSsdee0sgOc83x-Wjij_DQnk4Ulk6JBNHxFk8NMSvH7x4L0jFN38XK_OGwFqnJofXD_ZsrQ87B1i2VXYco-Z2l1tBTEVRhScjOAvf6aL53PgFIpiFZrRsEbuH6KVbkPyovbHtCJWd7y7bpWK8HsWJ8HDSMX-J4w3NpzIV8wxDyaC9-4UAMgmy4LPKuGSwUvDR8Ox"/>
+<img class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="portrait of a female event planner smiling" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3txMgKfyaYjqwN5bY6w1gGpI2pG0TcNbwFXYAwy9MVkejBTQ7Eu0fSdQ5y6xqqjoC8KhCHfWJDTW5HJty8leXFq6WKgYMntDm1uaoCmVR4h_srsnAQJ6Cao82MJtbOj_REqtRWjFXglfaVTldf8934LBOnIbSWUi643NpuXq6YypOp7_AQKHqCbzzle8XX6HPrH4E1uDxsKDNyfh_hevBltlvat1zQ9rnX-cICo9G5Y3wBDJBsSd2K-Ep2R55wxB1ODPuO4kdYa2T"/>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+3</div>
+</div>
+<button class="bg-secondary text-on-secondary px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 active:scale-95 transition-all" onclick="window.location.href='product-detail.html'">Xem chi tiết</button>
+</div>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="group relative bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0px_10px_30px_rgba(88,65,62,0.12)]">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="modern industrial ballroom with sleek lighting and minimal decor for a corporate gala event" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAJZvO5iCuVsA23e6GhoemBSDhfLq4V5yXP31svvuTiIlp_IznhGiHkLhT5zUjDoifN1AUyRoyQnXYXA759cUCkCY3oMPL5zgBibKk5VibZTi2u3pHeexqJmjUZU9an356AqRfGUbsFQa0T0PmdbxIO5EcsQb045pZEulB62CW9HzfU-AvRkBZFxyxF3IgY-ejcSF5sF16JAWUpvR_5P5xq0_hyA0hnhtthTv7gUrO7DqPwxfFtoAKBk1taG_rwF7rGNQB5KpuIKXPA"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-secondary text-on-secondary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm">Lựa chọn phổ biến</span>
+</div>
+<button class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full text-zinc-400 shadow-sm active:scale-90 transition-transform hover:text-rose-500">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline font-bold text-xl text-on-surface leading-tight">Dạ tiệc Công nghiệp Hiện đại</h3>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-sm text-tertiary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-xs font-bold text-on-surface">4.8</span>
+<span class="text-xs text-on-surface-variant">(86 đánh giá)</span>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-tighter">Giá từ</p>
+<p class="text-xl font-black text-primary">$12,200</p>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant line-clamp-2 mb-4 leading-relaxed">Địa điểm loft thành thị bóng bẩy, bữa tối ẩm thực phân tử 5 món và gói âm thanh ánh sáng cao cấp cho các buổi thuyết trình của doanh nghiệp.</p>
+<div class="flex items-center justify-between pt-4 border-t border-surface-container-high">
+<div class="flex -space-x-2">
+<img class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="portrait of a young female coordinator" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAelSU-0dTkNnK3Wz1JE9veMCqmYiS-UYsAc_RzvWrrQtqhaiisLvzSJPuQqfLcsuwTVwdsFIV-gLYWmOJVO3XS5wA8kIzPnWOojzHsqJUpMOt8Qvx_Wjr7YFB32cJu1jiLUTj-iShkvb6EFnKB9ld70BtcpylTs62mX1oH5vdeIvdYGM3X5UmQF9GDq0PMSXdsJ6KHtMTBBfhxJRX6H0CA0gusIGjmE6wNXDAcl9tV5jFTcvkD0FiMgnkQPiwwqdCvn090ctx7x_CA"/>
+<img class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="portrait of a professional male photographer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD97X44_JNF5s8dn4d_x9Ujr3ucS_X1vjyMHGtHOyI90wyC1qkFJ1HxZXW0r88mVNEK55eYKQXHbxr14Cnr3tqqJwvi3LnPe1maIHMNAtej-Vp3JuntYZkZK1KGmsISeI3IM9suFJjcEsRb_rnZZIRAGYG2zcayxq8KwoXjE6C9RH0OwaPKtiTR1RyEZ0ADqJK9dP0qw1XYvLobBC_j1kqaHki5bMxK0hekBrVmiysubzcXC1OcLMb3ZONz18ck3RsdH7ILDor8HZrk"/>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+2</div>
+</div>
+<button class="bg-secondary text-on-secondary px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 active:scale-95 transition-all" onclick="window.location.href='product-detail.html'">Xem chi tiết</button>
+</div>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="group relative bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0px_10px_30px_rgba(88,65,62,0.12)]">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="lavish dinner party set in a private wine cellar with candle lighting and rustic textures" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB3hg0HDdRfzsFnmmp4-_meqn54mODPbzuv0oDoRAPobsVeQaI63C4HdFlUojV9NHiJBf9OdDJjgYdTFeuEuQyXRDZcWH3kZAyXsG_em5LE8i4m2DejuL8UhjgQNRFer99p4R7AWDY8oL9tlBn0inTousPEA_2qYxrzEPnOuesviFesDQ3k0Wf9Eh5N-Sk6FSj5C987n8z5ZL0sxNKHsxIHUvRw9J621fYWLfwr6OAfv6DXNyy16z8oXFeW4hZQ44PrdYAOsBOJXRjs"/>
+<div class="absolute top-4 left-4 flex gap-2">
+<span class="bg-tertiary text-on-tertiary px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm">Cao cấp</span>
+</div>
+<button class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full text-zinc-400 shadow-sm active:scale-90 transition-transform hover:text-rose-500">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline font-bold text-xl text-on-surface leading-tight">Tiệc tối tại Trang viên Riêng</h3>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-sm text-tertiary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-xs font-bold text-on-surface">5.0</span>
+<span class="text-xs text-on-surface-variant">(42 đánh giá)</span>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-tighter">Giá từ</p>
+<p class="text-xl font-black text-primary">$4,900</p>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant line-clamp-2 mb-4 leading-relaxed">Trải nghiệm ăn tối thân mật cho tối đa 30 khách tại một trang viên lịch sử riêng biệt với trải nghiệm đầu bếp đạt sao Michelin.</p>
+<div class="flex items-center justify-between pt-4 border-t border-surface-container-high">
+<div class="flex -space-x-2">
+<img class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="portrait of an experienced sommelier" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAuGsg5cm9AMT0er13lQhmPYQGBxa-8OpGqUwkDRoMaSb6j7ui8InPbfv09mFucktQZIUucyIeGAlw0D9tTvBR42pvJwd4zcU2ANXORAxanIUj46N9Y_ae3xDoWgp5PyKEZ-5AgZUi7ApaA71Rr1ljIEiYEi6_ZJ-8vO5qLbGHukXqWz08cpwLzF2lLuGhqQ3DLNE_Vos_AGqDcTMJNDagtX2s90NxgK4mCor2PlEiW8WT6T00ud3wCDNjPLvP-eO87THgqejULgT5L"/>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+1</div>
+</div>
+<button class="bg-secondary text-on-secondary px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 active:scale-95 transition-all" onclick="window.location.href='product-detail.html'">Xem chi tiết</button>
+</div>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="group relative bg-surface-container-lowest rounded-xl overflow-hidden transition-all duration-300 hover:shadow-[0px_10px_30px_rgba(88,65,62,0.12)]">
+<div class="relative h-64 overflow-hidden">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="vibrant tropical beach party with tiki torches, colourful cocktails and white sand background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUYXkP32d9mXFwuoo_jS6nRVWXv61AvnPJg__jlXqqWWLcqw7XpdwYggjIAPbGkJq3B89nD6MmxtDJiG92czwoaxVWHnHHnoctUCmN72PbE5QE3kyFnhSfg9LSaT7pMUi43CmfeVO668v9Vio9P4qAl5X6T4i4neKlpbDGDlB29zxjYPlnx1OURPE-zJDaXJUwe2d_MYeQXe0yLnK2C9TOHrH976BJtzCrUbFZ6yh4zozvmqp_bFO_vld-eXV-oy20wGY_XZWU2TRn"/>
+<button class="absolute top-4 right-4 bg-white/90 backdrop-blur p-2 rounded-full text-zinc-400 shadow-sm active:scale-90 transition-transform hover:text-rose-500">
+<span class="material-symbols-outlined">favorite</span>
+</button>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-start mb-3">
+<div>
+<h3 class="font-headline font-bold text-xl text-on-surface leading-tight">Tiệc Thoát ly Nhiệt đới</h3>
+<div class="flex items-center gap-1 mt-1">
+<span class="material-symbols-outlined text-sm text-tertiary" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="text-xs font-bold text-on-surface">4.7</span>
+<span class="text-xs text-on-surface-variant">(65 đánh giá)</span>
+</div>
+</div>
+<div class="text-right">
+<p class="text-xs font-bold text-on-surface-variant uppercase tracking-tighter">Giá từ</p>
+<p class="text-xl font-black text-primary">$6,200</p>
+</div>
+</div>
+<p class="text-sm text-on-surface-variant line-clamp-2 mb-4 leading-relaxed">Thiết lập địa điểm trước biển, tiệc buffet Polynesia, màn trình diễn vũ công lửa và quầy bar cocktail đặc trưng.</p>
+<div class="flex items-center justify-between pt-4 border-t border-surface-container-high">
+<div class="flex -space-x-2">
+<img class="w-8 h-8 rounded-full border-2 border-white object-cover" data-alt="portrait of a creative floral designer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDtIk6RE22HHcief-IDuzc7kQffyrUD1bzqu-Lm73ydshuS6I6YeM2fW3zKM6p-r1jJ9MXqOqtOlDRJOPCqT9YNnIlk3fuBgTlZ110iihp6xe4lDxiB_M16GiHxgiu3iBRV1_92luhNuITUtRdTns58XjinQROsusEBWcZ9SP16KRMaj7aaspzTlFCWjBSae2CltxkU2bc0_Z5snBv68gj9bKK_kR7cDIDryr6YBxQNw344B5Q-q6I-brYlXjkaGVe3nlZHpst3S3EI"/>
+<div class="w-8 h-8 rounded-full border-2 border-white bg-surface-container-high flex items-center justify-center text-[10px] font-bold text-on-surface-variant">+4</div>
+</div>
+<button class="bg-secondary text-on-secondary px-6 py-2 rounded-lg font-bold text-sm hover:opacity-90 active:scale-95 transition-all" onclick="window.location.href='product-detail.html'">Xem chi tiết</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination (Subtle) -->
+<div class="mt-12 flex justify-center items-center gap-4">
+<button class="p-2 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high disabled:opacity-30">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<div class="flex gap-2">
+<span class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-on-primary font-bold text-sm">1</span>
+<span class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high cursor-pointer font-bold text-sm">2</span>
+<span class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high cursor-pointer font-bold text-sm">3</span>
+<span class="w-8 h-8 flex items-center justify-center text-on-surface-variant">...</span>
+<span class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-surface-container-high cursor-pointer font-bold text-sm">12</span>
+</div>
+<button class="p-2 rounded-lg bg-surface-container text-on-surface-variant hover:bg-surface-container-high">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</section>
+</main>
+<!-- Bottom Navigation (Mobile Only) -->
+<div class="md:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 py-3 pb-safe bg-white/90 dark:bg-zinc-900/90 backdrop-blur-lg shadow-[0_-4px_20px_rgba(0,0,0,0.05)] rounded-t-2xl">
+<div class="flex flex-col items-center justify-center bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-300 rounded-xl px-4 py-1 animate-pulse-subtle">
+<span class="material-symbols-outlined">search</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider">Khám phá</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500">
+<span class="material-symbols-outlined">favorite</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider">Đã lưu</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider">Đơn hàng</span>
+</div>
+<div class="flex flex-col items-center justify-center text-zinc-400 dark:text-zinc-500">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-semibold uppercase tracking-wider">Hồ sơ</span>
+</div>
+</div>
+</body></html>

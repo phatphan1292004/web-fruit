@@ -5,26 +5,26 @@ import { cn } from '../../../lib/utils';
 const features = [
   {
     icon: Leaf,
-    title: 'Fresh Daily',
-    description: 'Our fruits are harvested daily to ensure maximum freshness and taste.',
+    title: 'Tươi mỗi ngày',
+    description: 'Trái cây được thu hoạch hằng ngày để giữ trọn độ tươi ngon và hương vị.',
     color: 'bg-primary/10 text-primary',
   },
   {
     icon: Award,
-    title: 'Farm Quality',
-    description: 'We partner with the best organic farms to guarantee premium quality.',
+    title: 'Chất lượng nông trại',
+    description: 'Chúng tôi hợp tác với những nông trại hữu cơ tốt nhất để đảm bảo chất lượng cao.',
     color: 'bg-secondary/10 text-secondary',
   },
   {
     icon: Truck,
-    title: 'Fast Delivery',
-    description: 'Same-day delivery service to bring the freshness straight to your door.',
+    title: 'Giao nhanh',
+    description: 'Dịch vụ giao trong ngày để mang độ tươi đến tận cửa nhà bạn.',
     color: 'bg-accent/10 text-accent',
   },
   {
     icon: Heart,
-    title: 'Healthy & Organic',
-    description: '100% organic products with no artificial chemicals or preservatives.',
+    title: 'Tốt cho sức khỏe',
+    description: 'Sản phẩm 100% hữu cơ, không hóa chất hay chất bảo quản nhân tạo.',
     color: 'bg-destructive/10 text-destructive',
   },
 ];

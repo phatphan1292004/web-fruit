@@ -17,7 +17,7 @@ const PromoBanner = () => {
                 viewport={{ once: true }}
                 className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/30"
               >
-                <span className="text-white font-medium tracking-wider text-sm uppercase">Limited Time Offer</span>
+                <span className="text-white font-medium tracking-wider text-sm uppercase">Ưu đãi có hạn</span>
               </motion.div>
 
               <motion.h2
@@ -27,7 +27,7 @@ const PromoBanner = () => {
                 transition={{ delay: 0.1 }}
                 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight"
               >
-                Get <span className="text-accent">30% OFF</span> on <br /> Tropical Combo
+                Giảm <span className="text-accent">30%</span> cho <br /> combo trái cây nhiệt đới
               </motion.h2>
 
               <motion.p
@@ -37,7 +37,7 @@ const PromoBanner = () => {
                 transition={{ delay: 0.2 }}
                 className="text-white/80 text-lg md:text-xl max-w-md"
               >
-                Taste the exotic flavors of summer with our premium tropical fruit box. Freshly picked and delivered to you.
+                Thưởng thức hương vị mùa hè với hộp trái cây nhiệt đới cao cấp. Vừa hái và giao đến tận tay bạn.
               </motion.p>
 
               <motion.button
@@ -47,7 +47,7 @@ const PromoBanner = () => {
                 transition={{ delay: 0.3 }}
                 className="bg-white text-primary px-8 py-4 rounded-full font-bold text-lg shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 mt-4"
               >
-                Claim Discount Now
+Nhận ưu đãi ngay
               </motion.button>
             </div>
 
