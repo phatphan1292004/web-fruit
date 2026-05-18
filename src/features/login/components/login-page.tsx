@@ -24,7 +24,7 @@ const LoginPage = () => {
       document.cookie = `userId=${userCredential.user.uid}; path=/; SameSite=Lax`;
       navigate("/");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed.";
+      const message = error instanceof Error ? error.message : "Đăng nhập thất bại.";
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -35,9 +35,9 @@ const LoginPage = () => {
     <Layout mainClassName="bg-background pt-40 pb-16">
       <div className="container mx-auto px-4 md:px-8 max-w-md">
         <div className="bg-white shadow-xl rounded-3xl border border-border p-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">Login</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Đăng nhập</h1>
           <p className="text-sm text-foreground/70 mb-6">
-            Welcome back. Please sign in to continue.
+            Chào mừng bạn quay lại. Vui lòng đăng nhập để tiếp tục.
           </p>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
@@ -65,7 +65,7 @@ const LoginPage = () => {
                 className="text-sm font-medium text-foreground"
                 htmlFor="password"
               >
-                Password
+                Mật khẩu
               </label>
               <input
                 id="password"
@@ -75,7 +75,7 @@ const LoginPage = () => {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Your password"
+                placeholder="Nhập mật khẩu của bạn"
               />
             </div>
 
@@ -90,17 +90,17 @@ const LoginPage = () => {
               disabled={isSubmitting}
               className="w-full rounded-full bg-primary text-white py-3 font-semibold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-70"
             >
-              {isSubmitting ? "Signing in..." : "Login"}
+              {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
             </button>
           </form>
 
           <p className="text-sm text-foreground/70 mt-6 text-center">
-            You don't have an account?{" "}
+            Bạn chưa có tài khoản?{" "}
             <Link
               className="text-primary font-semibold hover:underline"
               to="/register"
             >
-              Create an account
+              Tạo tài khoản
             </Link>
           </p>
         </div>

@@ -29,7 +29,7 @@ const RegisterPage = () => {
       navigate("/");
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Registration failed.";
+        error instanceof Error ? error.message : "Đăng ký thất bại.";
       setErrorMessage(message);
     } finally {
       setIsSubmitting(false);
@@ -41,10 +41,10 @@ const RegisterPage = () => {
       <div className="container mx-auto px-4 md:px-8 max-w-md">
         <div className="bg-white shadow-xl rounded-lg border border-border p-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Register
+            Đăng ký
           </h1>
           <p className="text-sm text-foreground/70 mb-6">
-            Create your account to start shopping.
+            Tạo tài khoản để bắt đầu mua sắm.
           </p>
 
           <form className="space-y-5" onSubmit={handleSubmit}>
@@ -53,7 +53,7 @@ const RegisterPage = () => {
                 className="text-sm font-medium text-foreground"
                 htmlFor="name"
               >
-                Full name
+                Họ và tên
               </label>
               <input
                 id="name"
@@ -63,7 +63,7 @@ const RegisterPage = () => {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Your name"
+                placeholder="Tên của bạn"
               />
             </div>
 
@@ -91,7 +91,7 @@ const RegisterPage = () => {
                 className="text-sm font-medium text-foreground"
                 htmlFor="password"
               >
-                Password
+                Mật khẩu
               </label>
               <input
                 id="password"
@@ -101,7 +101,7 @@ const RegisterPage = () => {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Create a password"
+                placeholder="Tạo mật khẩu"
               />
             </div>
 
@@ -116,17 +116,17 @@ const RegisterPage = () => {
               disabled={isSubmitting}
               className="w-full rounded-full bg-primary text-white py-3 font-semibold shadow-md hover:bg-primary/90 transition-colors disabled:opacity-70"
             >
-              {isSubmitting ? "Creating account..." : "Register"}
+              {isSubmitting ? "Đang tạo tài khoản..." : "Đăng ký"}
             </button>
           </form>
 
           <p className="text-sm text-foreground/70 mt-6 text-center">
-            Already have an account?{" "}
+            Bạn đã có tài khoản?{" "}
             <Link
               className="text-primary font-semibold hover:underline"
               to="/login"
             >
-              Login
+              Đăng nhập
             </Link>
           </p>
         </div>
