@@ -1,15 +1,23 @@
 import { useState, useEffect, useRef } from 'react';
-import { ShoppingBag, Search, User, Menu, X } from 'lucide-react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { ShoppingBag, Search, User, Menu, ChevronDown } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../lib/utils';
 
 const navLinks = [
-  { name: 'Trang chủ', href: '#' },
-  { name: 'Trái cây', href: '#fruits' },
+  { name: 'Trang chủ', href: '/' },
+  { name: 'Trái cây', href: '/category' },
   { name: 'Combo', href: '#combo' },
   { name: 'Giới thiệu', href: '#about' },
   { name: 'Liên hệ', href: '#contact' },
+];
+
+const fruitCategories = [
+  { name: 'Trái cây trong nước', href: '/category#trong-nuoc' },
+  { name: 'Trái cây nhập khẩu', href: '/category#nhap-khau' },
+  { name: 'Giỏ quà trái cây', href: '/category#gio-qua' },
+  { name: 'Trái cây hữu cơ', href: '/category#huu-co' },
+  { name: 'Trái cây theo mùa', href: '/category#theo-mua' },
 ];
 
 const readCookie = (name: string) => {
@@ -18,52 +26,33 @@ const readCookie = (name: string) => {
 };
 
 const Header = () => {
-  const navigate = useNavigate();
   const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userId, setUserId] = useState<string | null>(() => readCookie('userId'));
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const userMenuRef = useRef<HTMLDivElement | null>(null);
-
-  const handleLogout = () => {
-    document.cookie = 'userId=; path=/; Max-Age=0; SameSite=Lax';
-    setUserId(null);
-    navigate('/');
-  };
+  const [fruitMenuOpen, setFruitMenuOpen] = useState(false);
+  const fruitMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   useEffect(() => {
     const nextUserId = readCookie('userId');
-    if (nextUserId !== userId) {
-      setUserId(nextUserId);
-    }
+    if (nextUserId !== userId) setUserId(nextUserId);
   }, [location.pathname, userId]);
 
   useEffect(() => {
-    if (!userMenuOpen) {
-      return undefined;
-    }
-
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!userMenuRef.current) {
-        return;
-      }
-      if (!userMenuRef.current.contains(event.target as Node)) {
-        setUserMenuOpen(false);
+    const onClickOutside = (event: MouseEvent) => {
+      if (fruitMenuRef.current && !fruitMenuRef.current.contains(event.target as Node)) {
+        setFruitMenuOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [userMenuOpen]);
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, []);
 
   return (
     <header
@@ -75,10 +64,7 @@ const Header = () => {
       <div className="container mx-auto px-4 md:px-8 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 lg:gap-6 min-w-0 flex-1">
           <a href="/" className="flex items-center gap-2 group shrink-0">
-            <motion.div
-              whileHover={{ rotate: 10 }}
-              className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg"
-            >
+            <motion.div whileHover={{ rotate: 10 }} className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg">
               M
             </motion.div>
             <span className="text-xl md:text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
@@ -97,227 +83,75 @@ const Header = () => {
         </div>
 
         <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.name}
-              href={link.href}
-              className="text-foreground/80 hover:text-primary font-medium transition-colors relative group text-sm uppercase tracking-wider"
-            >
-              {link.name}
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full rounded-full"></span>
-            </a>
-          ))}
+          {navLinks.map((link) =>
+            link.name === 'Trái cây' ? (
+              <div
+                key={link.name}
+                className="relative"
+                ref={fruitMenuRef}
+                onMouseEnter={() => setFruitMenuOpen(true)}
+                onMouseLeave={() => setFruitMenuOpen(false)}
+              >
+                <Link
+                  to={link.href}
+                  className="flex items-center gap-1 text-foreground/80 hover:text-primary font-medium transition-colors relative group text-sm uppercase tracking-wider"
+                  onClick={() => setFruitMenuOpen(false)}
+                >
+                  {link.name}
+                  <ChevronDown className="w-4 h-4" />
+                </Link>
+
+                <AnimatePresence>
+                  {fruitMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      className="absolute top-full left-0 mt-3 w-72 rounded-3xl border border-border/60 bg-white shadow-2xl overflow-hidden"
+                    >
+                      {fruitCategories.map((category) => (
+                        <a
+                          key={category.name}
+                          href={category.href}
+                          className="block px-5 py-3 text-sm font-medium text-foreground/80 hover:bg-primary hover:text-white transition-colors"
+                          onClick={() => setFruitMenuOpen(false)}
+                        >
+                          {category.name}
+                        </a>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <a
+                key={link.name}
+                href={link.href}
+                className="text-foreground/80 hover:text-primary font-medium transition-colors relative group text-sm uppercase tracking-wider"
+              >
+                {link.name}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full rounded-full"></span>
+              </a>
+            )
+          )}
         </nav>
 
         <div className="flex items-center gap-3 shrink-0">
-          <button className="p-2 text-foreground/80 hover:text-primary transition-colors hidden lg:block">
-            <Search className="w-5 h-5" />
-          </button>
-
-          <Link
-            to="/cart"
-            className="p-2 text-foreground/80 hover:text-primary transition-colors relative group"
-            aria-label="Giỏ hàng"
-          >
+          <Link to="/cart" className="p-2 text-foreground/80 hover:text-primary transition-colors relative group" aria-label="Giỏ hàng">
             <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
-              3
-            </span>
+            <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">3</span>
           </Link>
 
-          {userId ? (
-            <div className="relative hidden sm:block" ref={userMenuRef}>
-              <button
-                type="button"
-                onClick={() => setUserMenuOpen((prev) => !prev)}
-                className="flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-4 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
-                aria-expanded={userMenuOpen}
-                aria-haspopup="menu"
-              >
-                <User className="w-4 h-4" />
-                <span>Tài khoản</span>
-              </button>
+          <Link to="/login" className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium">
+            <User className="w-4 h-4" />
+            <span>Tài khoản</span>
+          </Link>
 
-              <AnimatePresence>
-                {userMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    className="absolute right-0 mt-3 w-72 rounded-3xl border border-border/60 bg-white shadow-2xl z-50 overflow-hidden"
-                    role="menu"
-                  >
-                    <div className="p-4">
-                      <div className="flex items-center justify-between gap-3 border border-primary/40 bg-primary/5 rounded-2xl px-4 py-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-semibold">
-                            M
-                          </div>
-                          <span className="text-sm font-semibold text-foreground">Tài khoản</span>
-                        </div>
-                        <span className="text-primary text-lg">›</span>
-                      </div>
-
-                      <div className="mt-4 border-b border-border/60 pb-3">
-                        <h4 className="text-sm font-semibold text-foreground">Menu</h4>
-                      </div>
-
-                      <div className="mt-3 flex flex-col gap-1">
-                        <Link
-                          to="/profile"
-                          className="flex font-semibold items-center justify-between px-4 py-2 rounded-xl text-sm text-foreground/80 hover:bg-muted transition-colors"
-                          role="menuitem"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <span>Thông tin cá nhân</span>
-                          <span className="text-foreground/40">›</span>
-                        </Link>
-                        <Link
-                          to="/orders"
-                          className="flex font-semibold items-center justify-between px-4 py-2 rounded-xl text-sm text-foreground/80 hover:bg-muted transition-colors"
-                          role="menuitem"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <span>Lịch sử đơn hàng</span>
-                          <span className="text-foreground/40">›</span>
-                        </Link>
-                        <button
-                          type="button"
-                          className="w-full text-left flex font-semibold items-center justify-between px-4 py-2 rounded-xl text-sm text-destructive hover:bg-destructive/10 transition-colors"
-                          role="menuitem"
-                          onClick={() => {
-                            setUserMenuOpen(false);
-                            handleLogout();
-                          }}
-                        >
-                          <span>Đăng xuất</span>
-                          <span className="text-destructive/70">›</span>
-                        </button>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="mt-4 w-full py-2 text-sm font-semibold text-primary border-t border-border/60"
-                      >
-                        Đóng
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <Link
-              to="/login"
-              className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
-            >
-              <User className="w-4 h-4" />
-              <span>Tài khoản</span>
-            </Link>
-          )}
-
-          <button
-            className="md:hidden p-2 text-foreground"
-            onClick={() => setMobileMenuOpen(true)}
-            aria-label="Mở menu"
-          >
+          <button className="md:hidden p-2 text-foreground" aria-label="Mở menu">
             <Menu className="w-6 h-6" />
           </button>
         </div>
       </div>
-
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileMenuOpen(false)}
-              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 md:hidden"
-            />
-            <motion.div
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-              className="fixed top-0 right-0 bottom-0 w-3/4 sm:w-1/2 bg-background z-50 p-6 flex flex-col shadow-2xl md:hidden"
-            >
-              <div className="flex justify-between items-center mb-8">
-                <span className="font-semibold text-foreground">Menu</span>
-                <button onClick={() => setMobileMenuOpen(false)} className="p-2" aria-label="Đóng menu">
-                  <X className="w-6 h-6 text-foreground/70 hover:text-primary" />
-                </button>
-              </div>
-              <div className="flex flex-col gap-6">
-                {navLinks.map((link) => (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-xl font-medium text-foreground hover:text-primary transition-colors"
-                  >
-                    {link.name}
-                  </a>
-                ))}
-              </div>
-              <div className="mt-8 flex flex-col gap-4">
-                <div className="w-full rounded-full border border-border px-4 py-3 flex items-center gap-3">
-                  <Search className="w-5 h-5 text-foreground/50" />
-                  <span className="text-sm text-foreground/60">Tìm kiếm</span>
-                </div>
-                <Link
-                  to="/cart"
-                  className="w-full py-3 flex items-center justify-center gap-2 border border-border rounded-full hover:bg-muted transition-colors"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <ShoppingBag className="w-5 h-5" />
-                  <span>Giỏ hàng</span>
-                </Link>
-                {userId ? (
-                  <div className="flex flex-col gap-3">
-                    <Link
-                      to="/profile"
-                      className="w-full py-3 flex items-center justify-center gap-2 border border-border rounded-full hover:bg-muted transition-colors"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <User className="w-5 h-5" />
-                      <span>Tài khoản</span>
-                    </Link>
-                    <Link
-                      to="/orders"
-                      className="w-full py-3 flex items-center justify-center gap-2 border border-border rounded-full hover:bg-muted transition-colors"
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <span>Đơn hàng đã đặt</span>
-                    </Link>
-                    <button
-                      type="button"
-                      className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        handleLogout();
-                      }}
-                    >
-                      <span>Đăng xuất</span>
-                    </button>
-                  </div>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="w-full py-3 flex items-center justify-center gap-2 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    <User className="w-5 h-5" />
-                    <span>Tài khoản</span>
-                  </Link>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
     </header>
   );
 };
