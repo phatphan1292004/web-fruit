@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { FiShoppingCart, FiStar, FiTag } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import type { FruitProduct } from './types';
@@ -18,7 +19,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       whileHover={{ y: -6 }}
       className="group rounded-[2rem] bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden border border-border/60"
     >
-      <div className="relative overflow-hidden">
+      <Link to={`/product/${product.id}`} className="block relative overflow-hidden">
         <img
           src={product.image}
           alt={product.name}
@@ -32,16 +33,18 @@ const ProductCard = ({ product }: ProductCardProps) => {
             -{discount}%
           </span>
         </div>
-      </div>
+      </Link>
 
       <div className="p-5 space-y-4">
         <div>
           <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">
             {product.category}
           </p>
-          <h3 className="text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
-            {product.name}
-          </h3>
+          <Link to={`/product/${product.id}`}>
+            <h3 className="text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
+              {product.name}
+            </h3>
+          </Link>
         </div>
 
         <div className="flex items-center gap-2 text-sm text-foreground/70">
@@ -60,10 +63,10 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <button className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
+          <Link to={`/product/${product.id}`} className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
             <FiShoppingCart className="w-4 h-4" />
-            Thêm vào giỏ
-          </button>
+            Xem chi tiết
+          </Link>
           <button className="w-12 h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300">
             <FiTag className="w-4 h-4" />
           </button>

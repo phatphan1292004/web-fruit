@@ -4,6 +4,7 @@ import LoginPage from "./features/login/components/login-page";
 import RegisterPage from "./features/register/components/register-page";
 import { CartPage, PaymentPage, ShippingPage } from "./features/cart";
 import CategoryPage from "./features/category/components/CategoryPage";
+import ProductDetailPage from "./features/product-detail/components/ProductDetailPage";
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/category" element={<CategoryPage />} />
+        <Route path="/product/:slug" element={<ProductDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/cart" element={<CartPage />} />
