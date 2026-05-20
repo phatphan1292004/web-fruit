@@ -7,7 +7,6 @@ import { cn } from '../../lib/utils';
 const navLinks = [
   { name: 'Trang chủ', href: '/' },
   { name: 'Trái cây', href: '/category' },
-  { name: 'Combo', href: '#combo' },
   { name: 'Giới thiệu', href: '#about' },
   { name: 'Liên hệ', href: '#contact' },
 ];

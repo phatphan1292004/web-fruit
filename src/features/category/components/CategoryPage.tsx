@@ -151,11 +151,9 @@ const CategoryPage = () => {
             selectedPrices={selectedPrices}
             selectedCategories={selectedCategories}
             selectedRating={selectedRating}
-            featuredHover={featuredHover}
             onTogglePrice={togglePrice}
             onToggleCategory={toggleCategory}
             onSelectRating={setSelectedRating}
-            onFeaturedHover={setFeaturedHover}
             onReset={resetFilters}
           />
 
