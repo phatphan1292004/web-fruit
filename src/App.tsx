@@ -5,6 +5,7 @@ import RegisterPage from "./features/register/components/register-page";
 import { CartPage, PaymentPage, ShippingPage } from "./features/cart";
 import CategoryPage from "./features/category/components/CategoryPage";
 import ProductDetailPage from "./features/product-detail/components/ProductDetailPage";
+import ProfilePage from "./features/profile/components/ProfilePage";
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/category" element={<CategoryPage />} />
         <Route path="/product/:slug" element={<ProductDetailPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/cart" element={<CartPage />} />
