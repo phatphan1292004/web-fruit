@@ -7,6 +7,7 @@ import CategoryPage from "./features/category/components/CategoryPage";
 import ProductDetailPage from "./features/product-detail/components/ProductDetailPage";
 import ProfilePage from "./features/profile/components/ProfilePage";
 import AboutPage from "./features/about/components/AboutPage";
+import ContactPage from "./features/contact/components/ContactPage";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/product/:slug" element={<ProductDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/cart" element={<CartPage />} />
