@@ -1,100 +1,59 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Star, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../../lib/utils';
+import { fetchHomeProducts, type HomeProduct } from '../servers/products';
 
-const categories = ['Tất cả', 'Nhập khẩu', 'Nhiệt đới', 'Bán chạy', 'Hữu cơ'];
-
-const products = [
-  {
-    id: 1,
-    name: 'Dâu tây Nhật Bản cao cấp',
-    category: 'Nhập khẩu',
-    price: 249000,
-    rating: 5.0,
-    image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=500&auto=format&fit=crop',
-    badge: 'Bán chạy',
-  },
-  {
-    id: 2,
-    name: 'Bơ Hass hữu cơ',
-    category: 'Hữu cơ',
-    price: 85000,
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1523049673857-eb18f1d7b578?w=500&auto=format&fit=crop',
-  },
-  {
-    id: 3,
-    name: 'Xoài Thái tươi ngon',
-    category: 'Nhiệt đới',
-    price: 120000,
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=500&auto=format&fit=crop',
-    badge: 'Theo mùa',
-  },
-  {
-    id: 4,
-    name: 'Cherry ngọt nhập khẩu',
-    category: 'Nhập khẩu',
-    price: 189000,
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1528821128474-27f963b062bf?w=500&auto=format&fit=crop',
-  },
-  {
-    id: 5,
-    name: 'Thanh long ruột đỏ hữu cơ',
-    category: 'Nhiệt đới',
-    price: 99000,
-    rating: 4.6,
-    image: 'https://images.unsplash.com/photo-1527310562375-a8f15724a2f0?w=500&auto=format&fit=crop',
-  },
-  {
-    id: 6,
-    name: 'Táo Fuji giòn ngọt',
-    category: 'Bán chạy',
-    price: 150000,
-    rating: 4.9,
-    image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6fd6c?w=500&auto=format&fit=crop',
-  },
-  {
-    id: 7,
-    name: 'Việt quất tươi',
-    category: 'Hữu cơ',
-    price: 145000,
-    rating: 4.8,
-    image: 'https://images.unsplash.com/photo-1498557850523-fd3d118b962e?w=500&auto=format&fit=crop',
-    badge: 'Hữu cơ',
-  },
-  {
-    id: 8,
-    name: 'Kiwi vàng cao cấp',
-    category: 'Nhập khẩu',
-    price: 112000,
-    rating: 4.7,
-    image: 'https://images.unsplash.com/photo-1585060544812-6b45742d762f?w=500&auto=format&fit=crop',
-  },
+const categoryTabs = [
+  { label: 'Tất cả', key: 'all' },
+  { label: 'Nhập khẩu', key: 'trai-cay-nhap-khau' },
+  { label: 'Nhiệt đới', key: 'trai-cay-trong-nuoc' },
+  { label: 'Bán chạy', key: 'bestseller' },
+  { label: 'Hữu cơ', key: 'trai-cay-huu-co' },
 ];
+
+const categoryNameMap: Record<string, string> = {
+  'trai-cay-nhap-khau': 'Nhập khẩu',
+  'trai-cay-trong-nuoc': 'Nhiệt đới',
+  'trai-cay-huu-co': 'Hữu cơ',
+  'gio-qua-trai-cay': 'Giỏ quà',
+  'trai-cay-theo-mua': 'Theo mùa',
+};
 
 const formatVND = (value: number) => `${value.toLocaleString('vi-VN')}đ`;
 
 const ProductSection = () => {
-  const [activeCategory, setActiveCategory] = useState('Tất cả');
+  const [activeCategory, setActiveCategory] = useState('all');
   const [page, setPage] = useState(0);
+  const [products, setProducts] = useState<HomeProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setProducts(await fetchHomeProducts());
+      } catch {
+        setProducts([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
 
   const filteredProducts = useMemo(
     () =>
-      products.filter(
-        (product) =>
-          activeCategory === 'Tất cả' ||
-          product.category === activeCategory ||
-          (activeCategory === 'Bán chạy' && product.badge === 'Bán chạy')
-      ),
-    [activeCategory]
+      products.filter((product) => {
+        if (activeCategory === 'all') return true;
+        if (activeCategory === 'bestseller') return product.badge === 'Hot';
+        const targetName = categoryNameMap[activeCategory] ?? activeCategory;
+        return product.category === targetName;
+      }),
+    [activeCategory, products]
   );
 
   const visibleProducts = useMemo(() => filteredProducts.slice(page, page + 4), [filteredProducts, page]);
-
   const canPrev = page > 0;
   const canNext = page + 4 < filteredProducts.length;
 
@@ -113,9 +72,9 @@ const ProductSection = () => {
           </motion.h2>
 
           <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="flex flex-wrap justify-center gap-2 md:gap-4 p-1 bg-white/60 backdrop-blur-md rounded-full shadow-sm border border-border/50">
-            {categories.map((category) => (
-              <button key={category} onClick={() => { setActiveCategory(category); setPage(0); }} className={cn('px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300', activeCategory === category ? 'bg-primary text-white shadow-md' : 'text-foreground/70 hover:bg-white hover:text-foreground')}>
-                {category}
+            {categoryTabs.map((category) => (
+              <button key={category.key} onClick={() => { setActiveCategory(category.key); setPage(0); }} className={cn('px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300', activeCategory === category.key ? 'bg-primary text-white shadow-md' : 'text-foreground/70 hover:bg-white hover:text-foreground')}>
+                {category.label}
               </button>
             ))}
           </motion.div>
@@ -133,12 +92,14 @@ const ProductSection = () => {
 
           <AnimatePresence mode="wait">
             <motion.div key={`${activeCategory}-${page}`} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.35, ease: 'easeOut' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {visibleProducts.map((product) => {
+              {loading ? Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="rounded-[2rem] bg-white h-[420px] animate-pulse" />
+              )) : visibleProducts.map((product) => {
                 const discount = product.badge ? 'Hot' : 'New';
                 return (
                   <motion.div key={product.id} whileHover={{ y: -6 }} className="group rounded-[2rem] bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden border border-border/60">
-                    <Link to={`/product/${product.id}`} className="relative overflow-hidden block">
-                      <img src={product.image} alt={product.name} className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    <Link to={`/product/${product.slug}`} className="relative overflow-hidden block">
+                      <img src={product.image ?? undefined} alt={product.name} className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       <div className="absolute top-4 left-4 flex gap-2">
                         {product.badge && <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow-md">{product.badge}</span>}
                         <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-foreground shadow-md">{discount}</span>
@@ -148,14 +109,14 @@ const ProductSection = () => {
                     <div className="p-5 space-y-4">
                       <div>
                         <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">{product.category}</p>
-                        <Link to={`/product/${product.id}`}>
+                        <Link to={`/product/${product.slug}`}>
                           <h3 className="text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors">{product.name}</h3>
                         </Link>
                       </div>
 
                       <div className="flex items-center gap-2 text-sm text-foreground/70">
                         <Star className="text-amber-500 w-4 h-4" />
-                        <span className="font-semibold text-foreground">{product.rating.toFixed(1)}</span>
+                        <span className="font-semibold text-foreground">{(product.rating ?? 0).toFixed(1)}</span>
                         <span>đánh giá</span>
                       </div>
 
@@ -164,7 +125,7 @@ const ProductSection = () => {
                       </div>
 
                       <div className="flex items-center gap-3 pt-2">
-                        <Link to={`/product/${product.id}`} className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
+                        <Link to={`/product/${product.slug}`} className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
                           <ShoppingCart className="w-4 h-4" />
                           Xem chi tiết
                         </Link>

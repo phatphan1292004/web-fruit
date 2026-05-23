@@ -1,0 +1,29 @@
+export type ApiProduct = {
+  id: number;
+  slug: string;
+  name: string;
+  category?: string;
+  categoryId?: {
+    slug?: string;
+    name?: string;
+  };
+  price: number;
+  originalPrice?: number;
+  rating?: number;
+  reviewsCount?: number;
+  reviews?: number;
+  badges?: string[];
+  label?: 'Hot' | 'Sale' | 'New' | 'Organic';
+  image?: string;
+  gallery?: string[];
+  description?: string;
+  shortDescription?: string;
+  origin?: string;
+  weight?: string;
+  unit?: string;
+  shelfLife?: string;
+  storage?: string;
+  nutrition?: string[];
+  storageTips?: string[];
+  stockText?: string;
+};

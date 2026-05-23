@@ -1,6 +1,14 @@
 import { FiFilter, FiStar } from 'react-icons/fi';
 import type { PriceRange, FruitCategory } from './types';
 
+const categorySlugMap: Record<FruitCategory, string> = {
+  'Trong nước': 'trai-cay-trong-nuoc',
+  'Nhập khẩu': 'trai-cay-nhap-khau',
+  'Giỏ quà': 'gio-qua-trai-cay',
+  'Hữu cơ': 'trai-cay-huu-co',
+  'Theo mùa': 'trai-cay-theo-mua',
+};
+
 const priceOptions: { id: PriceRange; label: string }[] = [
   { id: 'all', label: 'Tất cả giá' },
   { id: 'under-100', label: 'Dưới 100k' },
@@ -13,20 +21,20 @@ const categoryOptions: FruitCategory[] = ['Trong nước', 'Nhập khẩu', 'Gi�
 
 type FilterSidebarProps = {
   selectedPrices: PriceRange[];
-  selectedCategories: FruitCategory[];
   selectedRating: number;
+  selectedCategorySlug?: string;
   onTogglePrice: (price: PriceRange) => void;
-  onToggleCategory: (category: FruitCategory) => void;
+  onNavigateCategory: (category: FruitCategory) => void;
   onSelectRating: (rating: number) => void;
   onReset: () => void;
 };
 
 const FilterSidebar = ({
   selectedPrices,
-  selectedCategories,
   selectedRating,
+  selectedCategorySlug,
   onTogglePrice,
-  onToggleCategory,
+  onNavigateCategory,
   onSelectRating,
   onReset,
 }: FilterSidebarProps) => {
@@ -69,17 +77,17 @@ const FilterSidebar = ({
             <h4 className="text-base font-bold text-foreground mb-3">Loại trái cây</h4>
             <div className="space-y-2">
               {categoryOptions.map((category) => (
-                <label key={category} className="flex items-center gap-3 cursor-pointer group text-[15px]">
-                  <input
-                    type="checkbox"
-                    checked={selectedCategories.includes(category)}
-                    onChange={() => onToggleCategory(category)}
-                    className="w-4 h-4 accent-primary"
-                  />
-                  <span className="font-medium text-foreground/85 group-hover:text-foreground transition-colors">
+                <button
+                  key={category}
+                  type="button"
+                  onClick={() => onNavigateCategory(category)}
+                  className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-[15px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${selectedCategorySlug === categorySlugMap[category] ? 'border-primary bg-primary/10 shadow-md' : 'border-border/60 bg-white'}`}
+                >
+                  <span className="font-medium text-foreground/85">
                     {category}
                   </span>
-                </label>
+                  <span className="text-primary text-sm font-semibold">Chuyển danh mục</span>
+                </button>
               ))}
             </div>
           </div>
@@ -87,7 +95,11 @@ const FilterSidebar = ({
           <div>
             <h4 className="text-base font-bold text-foreground mb-3">Đánh giá sao</h4>
             <div className="space-y-2">
-              <div className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 text-[15px] transition-all duration-300 ${selectedRating === 0 ? 'border-primary bg-primary text-white shadow-lg' : 'border-border/60 bg-white text-foreground'}`}>
+              <button
+                type="button"
+                onClick={() => onSelectRating(0)}
+                className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 text-[15px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${selectedRating === 0 ? 'border-primary bg-primary text-white shadow-lg' : 'border-border/60 bg-white text-foreground'}`}
+              >
                 <span className="flex items-center gap-2 font-semibold">
                   <FiStar className={selectedRating === 0 ? 'text-white' : 'text-amber-500'} />
                   Nổi bật
@@ -95,44 +107,22 @@ const FilterSidebar = ({
                 <span className={`text-sm ${selectedRating === 0 ? 'text-white/90' : 'text-primary'}`}>
                   {selectedRating === 0 ? 'Đang chọn' : 'Bấm để lọc'}
                 </span>
-              </div>
+              </button>
 
               {[5, 4, 3].map((rating) => (
-                <label
+                <button
                   key={rating}
-                  className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 text-[15px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${selectedRating === rating ? 'border-primary bg-primary/10 shadow-md' : 'border-border/60 bg-white'}`}
+                  type="button"
+                  onClick={() => onSelectRating(rating)}
+                  className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 text-[15px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${selectedRating === rating ? 'border-primary bg-primary/10 shadow-md' : 'border-border/60 bg-white'}`}
                 >
                   <span className="flex items-center gap-2 font-medium text-foreground/85">
                     <FiStar className="text-amber-500" />
-                    <input
-                      type="radio"
-                      name="rating"
-                      checked={selectedRating === rating}
-                      onChange={() => onSelectRating(rating)}
-                      className="sr-only"
-                    />
                     Từ {rating} sao trở lên
                   </span>
                   <span className="text-primary font-semibold">Chọn</span>
-                </label>
+                </button>
               ))}
-
-              <label
-                className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 text-[15px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md cursor-pointer ${selectedRating === 0 ? 'border-primary bg-primary/10 shadow-md' : 'border-border/60 bg-white'}`}
-              >
-                <span className="flex items-center gap-2 font-medium text-foreground/85">
-                  <FiStar className="text-amber-500" />
-                  <input
-                    type="radio"
-                    name="rating"
-                    checked={selectedRating === 0}
-                    onChange={() => onSelectRating(0)}
-                    className="sr-only"
-                  />
-                  Tất cả đánh giá
-                </span>
-                <span className="text-primary font-semibold">Chọn</span>
-              </label>
             </div>
           </div>
 

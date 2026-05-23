@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
 import { FiShoppingCart, FiStar, FiTag } from 'react-icons/fi';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import type { FruitProduct } from './types';
 
 type ProductCardProps = {
@@ -8,7 +8,8 @@ type ProductCardProps = {
 };
 
 const ProductCard = ({ product }: ProductCardProps) => {
-  const discount = Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100);
+  const originalPrice = product.originalPrice ?? product.price;
+  const discount = originalPrice > product.price ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
 
   return (
     <motion.article
@@ -19,7 +20,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
       whileHover={{ y: -6 }}
       className="group rounded-[2rem] bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden border border-border/60"
     >
-      <Link to={`/product/${product.id}`} className="block relative overflow-hidden">
+      <Link to={`/product/${product.slug}`} className="relative overflow-hidden block">
         <img
           src={product.image}
           alt={product.name}
@@ -40,7 +41,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
           <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">
             {product.category}
           </p>
-          <Link to={`/product/${product.id}`}>
+          <Link to={`/product/${product.slug}`}>
             <h3 className="text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors">
               {product.name}
             </h3>
@@ -58,14 +59,14 @@ const ProductCard = ({ product }: ProductCardProps) => {
             {product.price.toLocaleString('vi-VN')}đ
           </span>
           <span className="text-sm text-foreground/50 line-through">
-            {product.originalPrice.toLocaleString('vi-VN')}đ
+            {originalPrice.toLocaleString('vi-VN')}đ
           </span>
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <Link to={`/product/${product.id}`} className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
+          <Link to={`/product/${product.slug}`} className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
             <FiShoppingCart className="w-4 h-4" />
-            Xem chi tiết
+            Thêm vào giỏ
           </Link>
           <button className="w-12 h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300">
             <FiTag className="w-4 h-4" />
