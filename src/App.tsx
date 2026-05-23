@@ -8,13 +8,16 @@ import ProductDetailPage from "./features/product-detail/components/ProductDetai
 import ProfilePage from "./features/profile/components/ProfilePage";
 import AboutPage from "./features/about/components/AboutPage";
 import ContactPage from "./features/contact/components/ContactPage";
+import ScrollToTop from "./components/layout/ScrollToTop";
 
 function App() {
   return (
     <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/category" element={<CategoryPage />} />
+        <Route path="/category/:categorySlug" element={<CategoryPage />} />
         <Route path="/product/:slug" element={<ProductDetailPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/about" element={<AboutPage />} />

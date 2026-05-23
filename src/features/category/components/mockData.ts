@@ -3,6 +3,7 @@ import type { FruitProduct } from './types';
 export const fruitProducts: FruitProduct[] = [
   {
     id: 1,
+    slug: 'gio-qua-trai-cay-premium',
     name: 'Giỏ quà trái cây Premium',
     category: 'Giỏ quà',
     price: 459000,
@@ -16,6 +17,7 @@ export const fruitProducts: FruitProduct[] = [
   },
   {
     id: 2,
+    slug: 'dau-tay-han-quoc',
     name: 'Dâu tây Hàn Quốc',
     category: 'Nhập khẩu',
     price: 189000,
@@ -29,6 +31,7 @@ export const fruitProducts: FruitProduct[] = [
   },
   {
     id: 3,
+    slug: 'nho-mau-don-nhat-ban',
     name: 'Nho mẫu đơn Nhật Bản',
     category: 'Nhập khẩu',
     price: 520000,
@@ -42,6 +45,7 @@ export const fruitProducts: FruitProduct[] = [
   },
   {
     id: 4,
+    slug: 'xoai-cat-hoa-loc',
     name: 'Mango cát Hòa Lộc',
     category: 'Trong nước',
     price: 125000,
@@ -55,6 +59,7 @@ export const fruitProducts: FruitProduct[] = [
   },
   {
     id: 5,
+    slug: 'tao-huu-co-da-lat',
     name: 'Táo hữu cơ Đà Lạt',
     category: 'Hữu cơ',
     price: 99000,
@@ -68,6 +73,7 @@ export const fruitProducts: FruitProduct[] = [
   },
   {
     id: 6,
+    slug: 'combo-trai-cay-theo-mua',
     name: 'Combo trái cây theo mùa',
     category: 'Theo mùa',
     price: 299000,
@@ -81,6 +87,7 @@ export const fruitProducts: FruitProduct[] = [
   },
   {
     id: 7,
+    slug: 'cam-vang-nhap-khau',
     name: 'Cam vàng nhập khẩu',
     category: 'Nhập khẩu',
     price: 219000,
@@ -94,6 +101,7 @@ export const fruitProducts: FruitProduct[] = [
   },
   {
     id: 8,
+    slug: 'thanh-long-ruot-do',
     name: 'Thanh long ruột đỏ',
     category: 'Trong nước',
     price: 89000,
@@ -106,3 +114,11 @@ export const fruitProducts: FruitProduct[] = [
     createdAt: '2026-04-18',
   },
 ];
+
+export const categoryMap = {
+  'trai-cay-trong-nuoc': 'Trong nước',
+  'trai-cay-nhap-khau': 'Nhập khẩu',
+  'gio-qua-trai-cay': 'Giỏ quà',
+  'trai-cay-huu-co': 'Hữu cơ',
+  'trai-cay-theo-mua': 'Theo mùa',
+} as const;

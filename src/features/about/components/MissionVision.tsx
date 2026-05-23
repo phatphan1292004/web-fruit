@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiTarget, FiEye, FiHeart, FiShield, FiSun, FiAward } from 'react-icons/fi';
+import { FiTarget, FiEye, FiHeart, FiSun } from 'react-icons/fi';
 
 const MissionVision = () => {
   const cards = [

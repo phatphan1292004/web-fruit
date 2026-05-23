@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { FiSearch, FiCheckCircle, FiArchive, FiPackage, FiTruck } from 'react-icons/fi';
+import { FiCheckCircle } from 'react-icons/fi';
 
 const steps = [
   { title: 'Tuyển chọn', text: 'Chọn lọc những trái cây đạt chuẩn về độ chín, hình thức và hương vị.' },
