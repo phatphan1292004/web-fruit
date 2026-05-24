@@ -1,62 +1,184 @@
-const API_URL = import.meta.env.VITE_API_URL ?? '';
+"use server";
 
-type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+import axios from "axios";
 
-type RequestOptions<TBody = unknown> = {
-  body?: TBody;
-  headers?: Record<string, string>;
-  signal?: AbortSignal;
-};
+export const storeClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-async function request<TResponse, TBody = unknown>(
-  method: HttpMethod,
-  endpoint: string,
-  options: RequestOptions<TBody> = {}
-): Promise<TResponse> {
-  const res = await fetch(`${API_URL}${endpoint}`, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(options.headers ?? {}),
-    },
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-    signal: options.signal,
-  });
-
-  if (!res.ok) {
-    let errorMessage = `Request failed with status ${res.status}`;
-    try {
-      const errorData = (await res.json()) as { message?: string };
-      if (errorData?.message) errorMessage = errorData.message;
-    } catch {
-      // Ignore non-JSON error bodies.
+export const get = async <T = unknown>(
+  url: string,
+  params?: Record<string, unknown>,
+  defaultReturn?: T,
+  onError?: (error: unknown) => T
+) => {
+  try {
+    const res = await storeClient.request({
+      method: "GET",
+      url,
+      params,
+    });
+    if (res.status === 200) {
+      return res.data;
+    } else {
+      console.log("Failed to fetch data from store", res.data);
+      if (onError) {
+        return onError(res.data);
+      } else if (defaultReturn) {
+        return defaultReturn;
+      } else {
+        return res.data;
+      }
     }
-    throw new Error(errorMessage);
+  } catch (error) {
+    if (onError) {
+      return onError(error);
+    } else if (defaultReturn) {
+      return defaultReturn;
+    } else {
+      return null;
+    }
   }
-
-  if (res.status === 204) {
-    return undefined as TResponse;
-  }
-
-  return (await res.json()) as TResponse;
-}
-
-export const store = {
-  get<TResponse>(endpoint: string, options?: Omit<RequestOptions, 'body'>) {
-    return request<TResponse>('GET', endpoint, options);
-  },
-  post<TResponse, TBody = unknown>(endpoint: string, body?: TBody, options?: Omit<RequestOptions<TBody>, 'body'>) {
-    return request<TResponse, TBody>('POST', endpoint, { ...options, body });
-  },
-  put<TResponse, TBody = unknown>(endpoint: string, body?: TBody, options?: Omit<RequestOptions<TBody>, 'body'>) {
-    return request<TResponse, TBody>('PUT', endpoint, { ...options, body });
-  },
-  patch<TResponse, TBody = unknown>(endpoint: string, body?: TBody, options?: Omit<RequestOptions<TBody>, 'body'>) {
-    return request<TResponse, TBody>('PATCH', endpoint, { ...options, body });
-  },
-  delete<TResponse>(endpoint: string, options?: Omit<RequestOptions, 'body'>) {
-    return request<TResponse>('DELETE', endpoint, options);
-  },
 };
 
-export default store;
+export const post = async <T = unknown, D = unknown>(
+  url: string,
+  data?: D,
+  defaultReturn?: T,
+  onError?: (error: unknown) => T
+) => {
+  try {
+    console.log(`POST: ${url}`, data);
+    const res = await storeClient.request({
+      method: "POST",
+      url,
+      data,
+    });
+    if (res.status === 200) {
+      return res.data;
+    } else {
+      if (onError) {
+        return onError(res.data);
+      } else if (defaultReturn) {
+        return defaultReturn;
+      } else {
+        console.log(res.data);
+        return res.data;
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    if (onError) {
+      return onError(error);
+    } else if (defaultReturn) {
+      return defaultReturn;
+    } else {
+      return null;
+    }
+  }
+};
+
+export const put = async <T = unknown, D = unknown>(
+  url: string,
+  data?: D,
+  defaultReturn?: T,
+  onError?: (error: unknown) => T
+) => {
+  try {
+    const res = await storeClient.request({
+      method: "PUT",
+      url,
+      data,
+    });
+    if (res.status === 200) {
+      return res.data;
+    } else {
+      if (onError) {
+        return onError(res.data);
+      } else if (defaultReturn) {
+        return defaultReturn;
+      } else {
+        return res.data;
+      }
+    }
+  } catch (error) {
+    if (onError) {
+      return onError(error);
+    } else if (defaultReturn) {
+      return defaultReturn;
+    } else {
+      return null;
+    }
+  }
+};
+
+export const del = async <T = unknown>(
+  url: string,
+  params?: Record<string, unknown>,
+  defaultReturn?: T,
+  onError?: (error: unknown) => T
+) => {
+  try {
+    const res = await storeClient.request({
+      method: "DELETE",
+      url,
+      params,
+    });
+    if (res.status === 200) {
+      return res.data;
+    } else {
+      if (onError) {
+        return onError(res.data);
+      } else if (defaultReturn) {
+        return defaultReturn;
+      } else {
+        return res.data;
+      }
+    }
+  } catch (error) {
+    if (onError) {
+      return onError(error);
+    } else if (defaultReturn) {
+      return defaultReturn;
+    } else {
+      return null;
+    }
+  }
+};
+
+export const patch = async <T = unknown, D = unknown>(
+  url: string,
+  data?: D,
+  defaultReturn?: T,
+  onError?: (error: unknown) => T
+) => {
+  try {
+    const res = await storeClient.request({
+      method: "PATCH",
+      url,
+      data,
+    });
+    if (res.status === 200) {
+      return res.data;
+    } else {
+      if (onError) {
+        return onError(res.data);
+      } else if (defaultReturn) {
+        return defaultReturn;
+      } else {
+        return res.data;
+      }
+    }
+  } catch (error) {
+    if (onError) {
+      return onError(error);
+    } else if (defaultReturn) {
+      return defaultReturn;
+    } else {
+      return null;
+    }
+  }
+};
