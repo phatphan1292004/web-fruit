@@ -81,11 +81,11 @@ const ProductSection = () => {
         </div>
 
         <div className="relative">
-          <div className="flex items-center justify-between mb-6">
-            <button onClick={handlePrev} disabled={!canPrev} className="w-11 h-11 rounded-full border border-border bg-white flex items-center justify-center shadow-sm hover:shadow-md hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-foreground disabled:hover:shadow-sm" aria-label="Sản phẩm trước">
+          <div className="flex items-center justify-end gap-3 mb-6">
+            <button onClick={handlePrev} disabled={!canPrev} className="w-9 h-9 rounded-full border border-border bg-white flex items-center justify-center shadow-sm hover:shadow-md hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-foreground disabled:hover:shadow-sm" aria-label="Sản phẩm trước">
               <ChevronLeft className="w-5 h-5" />
             </button>
-            <button onClick={handleNext} disabled={!canNext} className="w-11 h-11 rounded-full border border-border bg-white flex items-center justify-center shadow-sm hover:shadow-md hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-foreground disabled:hover:shadow-sm" aria-label="Sản phẩm tiếp theo">
+            <button onClick={handleNext} disabled={!canNext} className="w-9 h-9 rounded-full border border-border bg-white flex items-center justify-center shadow-sm hover:shadow-md hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-foreground disabled:hover:shadow-sm" aria-label="Sản phẩm tiếp theo">
               <ChevronRight className="w-5 h-5" />
             </button>
           </div>

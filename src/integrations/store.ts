@@ -1,6 +1,6 @@
 "use server";
 
-import axios from "axios";
+import axios, { type AxiosRequestConfig } from "axios";
 
 export const storeClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -48,7 +48,8 @@ export const post = async <T = unknown, D = unknown>(
   url: string,
   data?: D,
   defaultReturn?: T,
-  onError?: (error: unknown) => T
+  onError?: (error: unknown) => T,
+  config?: AxiosRequestConfig<D>
 ) => {
   try {
     console.log(`POST: ${url}`, data);
@@ -56,6 +57,7 @@ export const post = async <T = unknown, D = unknown>(
       method: "POST",
       url,
       data,
+      ...config,
     });
     if (res.status === 200) {
       return res.data;
@@ -181,4 +183,12 @@ export const patch = async <T = unknown, D = unknown>(
       return null;
     }
   }
+};
+
+export default {
+  get,
+  post,
+  put,
+  del,
+  patch,
 };
