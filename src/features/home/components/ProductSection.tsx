@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingCart, Star, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { fetchHomeProducts, type HomeProduct } from '../servers/products';
+import { useCartStore } from '../../cart/store/cart-store';
 
 const categoryTabs = [
   { label: 'Tất cả', key: 'all' },
@@ -28,6 +29,7 @@ const ProductSection = () => {
   const [page, setPage] = useState(0);
   const [products, setProducts] = useState<HomeProduct[]>([]);
   const [loading, setLoading] = useState(true);
+  const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
     const load = async () => {
@@ -129,7 +131,20 @@ const ProductSection = () => {
                           <ShoppingCart className="w-4 h-4" />
                           Xem chi tiết
                         </Link>
-                        <button className="w-12 h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            addItem({
+                              id: product.id,
+                              name: product.name,
+                              description: product.category,
+                              price: product.price,
+                              image: product.image ?? '',
+                              badge: product.badge,
+                            })
+                          }
+                          className="w-12 h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300"
+                        >
                           <Plus className="w-4 h-4" />
                         </button>
                       </div>
