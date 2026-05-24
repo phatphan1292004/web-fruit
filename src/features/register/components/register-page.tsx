@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../../../integrations/firebase";
 import Layout from "../../../components/layout/layout";
+import { createUser } from "../servers";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -23,10 +24,22 @@ const RegisterPage = () => {
         email,
         password,
       );
-      if (credential.user && name.trim()) {
-        await updateProfile(credential.user, { displayName: name.trim() });
+      if (credential.user) {
+        const displayName = name.trim();
+        if (displayName) {
+          await updateProfile(credential.user, { displayName });
+        }
+        const token = await credential.user.getIdToken();
+        await createUser(
+          {
+            firebaseUid: credential.user.uid,
+            displayName: displayName || credential.user.displayName || "",
+            email: credential.user.email || email,
+          },
+          token,
+        );
       }
-      navigate("/");
+      navigate("/login");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Đăng ký thất bại.";
