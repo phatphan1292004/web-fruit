@@ -2,6 +2,7 @@ import { FiShoppingCart, FiStar, FiTag } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import type { FruitProduct } from './types';
+import { useCartStore } from '../../cart/store/cart-store';
 
 type ProductCardProps = {
   product: FruitProduct;
@@ -10,6 +11,7 @@ type ProductCardProps = {
 const ProductCard = ({ product }: ProductCardProps) => {
   const originalPrice = product.originalPrice ?? product.price;
   const discount = originalPrice > product.price ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
+  const addItem = useCartStore((state) => state.addItem);
 
   return (
     <motion.article
@@ -64,10 +66,23 @@ const ProductCard = ({ product }: ProductCardProps) => {
         </div>
 
         <div className="flex items-center gap-3 pt-2">
-          <Link to={`/product/${product.slug}`} className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
+          <button
+            type="button"
+            onClick={() =>
+              addItem({
+                id: product.id,
+                name: product.name,
+                description: product.category,
+                price: product.price,
+                image: product.image,
+                badge: product.label,
+              })
+            }
+            className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg"
+          >
             <FiShoppingCart className="w-4 h-4" />
             Thêm vào giỏ
-          </Link>
+          </button>
           <button className="w-12 h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300">
             <FiTag className="w-4 h-4" />
           </button>

@@ -11,6 +11,7 @@ import RelatedProducts from './RelatedProducts';
 import { fruitProducts } from '../../category/components/mockData';
 import type { FruitProduct } from '../../category/components/types';
 import { productReviews } from './mockData';
+import { useCartStore } from '../../cart/store/cart-store';
 
 const categorySlugMap: Record<string, string> = {
   'Trong nước': 'trai-cay-trong-nuoc',
@@ -57,6 +58,7 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [product, setProduct] = useState(mapApiProductToDetail(fruitProducts[0]));
+  const addItem = useCartStore((state) => state.addItem);
 
   const relatedProducts: FruitProduct[] = useMemo(() => fruitProducts.filter((item) => item.id !== product.id).slice(0, 4), [product.id]);
   const categorySlug = getCategorySlug(product as unknown as ApiProduct);
@@ -117,7 +119,7 @@ const ProductDetailPage = () => {
         {isLoading ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-pulse"><div className="rounded-[2rem] bg-white h-[560px]" /><div className="space-y-4"><div className="h-8 bg-white rounded-full w-2/3" /><div className="h-6 bg-white rounded-full w-1/2" /><div className="h-40 bg-white rounded-[2rem]" /></div></div>
         ) : (
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start"><ProductGallery product={product as any} /><ProductInfo product={product as any} quantity={quantity} onIncrease={() => setQuantity((prev) => prev + 1)} onDecrease={() => setQuantity((prev) => Math.max(1, prev - 1))} onAddToCart={() => {}} /></section>
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start"><ProductGallery product={product as any} /><ProductInfo product={product as any} quantity={quantity} onIncrease={() => setQuantity((prev) => prev + 1)} onDecrease={() => setQuantity((prev) => Math.max(1, prev - 1))} onAddToCart={() => addItem({ id: product.id, name: product.name, description: product.shortDescription ?? product.category, price: product.price, image: product.gallery?.[0] ?? '', badge: product.badges?.[0], quantity })} /></section>
         )}
         <ProductTabs product={product as any} />
         <ReviewSection product={product as any} reviews={productReviews} />
