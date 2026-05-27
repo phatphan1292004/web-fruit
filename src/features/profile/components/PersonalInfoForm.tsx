@@ -1,10 +1,23 @@
-import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FiUpload } from 'react-icons/fi';
-import { userProfile } from './mockData';
+import type { ApiUser } from '../servers';
 
-const PersonalInfoForm = () => {
-  const [avatarPreview, setAvatarPreview] = useState(userProfile.avatar);
+type PersonalInfoFormProps = {
+  userProfile: ApiUser | null;
+  isLoading?: boolean;
+};
+
+const fallbackAvatar = 'https://i.pravatar.cc/240?img=47';
+
+const resolveField = (value?: string | number | null) =>
+  value === undefined || value === null || value === '' ? 'Chưa cập nhật' : String(value);
+
+const PersonalInfoForm = ({ userProfile, isLoading }: PersonalInfoFormProps) => {
+  const avatar = userProfile?.avatarUrl || userProfile?.avatar || fallbackAvatar;
+  const name = resolveField(userProfile?.displayName || userProfile?.name);
+  const email = resolveField(userProfile?.email);
+  const phone = resolveField(userProfile?.phone);
+  const birthday = resolveField(userProfile?.birthday);
+  const gender = resolveField(userProfile?.gender);
 
   return (
     <motion.section
@@ -15,43 +28,28 @@ const PersonalInfoForm = () => {
       <h3 className="text-2xl font-bold text-foreground mb-6">Thông tin cá nhân</h3>
 
       <div className="flex items-center gap-5 mb-6">
-        <img src={avatarPreview} alt="Avatar preview" className="w-20 h-20 rounded-full object-cover shadow-md" />
-        <label className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-3 text-sm font-semibold text-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
-          <FiUpload />
-          Upload avatar
-          <input type="file" accept="image/*" className="hidden" onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) setAvatarPreview(URL.createObjectURL(file));
-          }} />
-        </label>
+        <img src={avatar} alt={name} className="w-20 h-20 rounded-full object-cover shadow-md" />
+        {isLoading ? (
+          <span className="text-sm text-foreground/60">Đang tải thông tin...</span>
+        ) : null}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {[
-          ['Họ tên', userProfile.name],
-          ['Email', userProfile.email],
-          ['Số điện thoại', userProfile.phone],
-          ['Ngày sinh', userProfile.birthday],
+          ['Họ tên', name],
+          ['Email', email],
+          ['Số điện thoại', phone],
+          ['Ngày sinh', birthday],
+          ['Giới tính', gender],
         ].map(([label, value]) => (
           <div key={label} className="space-y-2">
             <label className="text-sm font-medium text-foreground">{label}</label>
-            <input defaultValue={value} className="w-full rounded-2xl border border-border bg-muted/30 px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
+            <div className="w-full rounded-2xl border border-border bg-muted/30 px-4 py-3 text-sm text-foreground">
+              {value}
+            </div>
           </div>
         ))}
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Giới tính</label>
-          <select defaultValue={userProfile.gender} className="w-full rounded-2xl border border-border bg-muted/30 px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-            <option>Nữ</option>
-            <option>Nam</option>
-            <option>Khác</option>
-          </select>
-        </div>
       </div>
-
-      <button className="mt-6 rounded-full bg-primary px-6 py-3 font-semibold text-white shadow-md hover:shadow-lg hover:bg-primary/90 transition-all">
-        Cập nhật thông tin
-      </button>
     </motion.section>
   );
 };

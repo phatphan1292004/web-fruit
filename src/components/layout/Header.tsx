@@ -1,10 +1,18 @@
 import { useState, useEffect, useRef } from "react";
-import { ShoppingBag, Search, User, Menu, ChevronDown } from "lucide-react";
-import { Link, useLocation } from "react-router-dom";
+import {
+  ShoppingBag,
+  Search,
+  User,
+  Menu,
+  ChevronDown,
+  LogOut,
+} from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../lib/utils";
 import { fetchCategories } from "../../features/category/servers/categories";
 import { useCartStore } from "../../features/cart/store/cart-store";
+import { fetchUserByFirebaseUid } from "../../features/profile/servers";
 
 type CategoryItem = { slug: string; name: string };
 
@@ -20,18 +28,29 @@ const readCookie = (name: string) => {
   return match ? decodeURIComponent(match[1]) : null;
 };
 
+const readStoredName = () =>
+  localStorage.getItem("displayName") ||
+  localStorage.getItem("userName") ||
+  localStorage.getItem("name");
+
 const Header = () => {
   const items = useCartStore((state) => state.items);
 
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
   const location = useLocation();
+  const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
   const [userId, setUserId] = useState<string | null>(() =>
     readCookie("userId"),
   );
+  const [userName, setUserName] = useState<string | null>(() =>
+    readStoredName(),
+  );
   const [fruitMenuOpen, setFruitMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [fruitCategories, setFruitCategories] = useState<CategoryItem[]>([]);
   const fruitMenuRef = useRef<HTMLDivElement | null>(null);
+  const userMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -42,7 +61,35 @@ const Header = () => {
   useEffect(() => {
     const nextUserId = readCookie("userId");
     if (nextUserId !== userId) setUserId(nextUserId);
-  }, [location.pathname, userId]);
+    if (!nextUserId) {
+      const nextName = readStoredName();
+      if (nextName !== userName) setUserName(nextName);
+    }
+  }, [location.pathname, userId, userName]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadUser = async () => {
+      if (!userId) {
+        setUserName(null);
+        return;
+      }
+      const data = await fetchUserByFirebaseUid(userId);
+      if (!isActive) return;
+      const resolvedName =
+        data?.displayName || data?.name || data?.email || readStoredName();
+      setUserName(resolvedName || null);
+      if (resolvedName) {
+        localStorage.setItem("displayName", resolvedName);
+      }
+    };
+
+    loadUser();
+    return () => {
+      isActive = false;
+    };
+  }, [userId]);
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -64,11 +111,31 @@ const Header = () => {
       ) {
         setFruitMenuOpen(false);
       }
+      if (
+        userMenuRef.current &&
+        !userMenuRef.current.contains(event.target as Node)
+      ) {
+        setUserMenuOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
   }, []);
+
+  const handleLogout = () => {
+    document.cookie =
+      "userId=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax";
+    localStorage.removeItem("userId");
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    localStorage.removeItem("displayName");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("name");
+    setUserId(null);
+    setUserMenuOpen(false);
+    navigate("/");
+  };
 
   return (
     <header
@@ -186,16 +253,60 @@ const Header = () => {
             aria-label="Giỏ hàng"
           >
             <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">{totalQuantity}</span>
+            <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+              {totalQuantity}
+            </span>
           </Link>
 
-          <Link
-            to="/login"
-            className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
-          >
-            <User className="w-4 h-4" />
-            <span>Tài khoản</span>
-          </Link>
+          {userId ? (
+            <div className="relative hidden sm:flex" ref={userMenuRef}>
+              <button
+                type="button"
+                className="flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                onClick={() => setUserMenuOpen((open) => !open)}
+              >
+                <User className="w-4 h-4" />
+                <span className="max-w-[140px] truncate">{userName}</span>
+                <ChevronDown className="w-4 h-4" />
+              </button>
+
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    className="absolute right-0 top-full mt-3 w-56 rounded-2xl border border-border/60 bg-white shadow-2xl overflow-hidden"
+                  >
+                    <Link
+                      to="/profile"
+                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:bg-primary hover:text-white transition-colors"
+                      onClick={() => setUserMenuOpen(false)}
+                    >
+                      <User className="w-4 h-4" />
+                      Thông tin cá nhân
+                    </Link>
+                    <button
+                      type="button"
+                      className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:bg-destructive hover:text-white transition-colors"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Đăng xuất
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+            >
+              <User className="w-4 h-4" />
+              <span>Tài khoản</span>
+            </Link>
+          )}
 
           <button
             className="md:hidden p-2 text-foreground"
