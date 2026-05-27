@@ -9,9 +9,12 @@ type ProductInfoProps = {
   onIncrease: () => void;
   onDecrease: () => void;
   onAddToCart: () => void;
+  onAddToFavorite: () => void;
+  isFavoriteLoading?: boolean;
+  isFavoriteAdded?: boolean;
 };
 
-const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart }: ProductInfoProps) => {
+const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart, onAddToFavorite, isFavoriteLoading, isFavoriteAdded }: ProductInfoProps) => {
   const discount = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);
 
   return (
@@ -30,7 +33,7 @@ const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart }:
         </div>
       </div>
 
-      <div className="rounded-[2rem] bg-white p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-border/60 space-y-4">
+      <div className="rounded-4xl bg-white p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-border/60 space-y-4">
         <div className="flex flex-wrap items-end gap-4">
           <span className="text-3xl md:text-4xl font-bold text-primary">{product.price.toLocaleString('vi-VN')}đ</span>
           <span className="text-lg text-foreground/40 line-through">{product.oldPrice.toLocaleString('vi-VN')}đ</span>
@@ -66,7 +69,17 @@ const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart }:
           <button className="rounded-full border border-border px-5 py-3.5 text-foreground hover:border-primary hover:text-primary transition-all duration-300">
             Mua ngay
           </button>
-          <button className="rounded-full border border-border px-4 py-3.5 text-foreground hover:border-primary hover:text-primary transition-all duration-300">
+          <button
+            type="button"
+            onClick={onAddToFavorite}
+            disabled={isFavoriteLoading}
+            className={`rounded-full border px-4 py-3.5 transition-all duration-300 ${
+              isFavoriteAdded
+                ? 'border-rose-500 text-rose-500 bg-rose-50'
+                : 'border-border text-foreground hover:border-primary hover:text-primary'
+            } ${isFavoriteLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+            aria-label="Them vao yeu thich"
+          >
             <FiHeart />
           </button>
         </div>
@@ -87,7 +100,7 @@ const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart }:
           <motion.div
             key={item.title}
             whileHover={{ y: -4 }}
-            className="rounded-[1.5rem] bg-white p-4 shadow-sm border border-border/60 flex items-start gap-3"
+            className="rounded-3xl bg-white p-4 shadow-sm border border-border/60 flex items-start gap-3"
           >
             <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
               <item.icon className="w-5 h-5" />
