@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../../components/layout/layout';
 import { fetchProductDetail } from '../servers';
 import type { ApiProduct } from '../servers';
@@ -12,6 +12,13 @@ import { fruitProducts } from '../../category/components/mockData';
 import type { FruitProduct } from '../../category/components/types';
 import { productReviews } from './mockData';
 import { useCartStore } from '../../cart/store/cart-store';
+import { addFavoriteProduct, fetchFavoriteProducts } from '../../profile/servers';
+import type { ProductDetail } from './types';
+
+const readCookie = (name: string) => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
 
 const categorySlugMap: Record<string, string> = {
   'Trong nước': 'trai-cay-trong-nuoc',
@@ -29,7 +36,8 @@ const getCategorySlug = (product: ApiProduct) => {
   return categorySlugMap[categoryName] ?? '';
 };
 
-const mapApiProductToDetail = (product: ApiProduct) => ({
+const mapApiProductToDetail = (product: ApiProduct): ProductDetail => ({
+  _id: product._id,
   id: product.id,
   slug: product.slug,
   name: product.name,
@@ -55,10 +63,14 @@ const mapApiProductToDetail = (product: ApiProduct) => ({
 
 const ProductDetailPage = () => {
   const { slug } = useParams();
+  const navigate = useNavigate();
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const [product, setProduct] = useState(mapApiProductToDetail(fruitProducts[0]));
+  const [product, setProduct] = useState<ProductDetail>(mapApiProductToDetail(fruitProducts[0] as ApiProduct));
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
+  const [favoriteAddedId, setFavoriteAddedId] = useState<string | null>(null);
   const addItem = useCartStore((state) => state.addItem);
+  const isFavoriteAdded = product._id ? favoriteAddedId === product._id : false;
 
   const relatedProducts: FruitProduct[] = useMemo(() => fruitProducts.filter((item) => item.id !== product.id).slice(0, 4), [product.id]);
   const categorySlug = getCategorySlug(product as unknown as ApiProduct);
@@ -73,6 +85,7 @@ const ProductDetailPage = () => {
         const fallback = fruitProducts.find((item) => item.slug === slug);
         if (fallback) {
           setProduct({
+            _id: undefined,
             id: fallback.id,
             slug: fallback.slug,
             name: fallback.name,
@@ -104,6 +117,46 @@ const ProductDetailPage = () => {
     load();
   }, [slug]);
 
+  const handleAddFavorite = async () => {
+    const userId = readCookie('userId');
+    if (!userId) {
+      navigate('/login');
+      return;
+    }
+    if (!product._id) return;
+    setIsFavoriteLoading(true);
+    try {
+      await addFavoriteProduct(userId, { productId: product._id });
+      setFavoriteAddedId(product._id);
+    } finally {
+      setIsFavoriteLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadFavoriteState = async () => {
+      const userId = readCookie('userId');
+      if (!userId || !product._id) {
+        setFavoriteAddedId(null);
+        return;
+      }
+      const favorites = await fetchFavoriteProducts(userId);
+      if (!isActive) return;
+      const hasFavorite = (favorites ?? []).some((item: unknown) => {
+        const candidate = (item as { _id?: string; productId?: string; id?: number | string })._id || (item as { _id?: string; productId?: string; id?: number | string }).productId || ((item as { _id?: string; productId?: string; id?: number | string }).id ? String((item as { _id?: string; productId?: string; id?: number | string }).id) : null);
+        return candidate === product._id;
+      });
+      setFavoriteAddedId(hasFavorite ? product._id : null);
+    };
+
+    loadFavoriteState();
+    return () => {
+      isActive = false;
+    };
+  }, [product._id]);
+
   return (
     <Layout mainClassName="bg-gradient-to-b from-emerald-50 via-white to-orange-50 pt-28 pb-16">
       <div className="container mx-auto px-4 md:px-8 space-y-10">
@@ -117,12 +170,34 @@ const ProductDetailPage = () => {
           <span className="text-foreground font-semibold">{product.name}</span>
         </nav>
         {isLoading ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-pulse"><div className="rounded-[2rem] bg-white h-[560px]" /><div className="space-y-4"><div className="h-8 bg-white rounded-full w-2/3" /><div className="h-6 bg-white rounded-full w-1/2" /><div className="h-40 bg-white rounded-[2rem]" /></div></div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-pulse"><div className="rounded-4xl bg-white h-140" /><div className="space-y-4"><div className="h-8 bg-white rounded-full w-2/3" /><div className="h-6 bg-white rounded-full w-1/2" /><div className="h-40 bg-white rounded-4xl" /></div></div>
         ) : (
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start"><ProductGallery product={product as any} /><ProductInfo product={product as any} quantity={quantity} onIncrease={() => setQuantity((prev) => prev + 1)} onDecrease={() => setQuantity((prev) => Math.max(1, prev - 1))} onAddToCart={() => addItem({ id: product.id, name: product.name, description: product.shortDescription ?? product.category, price: product.price, image: product.gallery?.[0] ?? '', badge: product.badges?.[0], quantity })} /></section>
+          <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <ProductGallery product={product} />
+            <ProductInfo
+              product={product}
+              quantity={quantity}
+              onIncrease={() => setQuantity((prev) => prev + 1)}
+              onDecrease={() => setQuantity((prev) => Math.max(1, prev - 1))}
+              onAddToCart={() =>
+                addItem({
+                  id: product.id,
+                  name: product.name,
+                  description: product.shortDescription ?? product.category,
+                  price: product.price,
+                  image: product.gallery?.[0] ?? '',
+                  badge: product.badges?.[0],
+                  quantity,
+                })
+              }
+              onAddToFavorite={handleAddFavorite}
+              isFavoriteLoading={isFavoriteLoading}
+              isFavoriteAdded={isFavoriteAdded}
+            />
+          </section>
         )}
-        <ProductTabs product={product as any} />
-        <ReviewSection product={product as any} reviews={productReviews} />
+        <ProductTabs product={product} />
+        <ReviewSection product={product} reviews={productReviews} />
         <RelatedProducts products={relatedProducts} />
       </div>
     </Layout>

@@ -9,9 +9,12 @@ import WishlistSection from './WishlistSection';
 import AddressSection from './AddressSection';
 import VoucherSection from './VoucherSection';
 import NotificationPanel from './NotificationPanel';
-import { addresses, notifications, recentOrders, vouchers, wishlist } from './mockData';
+import { addresses, notifications, recentOrders, vouchers } from './mockData';
 import type { ProfileTab } from './types';
-import { fetchUserByFirebaseUid, type ApiUser } from '../servers';
+import { fetchFavoriteProducts, fetchUserByFirebaseUid, type ApiFavoriteProduct, type ApiUser } from '../servers';
+
+const fallbackFavoriteImage =
+  'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?q=80&w=1200&auto=format&fit=crop';
 
 const readCookie = (name: string) => {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -23,6 +26,9 @@ const ProfilePage = () => {
   const [notificationOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<ApiUser | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [favorites, setFavorites] = useState<ApiFavoriteProduct[]>([]);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
+  const [favoritesLoaded, setFavoritesLoaded] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -52,6 +58,32 @@ const ProfilePage = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadFavorites = async () => {
+      if (activeTab !== 'wishlist' || favoritesLoaded) return;
+      const userId = readCookie('userId');
+      if (!userId) {
+        setFavorites([]);
+        setFavoritesLoaded(true);
+        return;
+      }
+
+      setLoadingFavorites(true);
+      const data = await fetchFavoriteProducts(userId);
+      if (!isActive) return;
+      setFavorites(data ?? []);
+      setLoadingFavorites(false);
+      setFavoritesLoaded(true);
+    };
+
+    loadFavorites();
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, favoritesLoaded]);
+
   const content = useMemo(() => {
     switch (activeTab) {
       case 'personal':
@@ -59,7 +91,18 @@ const ProfilePage = () => {
       case 'orders':
         return <OrderHistory orders={recentOrders} />;
       case 'wishlist':
-        return <WishlistSection items={wishlist} />;
+        return (
+          <WishlistSection
+            items={favorites.map((item) => ({
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              rating: item.rating ?? 0,
+              image: item.image || fallbackFavoriteImage,
+            }))}
+            isLoading={loadingFavorites}
+          />
+        );
       case 'addresses':
         return <AddressSection addresses={addresses} />;
       case 'vouchers':
@@ -75,7 +118,7 @@ const ProfilePage = () => {
       default:
         return <PersonalInfoForm userProfile={userProfile} isLoading={loadingProfile} />;
     }
-  }, [activeTab]);
+  }, [activeTab, favorites, loadingFavorites]);
 
   return (
     <Layout mainClassName="bg-gradient-to-b from-emerald-50 via-white to-orange-50 pt-28 pb-16">

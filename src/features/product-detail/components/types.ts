@@ -1,10 +1,12 @@
 export type ProductBadge = 'Hot' | 'Sale' | 'New' | 'Organic';
 
 export type ProductDetail = {
+  _id?: string;
   id: number;
   slug: string;
   name: string;
   category: string;
+  categorySlug?: string;
   price: number;
   oldPrice: number;
   rating: number;
