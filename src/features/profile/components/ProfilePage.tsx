@@ -94,7 +94,7 @@ const ProfilePage = () => {
         return (
           <WishlistSection
             items={favorites.map((item) => ({
-              id: item.id,
+              id: Number(item.id) || 0,
               name: item.name,
               price: item.price,
               rating: item.rating ?? 0,
