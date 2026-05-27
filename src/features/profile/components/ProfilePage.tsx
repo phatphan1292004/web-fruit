@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import Layout from '../../../components/layout/layout';
 import ProfileSidebar from './ProfileSidebar';
@@ -11,15 +11,51 @@ import VoucherSection from './VoucherSection';
 import NotificationPanel from './NotificationPanel';
 import { addresses, notifications, recentOrders, vouchers, wishlist } from './mockData';
 import type { ProfileTab } from './types';
+import { fetchUserByFirebaseUid, type ApiUser } from '../servers';
+
+const readCookie = (name: string) => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
 
 const ProfilePage = () => {
   const [activeTab, setActiveTab] = useState<ProfileTab>('personal');
   const [notificationOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<ApiUser | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadProfile = async () => {
+      const userId = readCookie('userId');
+      if (!userId) {
+        setUserProfile(null);
+        setLoadingProfile(false);
+        return;
+      }
+      setLoadingProfile(true);
+      const data = await fetchUserByFirebaseUid(userId);
+      if (!isActive) return;
+      setUserProfile(data ?? null);
+      setLoadingProfile(false);
+
+      const resolvedName = data?.displayName || data?.name;
+      if (resolvedName) {
+        localStorage.setItem('displayName', resolvedName);
+      }
+    };
+
+    loadProfile();
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const content = useMemo(() => {
     switch (activeTab) {
       case 'personal':
-        return <PersonalInfoForm />;
+        return null;
       case 'orders':
         return <OrderHistory orders={recentOrders} />;
       case 'wishlist':
@@ -37,7 +73,7 @@ const ProfilePage = () => {
           </div>
         );
       default:
-        return <PersonalInfoForm />;
+        return <PersonalInfoForm userProfile={userProfile} isLoading={loadingProfile} />;
     }
   }, [activeTab]);
 
@@ -57,11 +93,17 @@ const ProfilePage = () => {
           )}
         </AnimatePresence>
 
-        <ProfileBanner />
+        <ProfileBanner userProfile={userProfile} isLoading={loadingProfile} />
 
         <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 items-start">
           <ProfileSidebar activeTab={activeTab} onChange={setActiveTab} />
-          <div className="space-y-8">{content}</div>
+          <div className="space-y-8">
+            {activeTab === 'personal' ? (
+              <PersonalInfoForm userProfile={userProfile} isLoading={loadingProfile} />
+            ) : (
+              content
+            )}
+          </div>
         </div>
       </div>
     </Layout>
