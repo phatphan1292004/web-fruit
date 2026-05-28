@@ -1,8 +1,26 @@
+import { useEffect, useMemo, useState } from 'react';
 import Layout from '../../../components/layout/layout';
+import { store } from '../../../integrations';
 import CartHeader from './cart-header';
 import CartSteps from './cart-steps';
 import OrderSummary from './order-summary';
 import type { CartTotals } from './types';
+
+type Province = {
+  _id?: string;
+  provinceId: number;
+  provinceCode: string;
+  name: string;
+  countryId: number;
+};
+
+type Ward = {
+  _id?: string;
+  wardId: number;
+  wardCode: string;
+  name: string;
+  provinceId: number;
+};
 
 const totals: CartTotals = {
   subtotal: 1346520,
@@ -15,6 +33,79 @@ const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
 const ShippingPage = () => {
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [selectedProvinceId, setSelectedProvinceId] = useState<number | ''>('');
+  const [selectedWardId, setSelectedWardId] = useState<number | ''>('');
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+    setLoadingProvinces(true);
+
+    store
+      .get<Province[]>('/locations/provinces', undefined, [])
+      .then((data) => {
+        if (!isActive) return;
+        setProvinces(Array.isArray(data) ? data : []);
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setLoadingProvinces(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (!selectedProvinceId) {
+      setWards([]);
+      setSelectedWardId('');
+      return;
+    }
+
+    setLoadingWards(true);
+    store
+      .get<Ward[]>(`/locations/provinces/${selectedProvinceId}/wards`, undefined, [])
+      .then((data) => {
+        if (!isActive) return;
+        setWards(Array.isArray(data) ? data : []);
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setLoadingWards(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedProvinceId]);
+
+  const provinceOptions = useMemo(
+    () =>
+      provinces.map((province) => (
+        <option key={province.provinceId} value={province.provinceId}>
+          {province.name}
+        </option>
+      )),
+    [provinces]
+  );
+
+  const wardOptions = useMemo(
+    () =>
+      wards.map((ward) => (
+        <option key={ward.wardId} value={ward.wardId}>
+          {ward.name}
+        </option>
+      )),
+    [wards]
+  );
+
   return (
     <Layout mainClassName="bg-gradient-to-b from-background to-muted/30 relative pt-20">
       <div className="absolute top-24 left-10 w-72 h-72 bg-primary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-pulse" />
@@ -57,13 +148,34 @@ const ShippingPage = () => {
                 <div className="flex flex-col gap-2">
                   <h4 className="text-sm font-semibold text-primary">Địa chỉ</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <select className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40">
-                      <option>Chọn tỉnh/thành phố</option>
-                      <option>Hà Tĩnh</option>
+                    <select
+                      className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      value={selectedProvinceId}
+                      onChange={(event) => {
+                        const nextValue = event.target.value;
+                        setSelectedProvinceId(nextValue ? Number(nextValue) : '');
+                      }}
+                    >
+                      <option value="">{loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành phố'}</option>
+                      {provinceOptions}
                     </select>
-                    <select className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40">
-                      <option>Chọn phường/xã</option>
-                      <option>Xã Đức Thịnh</option>
+                    <select
+                      className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      value={selectedWardId}
+                      onChange={(event) => {
+                        const nextValue = event.target.value;
+                        setSelectedWardId(nextValue ? Number(nextValue) : '');
+                      }}
+                      disabled={!selectedProvinceId || loadingWards}
+                    >
+                      <option value="">
+                        {!selectedProvinceId
+                          ? 'Chọn phường/xã'
+                          : loadingWards
+                          ? 'Đang tải...'
+                          : 'Chọn phường/xã'}
+                      </option>
+                      {wardOptions}
                     </select>
                   </div>
                   <input
