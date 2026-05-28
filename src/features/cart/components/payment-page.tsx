@@ -1,16 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import CartHeader from './cart-header';
 import CartSteps from './cart-steps';
 import OrderSummary from './order-summary';
-import type { CartTotals } from './types';
 import Layout from '../../../components/layout/layout';
-
-const totals: CartTotals = {
-  subtotal: 1346520,
-  shipping: 0,
-  discount: 0,
-  total: 1346520,
-};
+import { createOrder } from '../../../lib/api/orders';
+import { useCartStore } from '../store/cart-store';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -39,7 +34,92 @@ const paymentOptions = [
 ];
 
 const PaymentPage = () => {
+  const navigate = useNavigate();
   const [selected, setSelected] = useState('cod');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const items = useCartStore((state) => state.items);
+  const previewTotals = useCartStore((state) => state.previewTotals);
+  const isPreviewLoading = useCartStore((state) => state.isPreviewLoading);
+  const fetchPreview = useCartStore((state) => state.fetchPreview);
+  const getTotals = useCartStore((state) => state.getTotals);
+  const shippingInfo = useCartStore((state) => state.shippingInfo);
+  const clearCart = useCartStore((state) => state.clear);
+  const resetShippingInfo = useCartStore((state) => state.resetShippingInfo);
+  useEffect(() => {
+    fetchPreview();
+  }, [fetchPreview, items]);
+
+  const fallbackTotals = useMemo(() => getTotals(), [getTotals]);
+  const totals =
+    items.length > 0 && !isPreviewLoading && previewTotals.subtotal > 0
+      ? previewTotals
+      : fallbackTotals;
+
+  const address = useMemo(() => {
+    return [shippingInfo.addressDetail, shippingInfo.wardName, shippingInfo.provinceName]
+      .filter(Boolean)
+      .join(', ');
+  }, [shippingInfo.addressDetail, shippingInfo.provinceName, shippingInfo.wardName]);
+
+  const paymentMethod = useMemo(() => {
+    const mapping: Record<string, string> = {
+      cod: 'COD',
+      vietqr: 'VietQR',
+      momo: 'MOMO',
+      vnpay: 'VNPAY',
+    };
+    return mapping[selected] ?? 'COD';
+  }, [selected]);
+
+  const isOrderReady = useMemo(() => {
+    return (
+      items.length > 0 &&
+      shippingInfo.fullName.trim().length > 0 &&
+      shippingInfo.phoneNumber.trim().length > 0 &&
+      shippingInfo.addressDetail.trim().length > 0 &&
+      Boolean(shippingInfo.provinceId) &&
+      Boolean(shippingInfo.wardId)
+    );
+  }, [items.length, shippingInfo]);
+
+  const readCookie = (name: string) => {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting || !isOrderReady) return;
+    setIsSubmitting(true);
+
+    try {
+      const firebaseUid = readCookie('userId') ?? undefined;
+      const payload = {
+        firebaseUid,
+        customer: {
+          name: shippingInfo.fullName,
+          phone: shippingInfo.phoneNumber,
+        },
+        address,
+        note: shippingInfo.note || undefined,
+        paymentMethod,
+        items: items.map((item) => ({
+          productId: item.productId ?? String(item.id),
+          quantity: item.quantity,
+        })),
+        shippingFee: totals.shipping,
+        discount: totals.discount,
+      };
+
+      const result = await createOrder(payload);
+      if (result?._id) {
+        clearCart();
+        resetShippingInfo();
+        navigate('/');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Layout mainClassName="bg-gradient-to-b from-background to-muted/30 relative pt-20">
@@ -67,12 +147,12 @@ const PaymentPage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 text-sm">
                   <div className="flex flex-col gap-2">
                     <span className="text-foreground/50 uppercase tracking-wider text-xs">Người nhận</span>
-                    <span className="font-semibold text-foreground">Phát Phan</span>
-                    <span className="text-foreground/70">0973 038 104</span>
+                    <span className="font-semibold text-foreground">{shippingInfo.fullName || '---'}</span>
+                    <span className="text-foreground/70">{shippingInfo.phoneNumber || '---'}</span>
                   </div>
                   <div className="flex flex-col gap-2">
                     <span className="text-foreground/50 uppercase tracking-wider text-xs">Địa chỉ giao hàng</span>
-                    <span className="font-semibold text-foreground">123, Xã Đức Thịnh, Hà Tĩnh</span>
+                    <span className="font-semibold text-foreground">{address || '---'}</span>
                   </div>
                 </div>
               </div>
@@ -114,6 +194,8 @@ const PaymentPage = () => {
               totals={totals}
               formatCurrency={formatCurrency}
               primaryLabel="Xác nhận thanh toán"
+              primaryDisabled={!isOrderReady || isSubmitting}
+              onPrimaryClick={handleSubmit}
               secondaryLabel="Quay lại giao hàng"
               secondaryHref="/checkout/shipping"
             />

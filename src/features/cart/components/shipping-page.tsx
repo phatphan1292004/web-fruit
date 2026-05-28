@@ -1,20 +1,156 @@
+import { useEffect, useMemo, useState } from 'react';
 import Layout from '../../../components/layout/layout';
+import { store } from '../../../integrations';
 import CartHeader from './cart-header';
 import CartSteps from './cart-steps';
 import OrderSummary from './order-summary';
 import type { CartTotals } from './types';
+import { useCartStore } from '../store/cart-store';
 
-const totals: CartTotals = {
-  subtotal: 1346520,
-  shipping: 0,
-  discount: 0,
-  total: 1346520,
+type Province = {
+  _id?: string;
+  provinceId: number;
+  provinceCode: string;
+  name: string;
+  countryId: number;
+};
+
+type Ward = {
+  _id?: string;
+  wardId: number;
+  wardCode: string;
+  name: string;
+  provinceId: number;
 };
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
 const ShippingPage = () => {
+  const items = useCartStore((state) => state.items);
+  const previewTotals = useCartStore((state) => state.previewTotals);
+  const isPreviewLoading = useCartStore((state) => state.isPreviewLoading);
+  const fetchPreview = useCartStore((state) => state.fetchPreview);
+  const getTotals = useCartStore((state) => state.getTotals);
+  const shippingInfo = useCartStore((state) => state.shippingInfo);
+  const setShippingInfo = useCartStore((state) => state.setShippingInfo);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [wards, setWards] = useState<Ward[]>([]);
+  const [selectedProvinceId, setSelectedProvinceId] = useState<number | ''>(
+    shippingInfo.provinceId ?? ''
+  );
+  const [selectedWardId, setSelectedWardId] = useState<number | ''>(
+    shippingInfo.wardId ?? ''
+  );
+  const [loadingProvinces, setLoadingProvinces] = useState(false);
+  const [loadingWards, setLoadingWards] = useState(false);
+  const [fullName, setFullName] = useState(shippingInfo.fullName ?? '');
+  const [phoneNumber, setPhoneNumber] = useState(shippingInfo.phoneNumber ?? '');
+  const [addressDetail, setAddressDetail] = useState(shippingInfo.addressDetail ?? '');
+  const [note, setNote] = useState(shippingInfo.note ?? '');
+
+  useEffect(() => {
+    let isActive = true;
+    setLoadingProvinces(true);
+
+    store
+      .get<Province[]>('/locations/provinces', undefined, [])
+      .then((data) => {
+        if (!isActive) return;
+        setProvinces(Array.isArray(data) ? data : []);
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setLoadingProvinces(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isActive = true;
+
+    if (!selectedProvinceId) {
+      setWards([]);
+      setSelectedWardId('');
+      return;
+    }
+
+    setLoadingWards(true);
+    store
+      .get<Ward[]>(`/locations/provinces/${selectedProvinceId}/wards`, undefined, [])
+      .then((data) => {
+        if (!isActive) return;
+        setWards(Array.isArray(data) ? data : []);
+      })
+      .finally(() => {
+        if (!isActive) return;
+        setLoadingWards(false);
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [selectedProvinceId]);
+
+  useEffect(() => {
+    if (!selectedProvinceId || shippingInfo.provinceName) return;
+    const selected = provinces.find((province) => province.provinceId === selectedProvinceId);
+    if (selected) {
+      setShippingInfo({ provinceName: selected.name });
+    }
+  }, [provinces, selectedProvinceId, setShippingInfo, shippingInfo.provinceName]);
+
+  useEffect(() => {
+    if (!selectedWardId || shippingInfo.wardName) return;
+    const selected = wards.find((ward) => ward.wardId === selectedWardId);
+    if (selected) {
+      setShippingInfo({ wardName: selected.name });
+    }
+  }, [selectedWardId, setShippingInfo, shippingInfo.wardName, wards]);
+
+  useEffect(() => {
+    fetchPreview();
+  }, [fetchPreview, items]);
+
+  const provinceOptions = useMemo(
+    () =>
+      provinces.map((province) => (
+        <option key={province.provinceId} value={province.provinceId}>
+          {province.name}
+        </option>
+      )),
+    [provinces]
+  );
+
+  const wardOptions = useMemo(
+    () =>
+      wards.map((ward) => (
+        <option key={ward.wardId} value={ward.wardId}>
+          {ward.name}
+        </option>
+      )),
+    [wards]
+  );
+
+  const fallbackTotals = useMemo<CartTotals>(() => getTotals(), [getTotals]);
+  const totals =
+    items.length > 0 && !isPreviewLoading && previewTotals.subtotal > 0
+      ? previewTotals
+      : fallbackTotals;
+
+  const isFormComplete = useMemo(() => {
+    return (
+      fullName.trim().length > 0 &&
+      phoneNumber.trim().length > 0 &&
+      Boolean(selectedProvinceId) &&
+      Boolean(selectedWardId) &&
+      addressDetail.trim().length > 0
+    );
+  }, [addressDetail, fullName, phoneNumber, selectedProvinceId, selectedWardId]);
+
   return (
     <Layout mainClassName="bg-gradient-to-b from-background to-muted/30 relative pt-20">
       <div className="absolute top-24 left-10 w-72 h-72 bg-primary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-pulse" />
@@ -47,32 +183,94 @@ const ShippingPage = () => {
                   <input
                     className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     placeholder="Họ và tên"
+                    value={fullName}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setFullName(value);
+                      setShippingInfo({ fullName: value });
+                    }}
                   />
                   <input
                     className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     placeholder="Số điện thoại"
+                    value={phoneNumber}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setPhoneNumber(value);
+                      setShippingInfo({ phoneNumber: value });
+                    }}
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <h4 className="text-sm font-semibold text-primary">Địa chỉ</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <select className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40">
-                      <option>Chọn tỉnh/thành phố</option>
-                      <option>Hà Tĩnh</option>
+                    <select
+                      className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      value={selectedProvinceId}
+                      onChange={(event) => {
+                        const nextValue = event.target.value;
+                        const nextId = nextValue ? Number(nextValue) : '';
+                        const selectedName = event.currentTarget.selectedOptions[0]?.text;
+                        const selected = provinces.find((province) => province.provinceId === nextId);
+                        setSelectedProvinceId(nextId);
+                        setSelectedWardId('');
+                        setShippingInfo({
+                          provinceId: nextId || undefined,
+                          provinceName: nextId ? selectedName || selected?.name : undefined,
+                          wardId: undefined,
+                          wardName: undefined,
+                        });
+                      }}
+                    >
+                      <option value="">{loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành phố'}</option>
+                      {provinceOptions}
                     </select>
-                    <select className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40">
-                      <option>Chọn phường/xã</option>
-                      <option>Xã Đức Thịnh</option>
+                    <select
+                      className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                      value={selectedWardId}
+                      onChange={(event) => {
+                        const nextValue = event.target.value;
+                        const nextId = nextValue ? Number(nextValue) : '';
+                        const selectedName = event.currentTarget.selectedOptions[0]?.text;
+                        const selected = wards.find((ward) => ward.wardId === nextId);
+                        setSelectedWardId(nextId);
+                        setShippingInfo({
+                          wardId: nextId || undefined,
+                          wardName: nextId ? selectedName || selected?.name : undefined,
+                        });
+                      }}
+                      disabled={!selectedProvinceId || loadingWards}
+                    >
+                      <option value="">
+                        {!selectedProvinceId
+                          ? 'Chọn phường/xã'
+                          : loadingWards
+                          ? 'Đang tải...'
+                          : 'Chọn phường/xã'}
+                      </option>
+                      {wardOptions}
                     </select>
                   </div>
                   <input
                     className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     placeholder="Địa chỉ cụ thể"
+                    value={addressDetail}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setAddressDetail(value);
+                      setShippingInfo({ addressDetail: value });
+                    }}
                   />
                   <textarea
                     className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[120px]"
                     placeholder="Ghi chú"
+                    value={note}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNote(value);
+                      setShippingInfo({ note: value });
+                    }}
                   />
                 </div>
 
@@ -92,7 +290,7 @@ const ShippingPage = () => {
               formatCurrency={formatCurrency}
               primaryLabel="Thanh toán"
               primaryHref="/checkout/payment"
-              primaryDisabled={true}
+              primaryDisabled={!isFormComplete}
               secondaryLabel="Quay lại giỏ hàng"
               secondaryHref="/cart"
             />

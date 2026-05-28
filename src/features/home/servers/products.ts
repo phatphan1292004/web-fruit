@@ -1,6 +1,7 @@
 import store from '../../../integrations/store';
 
 export type HomeProduct = {
+  _id?: string;
   id: number;
   slug: string;
   name: string;

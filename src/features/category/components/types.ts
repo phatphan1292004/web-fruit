@@ -15,6 +15,7 @@ export type PriceRange =
 export type SortOption = 'featured' | 'price-asc' | 'price-desc' | 'bestseller' | 'newest';
 
 export type FruitProduct = {
+  _id?: string;
   id: number;
   slug: string;
   name: string;

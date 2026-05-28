@@ -9,6 +9,7 @@ type OrderSummaryProps = {
   primaryHref?: string;
   secondaryHref?: string;
   primaryDisabled?: boolean;
+  onPrimaryClick?: () => void;
 };
 
 const OrderSummary = ({
@@ -19,6 +20,7 @@ const OrderSummary = ({
   primaryHref,
   secondaryHref,
   primaryDisabled = false,
+  onPrimaryClick,
 }: OrderSummaryProps) => {
   return (
     <div className="glass rounded-3xl border border-border/60 p-6 md:p-7 h-fit sticky top-24 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
@@ -58,7 +60,9 @@ const OrderSummary = ({
             onClick={(event) => {
               if (primaryDisabled) {
                 event.preventDefault();
+                return;
               }
+              onPrimaryClick?.();
             }}
           >
             {primaryLabel}
@@ -71,6 +75,7 @@ const OrderSummary = ({
                 : 'bg-primary text-white hover:shadow-xl hover:bg-primary/90'
             }`}
             disabled={primaryDisabled}
+            onClick={onPrimaryClick}
           >
             {primaryLabel}
           </button>

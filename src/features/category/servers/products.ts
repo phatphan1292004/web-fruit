@@ -7,6 +7,7 @@ type ApiCategoryRef = {
 };
 
 type ApiProduct = {
+  _id?: string;
   id: number;
   slug: string;
   name: string;
@@ -43,6 +44,7 @@ const toFruitCategory = (value?: string): FruitProduct['category'] => {
 };
 
 const mapProduct = (product: ApiProduct): FruitProduct => ({
+  _id: product._id,
   id: product.id,
   slug: product.slug,
   name: product.name,
