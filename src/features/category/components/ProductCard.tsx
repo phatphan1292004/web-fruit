@@ -71,6 +71,7 @@ const ProductCard = ({ product }: ProductCardProps) => {
             onClick={() =>
               addItem({
                 id: product.id,
+                productId: product._id ?? String(product.id),
                 name: product.name,
                 description: product.category,
                 price: product.price,

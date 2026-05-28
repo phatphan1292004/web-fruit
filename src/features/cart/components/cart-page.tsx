@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import CartHeader from './cart-header';
 import CartItems from './cart-items';
 import CartSteps from './cart-steps';
@@ -15,8 +15,11 @@ const CartPage = () => {
   const increase = useCartStore((state) => state.increase);
   const decrease = useCartStore((state) => state.decrease);
   const remove = useCartStore((state) => state.remove);
+  const fetchPreview = useCartStore((state) => state.fetchPreview);
+  const previewTotals = useCartStore((state) => state.previewTotals);
+  const isPreviewLoading = useCartStore((state) => state.isPreviewLoading);
 
-  const totals = useMemo<CartTotals>(() => {
+  const fallbackTotals = useMemo<CartTotals>(() => {
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shipping = 0;
     const discount = 0;
@@ -28,6 +31,15 @@ const CartPage = () => {
       total: subtotal + shipping - discount,
     };
   }, [items]);
+
+  useEffect(() => {
+    fetchPreview();
+  }, [fetchPreview, items]);
+
+  const totals =
+    items.length > 0 && !isPreviewLoading && previewTotals.subtotal > 0
+      ? previewTotals
+      : fallbackTotals;
 
   return (
     <Layout mainClassName="bg-gradient-to-b from-background to-muted/30 relative pt-20">

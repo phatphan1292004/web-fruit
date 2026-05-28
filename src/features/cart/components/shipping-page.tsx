@@ -5,6 +5,7 @@ import CartHeader from './cart-header';
 import CartSteps from './cart-steps';
 import OrderSummary from './order-summary';
 import type { CartTotals } from './types';
+import { useCartStore } from '../store/cart-store';
 
 type Province = {
   _id?: string;
@@ -22,23 +23,31 @@ type Ward = {
   provinceId: number;
 };
 
-const totals: CartTotals = {
-  subtotal: 1346520,
-  shipping: 0,
-  discount: 0,
-  total: 1346520,
-};
-
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
 const ShippingPage = () => {
+  const items = useCartStore((state) => state.items);
+  const previewTotals = useCartStore((state) => state.previewTotals);
+  const isPreviewLoading = useCartStore((state) => state.isPreviewLoading);
+  const fetchPreview = useCartStore((state) => state.fetchPreview);
+  const getTotals = useCartStore((state) => state.getTotals);
+  const shippingInfo = useCartStore((state) => state.shippingInfo);
+  const setShippingInfo = useCartStore((state) => state.setShippingInfo);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
-  const [selectedProvinceId, setSelectedProvinceId] = useState<number | ''>('');
-  const [selectedWardId, setSelectedWardId] = useState<number | ''>('');
+  const [selectedProvinceId, setSelectedProvinceId] = useState<number | ''>(
+    shippingInfo.provinceId ?? ''
+  );
+  const [selectedWardId, setSelectedWardId] = useState<number | ''>(
+    shippingInfo.wardId ?? ''
+  );
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingWards, setLoadingWards] = useState(false);
+  const [fullName, setFullName] = useState(shippingInfo.fullName ?? '');
+  const [phoneNumber, setPhoneNumber] = useState(shippingInfo.phoneNumber ?? '');
+  const [addressDetail, setAddressDetail] = useState(shippingInfo.addressDetail ?? '');
+  const [note, setNote] = useState(shippingInfo.note ?? '');
 
   useEffect(() => {
     let isActive = true;
@@ -86,6 +95,26 @@ const ShippingPage = () => {
     };
   }, [selectedProvinceId]);
 
+  useEffect(() => {
+    if (!selectedProvinceId || shippingInfo.provinceName) return;
+    const selected = provinces.find((province) => province.provinceId === selectedProvinceId);
+    if (selected) {
+      setShippingInfo({ provinceName: selected.name });
+    }
+  }, [provinces, selectedProvinceId, setShippingInfo, shippingInfo.provinceName]);
+
+  useEffect(() => {
+    if (!selectedWardId || shippingInfo.wardName) return;
+    const selected = wards.find((ward) => ward.wardId === selectedWardId);
+    if (selected) {
+      setShippingInfo({ wardName: selected.name });
+    }
+  }, [selectedWardId, setShippingInfo, shippingInfo.wardName, wards]);
+
+  useEffect(() => {
+    fetchPreview();
+  }, [fetchPreview, items]);
+
   const provinceOptions = useMemo(
     () =>
       provinces.map((province) => (
@@ -105,6 +134,22 @@ const ShippingPage = () => {
       )),
     [wards]
   );
+
+  const fallbackTotals = useMemo<CartTotals>(() => getTotals(), [getTotals]);
+  const totals =
+    items.length > 0 && !isPreviewLoading && previewTotals.subtotal > 0
+      ? previewTotals
+      : fallbackTotals;
+
+  const isFormComplete = useMemo(() => {
+    return (
+      fullName.trim().length > 0 &&
+      phoneNumber.trim().length > 0 &&
+      Boolean(selectedProvinceId) &&
+      Boolean(selectedWardId) &&
+      addressDetail.trim().length > 0
+    );
+  }, [addressDetail, fullName, phoneNumber, selectedProvinceId, selectedWardId]);
 
   return (
     <Layout mainClassName="bg-gradient-to-b from-background to-muted/30 relative pt-20">
@@ -138,10 +183,22 @@ const ShippingPage = () => {
                   <input
                     className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     placeholder="Họ và tên"
+                    value={fullName}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setFullName(value);
+                      setShippingInfo({ fullName: value });
+                    }}
                   />
                   <input
                     className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     placeholder="Số điện thoại"
+                    value={phoneNumber}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setPhoneNumber(value);
+                      setShippingInfo({ phoneNumber: value });
+                    }}
                   />
                 </div>
 
@@ -153,7 +210,17 @@ const ShippingPage = () => {
                       value={selectedProvinceId}
                       onChange={(event) => {
                         const nextValue = event.target.value;
-                        setSelectedProvinceId(nextValue ? Number(nextValue) : '');
+                        const nextId = nextValue ? Number(nextValue) : '';
+                        const selectedName = event.currentTarget.selectedOptions[0]?.text;
+                        const selected = provinces.find((province) => province.provinceId === nextId);
+                        setSelectedProvinceId(nextId);
+                        setSelectedWardId('');
+                        setShippingInfo({
+                          provinceId: nextId || undefined,
+                          provinceName: nextId ? selectedName || selected?.name : undefined,
+                          wardId: undefined,
+                          wardName: undefined,
+                        });
                       }}
                     >
                       <option value="">{loadingProvinces ? 'Đang tải...' : 'Chọn tỉnh/thành phố'}</option>
@@ -164,7 +231,14 @@ const ShippingPage = () => {
                       value={selectedWardId}
                       onChange={(event) => {
                         const nextValue = event.target.value;
-                        setSelectedWardId(nextValue ? Number(nextValue) : '');
+                        const nextId = nextValue ? Number(nextValue) : '';
+                        const selectedName = event.currentTarget.selectedOptions[0]?.text;
+                        const selected = wards.find((ward) => ward.wardId === nextId);
+                        setSelectedWardId(nextId);
+                        setShippingInfo({
+                          wardId: nextId || undefined,
+                          wardName: nextId ? selectedName || selected?.name : undefined,
+                        });
                       }}
                       disabled={!selectedProvinceId || loadingWards}
                     >
@@ -181,10 +255,22 @@ const ShippingPage = () => {
                   <input
                     className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
                     placeholder="Địa chỉ cụ thể"
+                    value={addressDetail}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setAddressDetail(value);
+                      setShippingInfo({ addressDetail: value });
+                    }}
                   />
                   <textarea
                     className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 min-h-[120px]"
                     placeholder="Ghi chú"
+                    value={note}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNote(value);
+                      setShippingInfo({ note: value });
+                    }}
                   />
                 </div>
 
@@ -204,7 +290,7 @@ const ShippingPage = () => {
               formatCurrency={formatCurrency}
               primaryLabel="Thanh toán"
               primaryHref="/checkout/payment"
-              primaryDisabled={true}
+              primaryDisabled={!isFormComplete}
               secondaryLabel="Quay lại giỏ hàng"
               secondaryHref="/cart"
             />

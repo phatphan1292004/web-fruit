@@ -182,6 +182,7 @@ const ProductDetailPage = () => {
               onAddToCart={() =>
                 addItem({
                   id: product.id,
+                  productId: product._id ?? String(product.id),
                   name: product.name,
                   description: product.shortDescription ?? product.category,
                   price: product.price,
