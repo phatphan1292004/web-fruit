@@ -1,19 +1,44 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../../components/layout/layout';
-import { fetchProductDetail } from '../servers';
+import { fetchProductDetail, fetchReviewsByProductId } from '../servers';
 import type { ApiProduct } from '../servers';
 import ProductGallery from './ProductGallery';
 import ProductInfo from './ProductInfo';
 import ProductTabs from './ProductTabs';
 import ReviewSection from './ReviewSection';
 import RelatedProducts from './RelatedProducts';
-import { fruitProducts } from '../../category/components/mockData';
+import { fruitProducts } from '../../category/components/constants';
 import type { FruitProduct } from '../../category/components/types';
-import { productReviews } from './mockData';
+const productReviews: ProductReview[] = [
+  {
+    id: 1,
+    name: 'Ngọc Anh',
+    avatar: 'https://i.pravatar.cc/120?img=32',
+    rating: 5,
+    date: '2026-05-10',
+    content: 'Táo rất tươi, giòn và đóng gói cực kỳ đẹp. Giao hàng nhanh, xứng đáng với mức giá premium.',
+  },
+  {
+    id: 2,
+    name: 'Minh Tuấn',
+    avatar: 'https://i.pravatar.cc/120?img=12',
+    rating: 5,
+    date: '2026-05-08',
+    content: 'Mình mua làm quà tặng, hộp sang trọng và sản phẩm ngon hơn mong đợi. Sẽ đặt lại.',
+  },
+  {
+    id: 3,
+    name: 'Thu Hằng',
+    avatar: 'https://i.pravatar.cc/120?img=45',
+    rating: 4,
+    date: '2026-05-03',
+    content: 'Táo giòn, ngọt dịu, hợp khẩu vị gia đình mình. Chỉ mong có thêm nhiều lựa chọn size hơn.',
+  },
+];
 import { useCartStore } from '../../cart/store/cart-store';
 import { addFavoriteProduct, fetchFavoriteProducts } from '../../profile/servers';
-import type { ProductDetail } from './types';
+import type { ProductDetail, ProductReview } from './types';
 
 const readCookie = (name: string) => {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -46,7 +71,7 @@ const mapApiProductToDetail = (product: ApiProduct): ProductDetail => ({
   price: product.price,
   oldPrice: product.originalPrice ?? product.price,
   rating: product.rating ?? 0,
-  reviewsCount: product.reviews ?? 0,
+  reviewsCount: product.reviewsCount ?? product.reviews ?? 0,
   badges: [product.label ?? 'New'] as const,
   stockText: product.stockText ?? 'Còn hàng',
   origin: product.origin ?? 'Việt Nam',
@@ -67,6 +92,7 @@ const ProductDetailPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [product, setProduct] = useState<ProductDetail>(mapApiProductToDetail(fruitProducts[0] as ApiProduct));
+  const [reviews, setReviews] = useState<ProductReview[]>([]);
   const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
   const [favoriteAddedId, setFavoriteAddedId] = useState<string | null>(null);
   const addItem = useCartStore((state) => state.addItem);
@@ -76,11 +102,31 @@ const ProductDetailPage = () => {
   const categorySlug = getCategorySlug(product as unknown as ApiProduct);
   const categoryLink = categorySlug ? `/category/${categorySlug}` : '/category';
 
+  const reloadProductAndReviews = async () => {
+    if (!slug) return;
+    try {
+      const detail = await fetchProductDetail(slug);
+      const mapped = mapApiProductToDetail(detail);
+      setProduct(mapped);
+      if (detail._id) {
+        const list = await fetchReviewsByProductId(detail._id);
+        setReviews(list);
+      }
+    } catch (err) {
+      console.error('Reload failed:', err);
+    }
+  };
+
   useEffect(() => {
     const load = async () => {
       if (!slug) return;
       try {
-        setProduct(mapApiProductToDetail(await fetchProductDetail(slug)));
+        const detail = await fetchProductDetail(slug);
+        setProduct(mapApiProductToDetail(detail));
+        if (detail._id) {
+          const list = await fetchReviewsByProductId(detail._id);
+          setReviews(list);
+        }
       } catch {
         const fallback = fruitProducts.find((item) => item.slug === slug);
         if (fallback) {
@@ -108,6 +154,7 @@ const ProductDetailPage = () => {
             storageTips: ['Bảo quản ngăn mát', 'Tránh ánh nắng trực tiếp', 'Dùng sớm để ngon nhất'],
             gallery: [fallback.image],
           });
+          setReviews(productReviews);
         }
       } finally {
         setIsLoading(false);
@@ -198,7 +245,7 @@ const ProductDetailPage = () => {
           </section>
         )}
         <ProductTabs product={product} />
-        <ReviewSection product={product} reviews={productReviews} />
+        <ReviewSection product={product} reviews={reviews} onReviewSubmitted={reloadProductAndReviews} />
         <RelatedProducts products={relatedProducts} />
       </div>
     </Layout>

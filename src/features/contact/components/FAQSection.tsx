@@ -1,7 +1,24 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FiChevronDown } from 'react-icons/fi';
-import { faqItems } from './mockData';
+const faqItems = [
+  {
+    question: 'Thời gian giao hàng bao lâu?',
+    answer: 'Thông thường đơn hàng được xử lý trong ngày và giao trong 2 - 4 giờ tại nội thành, tùy thời điểm đặt hàng và khu vực nhận hàng.',
+  },
+  {
+    question: 'Có hỗ trợ đổi trả không?',
+    answer: 'Có. Nếu sản phẩm không đạt chất lượng cam kết, chúng tôi hỗ trợ đổi trả nhanh chóng để đảm bảo trải nghiệm của bạn luôn trọn vẹn.',
+  },
+  {
+    question: 'Trái cây có nhập khẩu chính ngạch không?',
+    answer: 'Chúng tôi ưu tiên nguồn hàng rõ ràng, minh bạch xuất xứ và hợp tác với những nhà cung cấp uy tín trong và ngoài nước.',
+  },
+  {
+    question: 'Có giao hàng trong ngày không?',
+    answer: 'Có. Với các khu vực hỗ trợ, đơn hàng có thể giao trong ngày nếu được xác nhận trước khung giờ xử lý đơn của chúng tôi.',
+  },
+];
 
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(0);

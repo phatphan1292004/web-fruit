@@ -1,6 +1,27 @@
 import { motion } from 'framer-motion';
 import { FiMapPin, FiPhone, FiMail, FiClock } from 'react-icons/fi';
-import { contactInfo } from './mockData';
+const contactInfo = [
+  {
+    title: 'Địa chỉ cửa hàng',
+    value: '123 Nguyễn Huệ, Quận 1, TP.HCM',
+    icon: 'map',
+  },
+  {
+    title: 'Hotline',
+    value: '0909 123 456',
+    icon: 'phone',
+  },
+  {
+    title: 'Email hỗ trợ',
+    value: 'support@freshfruit.vn',
+    icon: 'mail',
+  },
+  {
+    title: 'Giờ hoạt động',
+    value: '07:00 - 22:00 mỗi ngày',
+    icon: 'clock',
+  },
+];
 
 const icons = {
   map: FiMapPin,
