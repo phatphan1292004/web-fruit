@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../../integrations/firebase";
 import Layout from "../../../components/layout/layout";
+import { getProfile } from "../../../lib/api/users";
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -16,13 +17,21 @@ const LoginPage = () => {
     setIsSubmitting(true);
 
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password,
-      );
-      document.cookie = `userId=${userCredential.user.uid}; path=/; SameSite=Lax`;
-      navigate("/");
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const firebaseUid = userCredential.user.uid;
+      document.cookie = `userId=${firebaseUid}; path=/; SameSite=Lax`;
+
+      const profile = await getProfile(firebaseUid);
+      if (!profile?.role) {
+        throw new Error("Không lấy được quyền tài khoản. Vui lòng thử lại.");
+      }
+
+      localStorage.setItem("role", profile.role);
+      if (profile.displayName) {
+        localStorage.setItem("displayName", profile.displayName);
+      }
+
+      navigate(profile.role === "admin" ? "/admin" : "/");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Đăng nhập thất bại.";
       setErrorMessage(message);

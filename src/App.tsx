@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import HomePage from "./features/home/components/HomePage";
 import LoginPage from "./features/login/components/login-page";
 import RegisterPage from "./features/register/components/register-page";
@@ -20,6 +20,11 @@ import ReviewManagementPage from "./features/admin/pages/ReviewManagementPage";
 import AnalyticsPage from "./features/admin/pages/AnalyticsPage";
 import SettingsPage from "./features/admin/pages/SettingsPage";
 
+const AdminRoute = () => {
+  const role = localStorage.getItem("role");
+  return role === "admin" ? <AdminLayout /> : <Navigate to="/" replace />;
+};
+
 function App() {
   return (
     <div className="min-h-screen flex flex-col font-sans overflow-x-hidden">
@@ -39,7 +44,7 @@ function App() {
         <Route path="/checkout/payment" element={<PaymentPage />} />
 
         {/* Admin Routes */}
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route path="/admin" element={<AdminRoute />}>
           <Route index element={<DashboardPage />} />
           <Route path="users" element={<UserManagementPage />} />
           <Route path="products" element={<ProductManagementPage />} />
