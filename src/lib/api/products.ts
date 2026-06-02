@@ -1,4 +1,4 @@
-import { store } from '../../integrations';
+import { get } from '../../integrations/store';
 
 export type ApiProduct = {
   id: number;
@@ -26,10 +26,15 @@ export type ApiProduct = {
   createdAt?: string;
 };
 
-export function fetchProducts(): Promise<ApiProduct[]> {
-  return store.get<ApiProduct[]>('/products');
+type ProductQuery = {
+  search?: string;
+  categorySlug?: string;
+};
+
+export function fetchProducts(query: ProductQuery = {}): Promise<ApiProduct[]> {
+  return get<ApiProduct[]>('/products', query, []);
 }
 
 export function fetchProductBySlug(slug: string): Promise<ApiProduct> {
-  return store.get<ApiProduct>(`/products/${slug}`);
+  return get<ApiProduct>(`/products/${slug}`);
 }

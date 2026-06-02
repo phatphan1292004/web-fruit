@@ -11,6 +11,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../lib/utils";
 import { fetchCategories } from "../../features/category/servers/categories";
+import { fruitCategoryMenu } from "../../features/category/components/constants";
 import { useCartStore } from "../../features/cart/store/cart-store";
 import { fetchUserByFirebaseUid } from "../../features/profile/servers";
 
@@ -49,6 +50,7 @@ const Header = () => {
   const [fruitMenuOpen, setFruitMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [fruitCategories, setFruitCategories] = useState<CategoryItem[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const fruitMenuRef = useRef<HTMLDivElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -140,6 +142,17 @@ const Header = () => {
     navigate("/");
   };
 
+  const handleSearch = () => {
+    const keyword = searchTerm.trim();
+    if (!keyword) {
+      navigate("/category");
+      return;
+    }
+
+    navigate(`/category?search=${encodeURIComponent(keyword)}`);
+    setSearchTerm("");
+  };
+
   return (
     <header
       className={cn(
@@ -165,9 +178,23 @@ const Header = () => {
             <Search className="w-5 h-5 text-foreground/50" />
             <input
               type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") {
+                  handleSearch();
+                }
+              }}
               placeholder="Tìm kiếm trái cây, combo..."
               className="ml-3 w-full bg-transparent text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
             />
+            <button
+              type="button"
+              onClick={handleSearch}
+              className="ml-2 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"
+            >
+              Tìm
+            </button>
           </div>
         </div>
 
@@ -200,28 +227,7 @@ const Header = () => {
                     >
                       {(fruitCategories.length
                         ? fruitCategories
-                        : [
-                            {
-                              slug: "trai-cay-trong-nuoc",
-                              name: "Trái cây trong nước",
-                            },
-                            {
-                              slug: "trai-cay-nhap-khau",
-                              name: "Trái cây nhập khẩu",
-                            },
-                            {
-                              slug: "gio-qua-trai-cay",
-                              name: "Giỏ quà trái cây",
-                            },
-                            {
-                              slug: "trai-cay-huu-co",
-                              name: "Trái cây hữu cơ",
-                            },
-                            {
-                              slug: "trai-cay-theo-mua",
-                              name: "Trái cây theo mùa",
-                            },
-                          ]
+                        : fruitCategoryMenu
                       ).map((category) => (
                         <Link
                           key={category.slug}
@@ -269,7 +275,7 @@ const Header = () => {
                 onClick={() => setUserMenuOpen((open) => !open)}
               >
                 <User className="w-4 h-4" />
-                <span className="max-w-[140px] truncate">{userName}</span>
+                <span className="max-w-35 truncate">{userName}</span>
                 <ChevronDown className="w-4 h-4" />
               </button>
 

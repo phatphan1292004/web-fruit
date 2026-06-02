@@ -1,4 +1,4 @@
-import store from '../../../integrations/store';
+import { get } from '../../../integrations/store';
 
 export type ApiProduct = {
   id: number;
@@ -25,5 +25,5 @@ export type ApiProduct = {
 };
 
 export async function fetchProductDetail(slug: string) {
-  return store.get<ApiProduct>(`/products/${slug}`);
+  return get<ApiProduct>(`/products/${slug}`);
 }

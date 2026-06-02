@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, startTransition } from 'react';
 import { FiChevronDown, FiSearch } from 'react-icons/fi';
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import Header from '../../../components/layout/Header';
 import FilterSidebar from './FilterSidebar';
 import ProductGrid from './ProductGrid';
@@ -8,6 +8,7 @@ import Pagination from './Pagination';
 import { categoryMap, fruitProducts } from './constants';
 import type { FruitCategory, PriceRange, SortOption, FruitProduct } from './types';
 import { fetchCategoryProducts, fetchProductsByCategory } from '../servers/products';
+import { getFruitCategorySlug } from './constants';
 
 const getPriceMatch = (price: number, range: PriceRange) => {
   if (range === 'all') return true;
@@ -50,17 +51,18 @@ const normalizeText = (value: string | undefined) =>
 
 const CategoryPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { categorySlug } = useParams();
   const [selectedPrices, setSelectedPrices] = useState<PriceRange[]>(['all']);
   const [selectedCategories, setSelectedCategories] = useState<FruitCategory[]>([]);
   const [selectedRating, setSelectedRating] = useState(0);
   const [sort, setSort] = useState<SortOption>('featured');
   const [currentPage, setCurrentPage] = useState(1);
-  const [search, setSearch] = useState('');
   const [featuredHover, setFeaturedHover] = useState(false);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [products, setProducts] = useState<FruitProduct[]>(fruitProducts);
   const [isSwitchingCategory, setIsSwitchingCategory] = useState(false);
+  const searchQuery = new URLSearchParams(location.search).get('search')?.trim() ?? '';
 
   const pageSize = 8;
   const activeCategoryName = categorySlug ? categoryMap[categorySlug as keyof typeof categoryMap] : '';
@@ -69,10 +71,11 @@ const CategoryPage = () => {
     const load = async () => {
       setIsSwitchingCategory(true);
       try {
+        const searchTerm = searchQuery || undefined;
         if (categorySlug) {
-          setProducts(await fetchProductsByCategory(categorySlug));
+          setProducts(await fetchProductsByCategory(categorySlug, searchTerm));
         } else {
-          setProducts(await fetchCategoryProducts());
+          setProducts(await fetchCategoryProducts({ search: searchTerm }));
         }
       } catch {
         if (categorySlug && activeCategoryName) {
@@ -85,15 +88,10 @@ const CategoryPage = () => {
       }
     };
     load();
-  }, [categorySlug, activeCategoryName]);
+  }, [categorySlug, activeCategoryName, searchQuery]);
 
   const filteredProducts = useMemo(() => {
     let result = [...products];
-
-    if (search.trim()) {
-      const query = normalizeText(search);
-      result = result.filter((product) => normalizeText(product.name).includes(query));
-    }
 
     if (!selectedPrices.includes('all')) {
       result = result.filter((product) => selectedPrices.some((range) => getPriceMatch(product.price, range)));
@@ -114,21 +112,15 @@ const CategoryPage = () => {
     }
 
     return sortProducts(result, sort);
-  }, [search, selectedPrices, selectedCategories, selectedRating, sort, featuredHover, products]);
+  }, [selectedPrices, selectedCategories, selectedRating, sort, featuredHover, products]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
+  const safePage = Math.min(currentPage, totalPages);
 
-  const paginatedProducts = useMemo(() => filteredProducts.slice((currentPage - 1) * pageSize, currentPage * pageSize), [filteredProducts, currentPage]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, selectedPrices, selectedCategories, selectedRating, sort, featuredHover, categorySlug]);
-
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
+  const paginatedProducts = useMemo(() => filteredProducts.slice((safePage - 1) * pageSize, safePage * pageSize), [filteredProducts, safePage]);
 
   const togglePrice = (price: PriceRange) => {
+    setCurrentPage(1);
     setSelectedPrices((prev) => {
       if (price === 'all') return ['all'];
       const next = prev.filter((item) => item !== 'all');
@@ -137,37 +129,27 @@ const CategoryPage = () => {
   };
 
   const toggleCategory = (category: FruitCategory) => {
-    const slug =
-      category === 'Trong nước'
-        ? 'trai-cay-trong-nuoc'
-        : category === 'Nhập khẩu'
-          ? 'trai-cay-nhap-khau'
-          : category === 'Giỏ quà'
-            ? 'gio-qua-trai-cay'
-            : category === 'Hữu cơ'
-              ? 'trai-cay-huu-co'
-              : 'trai-cay-theo-mua';
-
-    navigate(`/category/${slug}`, { replace: true });
+    setCurrentPage(1);
+    navigate(`/category/${getFruitCategorySlug(category)}`, { replace: true });
   };
 
   const resetFilters = () => {
+    setCurrentPage(1);
     setSelectedPrices(['all']);
     setSelectedCategories([]);
     setSelectedRating(0);
     setSort('featured');
-    setSearch('');
     setFeaturedHover(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-emerald-50 via-white to-orange-50">
+    <div className="min-h-screen bg-linear-to-b from-emerald-50 via-white to-orange-50">
       <Header />
       <section className="pt-28 pb-12 px-4 md:px-8">
         <div className="container mx-auto">
-          <div className="relative overflow-hidden rounded-[2.5rem] min-h-[280px] bg-[url('https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=1800&auto=format&fit=crop')] bg-cover bg-center shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
-            <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-black/10" />
-            <div className="relative z-10 p-8 md:p-14 flex flex-col justify-end h-full min-h-[280px] text-white">
+          <div className="relative overflow-hidden rounded-[2.5rem] min-h-70 bg-[url('https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=1800&auto=format&fit=crop')] bg-cover bg-center shadow-[0_20px_60px_rgba(16,185,129,0.15)]">
+            <div className="absolute inset-0 bg-linear-to-r from-black/55 via-black/30 to-black/10" />
+            <div className="relative z-10 p-8 md:p-14 flex flex-col justify-end h-full min-h-70 text-white">
               <div className="flex items-center gap-2 text-sm text-white/85 mb-4">
                 <Link to="/" className="hover:text-primary transition-colors">Trang chủ</Link>
                 <span>/</span>
@@ -187,7 +169,7 @@ const CategoryPage = () => {
         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 items-start">
           <FilterSidebar selectedPrices={selectedPrices} selectedRating={selectedRating} selectedCategorySlug={categorySlug} onTogglePrice={togglePrice} onNavigateCategory={toggleCategory} onSelectRating={setSelectedRating} onReset={resetFilters} />
           <div className="space-y-6">
-            <div className="glass rounded-[2rem] p-4 md:p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="glass rounded-4xl p-4 md:p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm text-foreground/60">Tìm thấy {filteredProducts.length} sản phẩm</p>
                 <h2 className="text-2xl font-bold text-foreground">Sản phẩm nổi bật</h2>
@@ -195,7 +177,12 @@ const CategoryPage = () => {
               <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto">
                 <div className="flex items-center gap-3 rounded-full border border-border bg-white px-4 py-3 flex-1 sm:min-w-80">
                   <FiSearch className="text-foreground/40" />
-                  <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Tìm trái cây, combo, giỏ quà..." className="w-full bg-transparent text-sm outline-none placeholder:text-foreground/40" />
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => navigate(e.target.value.trim() ? `/category?search=${encodeURIComponent(e.target.value)}` : '/category', { replace: true })}
+                    placeholder="Tìm trái cây, combo, giỏ quà..."
+                    className="w-full bg-transparent text-sm outline-none placeholder:text-foreground/40"
+                  />
                 </div>
                 <div className="relative" onMouseEnter={() => setSortMenuOpen(true)} onMouseLeave={() => setSortMenuOpen(false)}>
                   <button type="button" className="flex items-center gap-3 rounded-full border border-border bg-white px-5 py-3 text-sm font-medium text-foreground outline-none shadow-sm hover:shadow-md transition-all duration-300">
