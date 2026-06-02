@@ -1,4 +1,4 @@
-import store from '../../../integrations/store';
+import { get } from '../../../integrations/store';
 
 export type HomeProduct = {
   _id?: string;
@@ -12,6 +12,10 @@ export type HomeProduct = {
   badge?: 'Hot' | 'Sale' | 'New' | 'Organic';
 };
 
-export async function fetchHomeProducts() {
-  return store.get<HomeProduct[]>('/products');
+export async function fetchHomeProducts(categorySlug?: string) {
+  if (categorySlug) {
+    return get<HomeProduct[]>(`/products/category/${categorySlug}`, {}, []);
+  }
+
+  return get<HomeProduct[]>('/products', {}, []);
 }

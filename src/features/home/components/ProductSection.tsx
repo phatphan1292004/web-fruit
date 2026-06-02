@@ -8,19 +8,12 @@ import { useCartStore } from '../../cart/store/cart-store';
 
 const categoryTabs = [
   { label: 'Tất cả', key: 'all' },
+  { label: 'Trong nước', key: 'trai-cay-trong-nuoc' },
   { label: 'Nhập khẩu', key: 'trai-cay-nhap-khau' },
-  { label: 'Nhiệt đới', key: 'trai-cay-trong-nuoc' },
-  { label: 'Bán chạy', key: 'bestseller' },
+  { label: 'Giỏ quà', key: 'gio-qua-trai-cay' },
   { label: 'Hữu cơ', key: 'trai-cay-huu-co' },
+  { label: 'Theo mùa', key: 'trai-cay-theo-mua' },
 ];
-
-const categoryNameMap: Record<string, string> = {
-  'trai-cay-nhap-khau': 'Nhập khẩu',
-  'trai-cay-trong-nuoc': 'Nhiệt đới',
-  'trai-cay-huu-co': 'Hữu cơ',
-  'gio-qua-trai-cay': 'Giỏ quà',
-  'trai-cay-theo-mua': 'Theo mùa',
-};
 
 const formatVND = (value: number) => `${value.toLocaleString('vi-VN')}đ`;
 
@@ -32,35 +25,35 @@ const ProductSection = () => {
   const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
+    let isActive = true;
+
     const load = async () => {
+      setLoading(true);
       try {
-        setProducts(await fetchHomeProducts());
+        const data = await fetchHomeProducts(activeCategory === 'all' ? undefined : activeCategory);
+        if (isActive) {
+          setProducts(data);
+          setPage(0);
+        }
       } catch {
-        setProducts([]);
+        if (isActive) setProducts([]);
       } finally {
-        setLoading(false);
+        if (isActive) setLoading(false);
       }
     };
     load();
-  }, []);
 
-  const filteredProducts = useMemo(
-    () =>
-      products.filter((product) => {
-        if (activeCategory === 'all') return true;
-        if (activeCategory === 'bestseller') return product.badge === 'Hot';
-        const targetName = categoryNameMap[activeCategory] ?? activeCategory;
-        return product.category === targetName;
-      }),
-    [activeCategory, products]
-  );
+    return () => {
+      isActive = false;
+    };
+  }, [activeCategory]);
 
-  const visibleProducts = useMemo(() => filteredProducts.slice(page, page + 4), [filteredProducts, page]);
+  const visibleProducts = useMemo(() => products.slice(page, page + 4), [products, page]);
   const canPrev = page > 0;
-  const canNext = page + 4 < filteredProducts.length;
+  const canNext = page + 4 < products.length;
 
   const handlePrev = () => setPage((prev) => Math.max(0, prev - 4));
-  const handleNext = () => setPage((prev) => Math.min(Math.max(0, filteredProducts.length - 4), prev + 4));
+  const handleNext = () => setPage((prev) => Math.min(Math.max(0, products.length - 4), prev + 4));
 
   return (
     <section className="py-24 bg-muted/10 relative" id="fruits">
@@ -75,7 +68,7 @@ const ProductSection = () => {
 
           <motion.div initial={{ opacity: 0, y: 10 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="flex flex-wrap justify-center gap-2 md:gap-4 p-1 bg-white/60 backdrop-blur-md rounded-full shadow-sm border border-border/50">
             {categoryTabs.map((category) => (
-              <button key={category.key} onClick={() => { setActiveCategory(category.key); setPage(0); }} className={cn('px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300', activeCategory === category.key ? 'bg-primary text-white shadow-md' : 'text-foreground/70 hover:bg-white hover:text-foreground')}>
+              <button key={category.key} onClick={() => setActiveCategory(category.key)} className={cn('px-6 py-2.5 rounded-full text-sm font-medium transition-all duration-300', activeCategory === category.key ? 'bg-primary text-white shadow-md' : 'text-foreground/70 hover:bg-white hover:text-foreground')}>
                 {category.label}
               </button>
             ))}
@@ -95,11 +88,11 @@ const ProductSection = () => {
           <AnimatePresence mode="wait">
             <motion.div key={`${activeCategory}-${page}`} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.35, ease: 'easeOut' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {loading ? Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="rounded-[2rem] bg-white h-[420px] animate-pulse" />
+                <div key={index} className="rounded-4xl bg-white h-105 animate-pulse" />
               )) : visibleProducts.map((product) => {
                 const discount = product.badge ? 'Hot' : 'New';
                 return (
-                  <motion.div key={product.id} whileHover={{ y: -6 }} className="group rounded-[2rem] bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden border border-border/60">
+                  <motion.div key={product.id} whileHover={{ y: -6 }} className="group rounded-4xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden border border-border/60">
                     <Link to={`/product/${product.slug}`} className="relative overflow-hidden block">
                       <img src={product.image ?? undefined} alt={product.name} className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
                       <div className="absolute top-4 left-4 flex gap-2">

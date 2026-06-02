@@ -1,4 +1,4 @@
-import store from '../../../integrations/store';
+import { get } from '../../../integrations/store';
 import type { FruitProduct } from '../components/types';
 
 type ApiCategoryRef = {
@@ -59,12 +59,17 @@ const mapProduct = (product: ApiProduct): FruitProduct => ({
   createdAt: product.createdAt ?? new Date().toISOString(),
 });
 
-export async function fetchCategoryProducts() {
-  const data = await store.get<ApiProduct[]>('/products');
+type ProductQuery = {
+  search?: string;
+  categorySlug?: string;
+};
+
+export async function fetchCategoryProducts(query: ProductQuery = {}) {
+  const data = await get<ApiProduct[]>('/products', query, []);
   return data.map(mapProduct);
 }
 
-export async function fetchProductsByCategory(categorySlug: string) {
-  const data = await store.get<ApiProduct[]>(`/products/category/${categorySlug}`);
+export async function fetchProductsByCategory(categorySlug: string, search?: string) {
+  const data = await get<ApiProduct[]>('/products', { categorySlug, search }, []);
   return data.map(mapProduct);
 }
