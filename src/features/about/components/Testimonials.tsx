@@ -1,6 +1,19 @@
 import { motion } from 'framer-motion';
 import { FiStar } from 'react-icons/fi';
-import { reviewItems } from './mockData';
+const reviewItems = [
+  {
+    name: 'Nguyễn Thanh Hà',
+    avatar: 'https://i.pravatar.cc/160?img=48',
+    rating: 5,
+    content: 'Tôi cảm nhận rõ sự chỉn chu trong từng hộp trái cây. Từ chất lượng đến cách đóng gói đều rất đẹp và đáng tin cậy.',
+  },
+  {
+    name: 'Lê Hoàng Nam',
+    avatar: 'https://i.pravatar.cc/160?img=12',
+    rating: 5,
+    content: 'Điều tôi thích nhất là vị trái cây tươi tự nhiên và cách thương hiệu kể câu chuyện rất chân thật, không phô trương.',
+  },
+];
 
 const Testimonials = () => {
   return (

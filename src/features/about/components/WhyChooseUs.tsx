@@ -1,6 +1,32 @@
 import { motion } from 'framer-motion';
 import { FiCheckCircle, FiTruck, FiShield, FiRefreshCw, FiHeadphones, FiPackage } from 'react-icons/fi';
-import { whyChooseUs } from './mockData';
+
+const whyChooseUs = [
+  {
+    title: 'Trái cây tuyển chọn mỗi ngày',
+    description: 'Mỗi sản phẩm đều được kiểm tra độ tươi, hương vị và hình thức trước khi đến tay khách hàng.',
+  },
+  {
+    title: 'Nhập khẩu chính ngạch',
+    description: 'Nguồn hàng minh bạch, rõ ràng xuất xứ, ưu tiên những vùng trồng uy tín trong và ngoài nước.',
+  },
+  {
+    title: 'Giao hàng nhanh',
+    description: 'Quy trình xử lý và vận chuyển tối ưu giúp trái cây giữ được độ tươi ngon tối đa.',
+  },
+  {
+    title: 'Bảo quản tiêu chuẩn',
+    description: 'Kho lạnh và khu đóng gói được vận hành theo tiêu chuẩn phù hợp từng nhóm trái cây.',
+  },
+  {
+    title: 'Đổi trả nếu sản phẩm lỗi',
+    description: 'Chúng tôi luôn sẵn sàng đồng hành và xử lý nhanh khi sản phẩm chưa đạt kỳ vọng.',
+  },
+  {
+    title: 'Hỗ trợ khách hàng tận tâm',
+    description: 'Đội ngũ chăm sóc luôn lắng nghe để mỗi lần mua hàng đều là một trải nghiệm dễ chịu.',
+  },
+];
 
 const iconMap = [FiCheckCircle, FiPackage, FiTruck, FiShield, FiRefreshCw, FiHeadphones];
 

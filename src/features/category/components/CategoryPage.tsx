@@ -5,7 +5,7 @@ import Header from '../../../components/layout/Header';
 import FilterSidebar from './FilterSidebar';
 import ProductGrid from './ProductGrid';
 import Pagination from './Pagination';
-import { categoryMap, fruitProducts } from './mockData';
+import { categoryMap, fruitProducts } from './constants';
 import type { FruitCategory, PriceRange, SortOption, FruitProduct } from './types';
 import { fetchCategoryProducts, fetchProductsByCategory } from '../servers/products';
 
