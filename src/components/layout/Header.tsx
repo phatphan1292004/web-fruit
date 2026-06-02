@@ -83,6 +83,9 @@ const Header = () => {
       if (resolvedName) {
         localStorage.setItem("displayName", resolvedName);
       }
+      if (data?.role) {
+        localStorage.setItem("role", data.role);
+      }
     };
 
     loadUser();

@@ -13,6 +13,7 @@ export type ApiUser = {
   avatarUrl?: string;
   avatar?: string;
   createdAt?: string;
+  role?: string;
 };
 
 export type FavoritePayload = {
