@@ -8,6 +8,7 @@ import Pagination from './Pagination';
 import { categoryMap, fruitProducts } from './constants';
 import type { FruitCategory, PriceRange, SortOption, FruitProduct } from './types';
 import { fetchCategoryProducts, fetchProductsByCategory } from '../servers/products';
+import { getFruitCategorySlug } from './constants';
 
 const getPriceMatch = (price: number, range: PriceRange) => {
   if (range === 'all') return true;
@@ -137,18 +138,7 @@ const CategoryPage = () => {
   };
 
   const toggleCategory = (category: FruitCategory) => {
-    const slug =
-      category === 'Trong nước'
-        ? 'trai-cay-trong-nuoc'
-        : category === 'Nhập khẩu'
-          ? 'trai-cay-nhap-khau'
-          : category === 'Giỏ quà'
-            ? 'gio-qua-trai-cay'
-            : category === 'Hữu cơ'
-              ? 'trai-cay-huu-co'
-              : 'trai-cay-theo-mua';
-
-    navigate(`/category/${slug}`, { replace: true });
+    navigate(`/category/${getFruitCategorySlug(category)}`, { replace: true });
   };
 
   const resetFilters = () => {

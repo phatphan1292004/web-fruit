@@ -1,5 +1,30 @@
 import type { FruitProduct } from './types';
 
+export const fruitCategoryOptions = ['Trong nước', 'Nhập khẩu', 'Giỏ quà', 'Hữu cơ', 'Theo mùa'] as const;
+
+export const fruitCategoryMenu = [
+  { slug: 'trai-cay-trong-nuoc', name: 'Trái cây trong nước' },
+  { slug: 'trai-cay-nhap-khau', name: 'Trái cây nhập khẩu' },
+  { slug: 'gio-qua-trai-cay', name: 'Giỏ quà trái cây' },
+  { slug: 'trai-cay-huu-co', name: 'Trái cây hữu cơ' },
+  { slug: 'trai-cay-theo-mua', name: 'Trái cây theo mùa' },
+] as const;
+
+export const getFruitCategorySlug = (category: (typeof fruitCategoryOptions)[number]) => {
+  switch (category) {
+    case 'Trong nước':
+      return 'trai-cay-trong-nuoc';
+    case 'Nhập khẩu':
+      return 'trai-cay-nhap-khau';
+    case 'Giỏ quà':
+      return 'gio-qua-trai-cay';
+    case 'Hữu cơ':
+      return 'trai-cay-huu-co';
+    case 'Theo mùa':
+      return 'trai-cay-theo-mua';
+  }
+};
+
 export const fruitProducts: FruitProduct[] = [
   {
     id: 1,

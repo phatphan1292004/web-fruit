@@ -1,13 +1,6 @@
 import { FiFilter, FiStar } from 'react-icons/fi';
 import type { PriceRange, FruitCategory } from './types';
-
-const categorySlugMap: Record<FruitCategory, string> = {
-  'Trong nước': 'trai-cay-trong-nuoc',
-  'Nhập khẩu': 'trai-cay-nhap-khau',
-  'Giỏ quà': 'gio-qua-trai-cay',
-  'Hữu cơ': 'trai-cay-huu-co',
-  'Theo mùa': 'trai-cay-theo-mua',
-};
+import { fruitCategoryOptions, getFruitCategorySlug } from './constants';
 
 const priceOptions: { id: PriceRange; label: string }[] = [
   { id: 'all', label: 'Tất cả giá' },
@@ -16,8 +9,6 @@ const priceOptions: { id: PriceRange; label: string }[] = [
   { id: '300-500', label: '300k - 500k' },
   { id: 'over-500', label: 'Trên 500k' },
 ];
-
-const categoryOptions: FruitCategory[] = ['Trong nước', 'Nhập khẩu', 'Giỏ quà', 'Hữu cơ', 'Theo mùa'];
 
 type FilterSidebarProps = {
   selectedPrices: PriceRange[];
@@ -76,12 +67,12 @@ const FilterSidebar = ({
           <div>
             <h4 className="text-base font-bold text-foreground mb-3">Loại trái cây</h4>
             <div className="space-y-2">
-              {categoryOptions.map((category) => (
+              {fruitCategoryOptions.map((category) => (
                 <button
                   key={category}
                   type="button"
                   onClick={() => onNavigateCategory(category)}
-                  className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-[15px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${selectedCategorySlug === categorySlugMap[category] ? 'border-primary bg-primary/10 shadow-md' : 'border-border/60 bg-white'}`}
+                  className={`w-full flex items-center justify-between rounded-2xl border px-4 py-3 text-left text-[15px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md ${selectedCategorySlug === getFruitCategorySlug(category) ? 'border-primary bg-primary/10 shadow-md' : 'border-border/60 bg-white'}`}
                 >
                   <span className="font-medium text-foreground/85">
                     {category}

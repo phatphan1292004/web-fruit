@@ -11,6 +11,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../lib/utils";
 import { fetchCategories } from "../../features/category/servers/categories";
+import { fruitCategoryMenu } from "../../features/category/components/constants";
 import { useCartStore } from "../../features/cart/store/cart-store";
 import { fetchUserByFirebaseUid } from "../../features/profile/servers";
 
@@ -200,28 +201,7 @@ const Header = () => {
                     >
                       {(fruitCategories.length
                         ? fruitCategories
-                        : [
-                            {
-                              slug: "trai-cay-trong-nuoc",
-                              name: "Trái cây trong nước",
-                            },
-                            {
-                              slug: "trai-cay-nhap-khau",
-                              name: "Trái cây nhập khẩu",
-                            },
-                            {
-                              slug: "gio-qua-trai-cay",
-                              name: "Giỏ quà trái cây",
-                            },
-                            {
-                              slug: "trai-cay-huu-co",
-                              name: "Trái cây hữu cơ",
-                            },
-                            {
-                              slug: "trai-cay-theo-mua",
-                              name: "Trái cây theo mùa",
-                            },
-                          ]
+                        : fruitCategoryMenu
                       ).map((category) => (
                         <Link
                           key={category.slug}
