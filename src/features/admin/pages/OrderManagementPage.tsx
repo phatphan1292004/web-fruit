@@ -1,68 +1,131 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
 import SearchInput from '../components/SearchInput';
 import Pagination from '../components/Pagination';
-import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
+import ConfirmDialog from '../components/ConfirmDialog';
 import { usePagination } from '../hooks/usePagination';
-import { mockOrders, type AdminOrder, type OrderStatus } from '../mock/orders';
-import { ORDER_STATUS_MAP, PAYMENT_STATUS_MAP, DELIVERY_STATUS_MAP, PAGE_SIZE } from '../utils/constants';
+import { PAGE_SIZE } from '../utils/constants';
 import { formatCurrency, formatDate } from '../utils/formatters';
+import {
+  fetchAdminOrders,
+  updateAdminOrderStatus,
+  deleteAdminOrder,
+  type BackendOrder
+} from '../servers/orders';
 
 const orderStatusTabs: { key: string; label: string }[] = [
   { key: 'all', label: 'Tất cả' },
   { key: 'pending', label: 'Chờ xác nhận' },
-  { key: 'processing', label: 'Đang xử lý' },
-  { key: 'shipped', label: 'Đang giao' },
-  { key: 'delivered', label: 'Đã giao' },
+  { key: 'shipping', label: 'Đang giao' },
+  { key: 'completed', label: 'Đã giao' },
   { key: 'cancelled', label: 'Đã hủy' },
 ];
 
 const OrderManagementPage = () => {
-  const [orders, setOrders] = useState<AdminOrder[]>(mockOrders);
+  const [orders, setOrders] = useState<BackendOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<BackendOrder | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BackendOrder | null>(null);
+
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchAdminOrders();
+        setOrders(data);
+      } catch (err) {
+        console.error(err);
+        toast.error('Không thể tải danh sách đơn hàng.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadOrders();
+  }, []);
 
   const filteredOrders = orders.filter((o) => {
     const matchSearch =
-      o.id.toLowerCase().includes(search.toLowerCase()) ||
-      o.customer.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || o.orderStatus === statusFilter;
+      o._id.toLowerCase().includes(search.toLowerCase()) ||
+      o.customer?.name.toLowerCase().includes(search.toLowerCase()) ||
+      o.customer?.phone.includes(search);
+    const matchStatus = statusFilter === 'all' || o.status === statusFilter;
     return matchSearch && matchStatus;
   });
 
   const pagination = usePagination({ totalItems: filteredOrders.length, pageSize: PAGE_SIZE });
   const paginatedOrders = filteredOrders.slice(pagination.startIndex, pagination.endIndex);
 
-  const updateOrderStatus = (orderId: string, newStatus: OrderStatus) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, orderStatus: newStatus } : o))
-    );
+  const handleStatusUpdate = async (orderId: string, newStatus: string) => {
+    try {
+      const res = await updateAdminOrderStatus(orderId, newStatus);
+      if (res) {
+        setOrders((prev) =>
+          prev.map((o) => (o._id === orderId ? { ...o, status: res.status } : o))
+        );
+        toast.success('Cập nhật trạng thái đơn hàng thành công!');
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder((prev) => prev ? { ...prev, status: res.status } : null);
+        }
+      } else {
+        toast.error('Cập nhật trạng thái thất bại.');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Đã xảy ra lỗi khi cập nhật trạng thái.');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (deleteTarget) {
+      try {
+        await deleteAdminOrder(deleteTarget._id);
+        setOrders((prev) => prev.filter((o) => o._id !== deleteTarget._id));
+        toast.success('Xóa đơn hàng thành công!');
+      } catch (err) {
+        console.error(err);
+        toast.error('Xóa đơn hàng thất bại.');
+      } finally {
+        setDeleteTarget(null);
+      }
+    }
   };
 
   const statusCounts = orderStatusTabs.map((tab) => ({
     ...tab,
-    count: tab.key === 'all' ? orders.length : orders.filter((o) => o.orderStatus === tab.key).length,
+    count: tab.key === 'all' ? orders.length : orders.filter((o) => o.status === tab.key).length,
   }));
 
-  const columns: Column<AdminOrder>[] = [
+  const columns: Column<BackendOrder>[] = [
     {
       key: 'id',
       label: 'Mã đơn',
-      render: (o) => <span className="text-sm font-semibold text-slate-700">{o.id}</span>,
+      render: (o) => (
+        <span className="text-xs font-mono font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
+          {o._id.substring(o._id.length - 8).toUpperCase()}
+        </span>
+      ),
     },
     {
       key: 'customer',
       label: 'Khách hàng',
       render: (o) => (
         <div>
-          <p className="text-sm font-medium text-slate-700">{o.customer}</p>
-          <p className="text-xs text-slate-400">{o.phone}</p>
+          <p className="text-sm font-medium text-slate-700">{o.customer?.name}</p>
+          <p className="text-xs text-slate-400">{o.customer?.phone}</p>
         </div>
       ),
+    },
+    {
+      key: 'paymentMethod',
+      label: 'Thanh toán',
+      className: 'hidden md:table-cell',
+      render: (o) => <span className="text-sm text-slate-600">{o.paymentMethod}</span>,
     },
     {
       key: 'total',
@@ -71,12 +134,12 @@ const OrderManagementPage = () => {
       render: (o) => <span className="text-sm font-semibold text-emerald-600">{formatCurrency(o.total)}</span>,
     },
     {
-      key: 'orderStatus',
+      key: 'status',
       label: 'Trạng thái',
       render: (o) => (
         <select
-          value={o.orderStatus}
-          onChange={(e) => updateOrderStatus(o.id, e.target.value as OrderStatus)}
+          value={o.status}
+          onChange={(e) => handleStatusUpdate(o._id, e.target.value)}
           onClick={(e) => e.stopPropagation()}
           className="text-xs font-medium px-2 py-1 rounded-lg border border-slate-200 outline-none focus:border-emerald-300 bg-white cursor-pointer"
         >
@@ -87,31 +150,42 @@ const OrderManagementPage = () => {
       ),
     },
     {
-      key: 'paymentStatus',
-      label: 'Thanh toán',
-      className: 'hidden md:table-cell',
-      render: (o) => <StatusBadge status={o.paymentStatus} statusMap={PAYMENT_STATUS_MAP} />,
-    },
-    {
-      key: 'date',
+      key: 'createdAt',
       label: 'Ngày đặt',
       sortable: true,
       className: 'hidden lg:table-cell',
-      render: (o) => <span className="text-sm text-slate-500">{formatDate(o.date)}</span>,
+      render: (o) => <span className="text-sm text-slate-500">{formatDate(o.createdAt)}</span>,
     },
     {
       key: 'actions',
       label: '',
       render: (o) => (
-        <button
-          onClick={(e) => { e.stopPropagation(); setSelectedOrder(o); }}
-          className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
-        >
-          Chi tiết
-        </button>
+        <div className="flex items-center gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
+          <button
+            onClick={() => setSelectedOrder(o)}
+            className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
+          >
+            Chi tiết
+          </button>
+          <button
+            onClick={() => setDeleteTarget(o)}
+            className="text-xs font-medium text-red-600 hover:text-red-700 transition-colors p-1"
+            title="Xóa đơn hàng"
+          >
+            Xóa
+          </button>
+        </div>
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -165,7 +239,7 @@ const OrderManagementPage = () => {
         <DataTable
           columns={columns}
           data={paginatedOrders}
-          keyExtractor={(o) => o.id}
+          keyExtractor={(o) => o._id}
           onRowClick={(o) => setSelectedOrder(o)}
         />
         <div className="px-4 pb-3">
@@ -184,77 +258,103 @@ const OrderManagementPage = () => {
       <Modal
         isOpen={!!selectedOrder}
         onClose={() => setSelectedOrder(null)}
-        title={`Chi tiết đơn hàng ${selectedOrder?.id || ''}`}
+        title={`Chi tiết đơn hàng #${selectedOrder?._id.substring(selectedOrder._id.length - 8).toUpperCase()}`}
         size="lg"
       >
         {selectedOrder && (
           <div className="space-y-5">
             {/* Customer Info */}
-            <div className="grid grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-xl">
               <div>
                 <p className="text-xs text-slate-400 mb-1">Khách hàng</p>
-                <p className="text-sm font-semibold text-slate-700">{selectedOrder.customer}</p>
-                <p className="text-xs text-slate-400 mt-0.5">{selectedOrder.email}</p>
-                <p className="text-xs text-slate-400">{selectedOrder.phone}</p>
+                <p className="text-sm font-semibold text-slate-700">{selectedOrder.customer?.name}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{selectedOrder.customer?.phone}</p>
               </div>
               <div>
                 <p className="text-xs text-slate-400 mb-1">Giao hàng</p>
-                <p className="text-sm text-slate-600">{selectedOrder.address}</p>
+                <p className="text-sm text-slate-600 leading-relaxed">{selectedOrder.address}</p>
                 {selectedOrder.note && (
-                  <p className="text-xs text-amber-600 mt-1">📝 {selectedOrder.note}</p>
+                  <p className="text-xs text-amber-600 mt-1">📝 Ghi chú: {selectedOrder.note}</p>
                 )}
               </div>
             </div>
 
-            {/* Status */}
-            <div className="flex flex-wrap gap-3">
+            {/* Status & Method */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
-                <p className="text-xs text-slate-400 mb-1">Đơn hàng</p>
-                <StatusBadge status={selectedOrder.orderStatus} statusMap={ORDER_STATUS_MAP} />
+                <p className="text-xs text-slate-400 mb-1">Trạng thái đơn</p>
+                <select
+                  value={selectedOrder.status}
+                  onChange={(e) => handleStatusUpdate(selectedOrder._id, e.target.value)}
+                  className="text-xs font-medium px-2 py-1 rounded-lg border border-slate-200 outline-none focus:border-emerald-300 bg-white cursor-pointer"
+                >
+                  {orderStatusTabs.filter((t) => t.key !== 'all').map((t) => (
+                    <option key={t.key} value={t.key}>{t.label}</option>
+                  ))}
+                </select>
               </div>
               <div>
-                <p className="text-xs text-slate-400 mb-1">Thanh toán</p>
-                <StatusBadge status={selectedOrder.paymentStatus} statusMap={PAYMENT_STATUS_MAP} />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 mb-1">Vận chuyển</p>
-                <StatusBadge status={selectedOrder.deliveryStatus} statusMap={DELIVERY_STATUS_MAP} />
-              </div>
-              <div>
-                <p className="text-xs text-slate-400 mb-1">Phương thức</p>
+                <p className="text-xs text-slate-400 mb-1">Phương thức TT</p>
                 <span className="text-sm font-medium text-slate-600">{selectedOrder.paymentMethod}</span>
+              </div>
+              <div>
+                <p className="text-xs text-slate-400 mb-1">Ngày đặt</p>
+                <span className="text-sm font-medium text-slate-600">{formatDate(selectedOrder.createdAt)}</span>
               </div>
             </div>
 
             {/* Items */}
             <div>
               <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Sản phẩm</p>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
                 {selectedOrder.items.map((item) => (
                   <div key={item.productId} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                    <img src={item.image} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-slate-700 truncate">{item.name}</p>
                       <p className="text-xs text-slate-400">
-                        {formatCurrency(item.price)} × {item.quantity}
+                        {formatCurrency(item.unitPrice)} × {item.quantity}
                       </p>
                     </div>
                     <p className="text-sm font-semibold text-slate-700">
-                      {formatCurrency(item.price * item.quantity)}
+                      {formatCurrency(item.totalPrice)}
                     </p>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Total */}
-            <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-              <span className="text-sm text-slate-500">Tổng thanh toán</span>
-              <span className="text-xl font-bold text-emerald-600">{formatCurrency(selectedOrder.total)}</span>
+            {/* Price breakdown */}
+            <div className="space-y-2 pt-4 border-t border-slate-100 text-sm">
+              <div className="flex justify-between text-slate-500">
+                <span>Tạm tính</span>
+                <span>{formatCurrency(selectedOrder.subtotal)}</span>
+              </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Phí vận chuyển</span>
+                <span>+{formatCurrency(selectedOrder.shippingFee)}</span>
+              </div>
+              <div className="flex justify-between text-slate-500">
+                <span>Giảm giá</span>
+                <span>-{formatCurrency(selectedOrder.discount)}</span>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                <span className="font-semibold text-slate-700">Tổng thanh toán</span>
+                <span className="text-xl font-bold text-emerald-600">{formatCurrency(selectedOrder.total)}</span>
+              </div>
             </div>
           </div>
         )}
       </Modal>
+
+      {/* Delete Confirm */}
+      <ConfirmDialog
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
+        title="Xóa đơn hàng"
+        message={`Bạn có chắc chắn muốn xóa đơn hàng của "${deleteTarget?.customer?.name}"? Hành động này không thể hoàn tác.`}
+        confirmText="Xóa"
+      />
     </div>
   );
 };

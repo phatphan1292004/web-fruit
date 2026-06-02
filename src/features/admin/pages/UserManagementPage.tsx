@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { toast } from 'react-toastify';
 import { FiEdit2, FiTrash2, FiSlash, FiCheckCircle } from 'react-icons/fi';
 import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
@@ -9,20 +10,45 @@ import StatusBadge from '../components/StatusBadge';
 import ConfirmDialog from '../components/ConfirmDialog';
 import Modal from '../components/Modal';
 import { usePagination } from '../hooks/usePagination';
-import { mockUsers, type AdminUser } from '../mock/users';
+import {
+  fetchAdminUsers,
+  updateAdminUserRole,
+  updateAdminUserStatus,
+  deleteAdminUser,
+  type BackendUser
+} from '../servers/users';
 import { USER_STATUS_MAP, USER_ROLE_MAP, PAGE_SIZE } from '../utils/constants';
-import { formatCurrency, formatDate, formatNumber } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
 
 const UserManagementPage = () => {
-  const [users, setUsers] = useState<AdminUser[]>(mockUsers);
+  const [users, setUsers] = useState<BackendUser[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
-  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
-  const [editTarget, setEditTarget] = useState<AdminUser | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BackendUser | null>(null);
+  const [editTarget, setEditTarget] = useState<BackendUser | null>(null);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchAdminUsers();
+      setUsers(data);
+    } catch (err) {
+      console.error(err);
+      toast.error('Không thể tải danh sách người dùng.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
   const filteredUsers = users.filter((u) => {
-    const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase());
+    const matchSearch =
+      u.displayName?.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase());
     const matchRole = roleFilter === 'all' || u.role === roleFilter;
     return matchSearch && matchRole;
   });
@@ -30,42 +56,95 @@ const UserManagementPage = () => {
   const pagination = usePagination({ totalItems: filteredUsers.length, pageSize: PAGE_SIZE });
   const paginatedUsers = filteredUsers.slice(pagination.startIndex, pagination.endIndex);
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteTarget) {
-      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-      setDeleteTarget(null);
+      try {
+        await deleteAdminUser(deleteTarget.firebaseUid);
+        setUsers((prev) => prev.filter((u) => u.firebaseUid !== deleteTarget.firebaseUid));
+        toast.success('Xóa người dùng thành công!');
+      } catch (err) {
+        console.error(err);
+        toast.error('Xóa người dùng thất bại.');
+      } finally {
+        setDeleteTarget(null);
+      }
     }
   };
 
-  const handleToggleBan = (user: AdminUser) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === user.id
-          ? { ...u, status: u.status === 'banned' ? 'active' : 'banned' }
-          : u
-      )
-    );
+  const handleToggleBan = async (user: BackendUser) => {
+    try {
+      const newActiveState = !user.active;
+      const res = await updateAdminUserStatus(user.firebaseUid, newActiveState);
+      if (res) {
+        setUsers((prev) =>
+          prev.map((u) => (u.firebaseUid === user.firebaseUid ? { ...u, active: res.active } : u))
+        );
+        toast.success(`${newActiveState ? 'Mở khóa' : 'Khóa'} người dùng thành công!`);
+      } else {
+        toast.error('Cập nhật trạng thái thất bại.');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Đã xảy ra lỗi khi cập nhật trạng thái.');
+    }
   };
 
-  const columns: Column<AdminUser>[] = [
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editTarget) return;
+
+    const roleSelect = document.getElementById('edit-role') as HTMLSelectElement | null;
+    const statusSelect = document.getElementById('edit-status') as HTMLSelectElement | null;
+
+    const newRole = (roleSelect?.value as 'customer' | 'admin' | 'staff') || editTarget.role;
+    const newActive = statusSelect?.value === 'active';
+
+    try {
+      let updatedUser = { ...editTarget };
+
+      if (newRole !== editTarget.role) {
+        const resRole = await updateAdminUserRole(editTarget.firebaseUid, newRole);
+        if (resRole) {
+          updatedUser = { ...updatedUser, role: resRole.role };
+        }
+      }
+
+      if (newActive !== editTarget.active) {
+        const resStatus = await updateAdminUserStatus(editTarget.firebaseUid, newActive);
+        if (resStatus) {
+          updatedUser = { ...updatedUser, active: resStatus.active };
+        }
+      }
+
+      setUsers((prev) =>
+        prev.map((u) => (u.firebaseUid === editTarget.firebaseUid ? updatedUser : u))
+      );
+
+      toast.success('Cập nhật thông tin người dùng thành công!');
+      setEditTarget(null);
+    } catch (err) {
+      console.error(err);
+      toast.error('Cập nhật thông tin người dùng thất bại.');
+    }
+  };
+
+  const columns: Column<BackendUser>[] = [
     {
       key: 'name',
       label: 'Người dùng',
       render: (user) => (
         <div className="flex items-center gap-3">
-          <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full bg-slate-100" />
+          <img
+            src={user.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.displayName}`}
+            alt={user.displayName}
+            className="w-9 h-9 rounded-full bg-slate-100 object-cover"
+          />
           <div>
-            <p className="text-sm font-semibold text-slate-700">{user.name}</p>
+            <p className="text-sm font-semibold text-slate-700">{user.displayName}</p>
             <p className="text-xs text-slate-400">{user.email}</p>
           </div>
         </div>
       ),
-    },
-    {
-      key: 'phone',
-      label: 'Số điện thoại',
-      className: 'hidden md:table-cell',
-      render: (user) => <span className="text-sm text-slate-600">{user.phone}</span>,
     },
     {
       key: 'role',
@@ -75,21 +154,20 @@ const UserManagementPage = () => {
     {
       key: 'status',
       label: 'Trạng thái',
-      render: (user) => <StatusBadge status={user.status} statusMap={USER_STATUS_MAP} />,
+      render: (user) => (
+        <StatusBadge status={user.active ? 'active' : 'banned'} statusMap={USER_STATUS_MAP} />
+      ),
     },
     {
-      key: 'totalOrders',
-      label: 'Đơn hàng',
+      key: 'joinDate',
+      label: 'Ngày tham gia',
       sortable: true,
       className: 'hidden lg:table-cell',
-      render: (user) => <span className="text-sm text-slate-600">{formatNumber(user.totalOrders)}</span>,
-    },
-    {
-      key: 'totalSpent',
-      label: 'Chi tiêu',
-      sortable: true,
-      className: 'hidden lg:table-cell',
-      render: (user) => <span className="text-sm font-medium text-slate-700">{formatCurrency(user.totalSpent)}</span>,
+      render: (user) => (
+        <span className="text-sm text-slate-600">
+          {user.createdAt ? formatDate(user.createdAt) : 'N/A'}
+        </span>
+      ),
     },
     {
       key: 'actions',
@@ -97,23 +175,32 @@ const UserManagementPage = () => {
       render: (user) => (
         <div className="flex items-center gap-1">
           <button
-            onClick={(e) => { e.stopPropagation(); setEditTarget(user); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditTarget(user);
+            }}
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-blue-500"
             title="Chỉnh sửa"
           >
             <FiEdit2 className="text-sm" />
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); handleToggleBan(user); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleBan(user);
+            }}
             className={`p-2 rounded-lg hover:bg-slate-100 transition-colors ${
-              user.status === 'banned' ? 'text-emerald-500 hover:text-emerald-600' : 'text-slate-400 hover:text-amber-500'
+              !user.active ? 'text-emerald-500 hover:text-emerald-600' : 'text-slate-400 hover:text-amber-500'
             }`}
-            title={user.status === 'banned' ? 'Mở khóa' : 'Khóa'}
+            title={!user.active ? 'Mở khóa' : 'Khóa'}
           >
-            {user.status === 'banned' ? <FiCheckCircle className="text-sm" /> : <FiSlash className="text-sm" />}
+            {!user.active ? <FiCheckCircle className="text-sm" /> : <FiSlash className="text-sm" />}
           </button>
           <button
-            onClick={(e) => { e.stopPropagation(); setDeleteTarget(user); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              setDeleteTarget(user);
+            }}
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-red-500"
             title="Xóa"
           >
@@ -123,6 +210,14 @@ const UserManagementPage = () => {
       ),
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -141,7 +236,10 @@ const UserManagementPage = () => {
           {['all', 'customer', 'staff', 'admin'].map((role) => (
             <button
               key={role}
-              onClick={() => { setRoleFilter(role); pagination.setPage(1); }}
+              onClick={() => {
+                setRoleFilter(role);
+                pagination.setPage(1);
+              }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                 roleFilter === role
                   ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-200'
@@ -164,7 +262,7 @@ const UserManagementPage = () => {
         <DataTable
           columns={columns}
           data={paginatedUsers}
-          keyExtractor={(u) => u.id}
+          keyExtractor={(u) => u.firebaseUid}
         />
         <div className="px-4 pb-3">
           <Pagination
@@ -184,43 +282,40 @@ const UserManagementPage = () => {
         onClose={() => setDeleteTarget(null)}
         onConfirm={handleDelete}
         title="Xóa người dùng"
-        message={`Bạn có chắc chắn muốn xóa "${deleteTarget?.name}"? Hành động này không thể hoàn tác.`}
+        message={`Bạn có chắc chắn muốn xóa "${deleteTarget?.displayName}"? Hành động này không thể hoàn tác.`}
         confirmText="Xóa"
       />
 
       {/* Edit Modal */}
-      <Modal isOpen={!!editTarget} onClose={() => setEditTarget(null)} title="Chỉnh sửa người dùng" size="md">
+      <Modal
+        isOpen={!!editTarget}
+        onClose={() => setEditTarget(null)}
+        title="Chỉnh sửa người dùng"
+        size="md"
+      >
         {editTarget && (
-          <div className="space-y-4">
+          <form onSubmit={handleSaveEdit} className="space-y-4">
             <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
-              <img src={editTarget.avatar} alt={editTarget.name} className="w-14 h-14 rounded-full bg-slate-100" />
+              <img
+                src={
+                  editTarget.avatarUrl ||
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${editTarget.displayName}`
+                }
+                alt={editTarget.displayName}
+                className="w-14 h-14 rounded-full bg-slate-100 object-cover"
+              />
               <div>
-                <p className="font-semibold text-slate-700">{editTarget.name}</p>
+                <p className="font-semibold text-slate-700">{editTarget.displayName}</p>
                 <p className="text-sm text-slate-400">{editTarget.email}</p>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-medium text-slate-500 mb-1 block">Họ tên</label>
-                <input
-                  type="text"
-                  defaultValue={editTarget.name}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-slate-500 mb-1 block">Số điện thoại</label>
-                <input
-                  type="text"
-                  defaultValue={editTarget.phone}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
-                />
-              </div>
-              <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">Vai trò</label>
                 <select
+                  id="edit-role"
                   defaultValue={editTarget.role}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 bg-white"
                 >
                   <option value="customer">Khách hàng</option>
                   <option value="staff">Nhân viên</option>
@@ -230,35 +325,34 @@ const UserManagementPage = () => {
               <div>
                 <label className="text-xs font-medium text-slate-500 mb-1 block">Trạng thái</label>
                 <select
-                  defaultValue={editTarget.status}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100"
+                  id="edit-status"
+                  defaultValue={editTarget.active ? 'active' : 'banned'}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 bg-white"
                 >
                   <option value="active">Hoạt động</option>
                   <option value="banned">Đã khóa</option>
-                  <option value="inactive">Không hoạt động</option>
                 </select>
               </div>
             </div>
             <div className="text-xs text-slate-400 space-y-1">
-              <p>Ngày tham gia: {formatDate(editTarget.joinDate)}</p>
-              <p>Tổng đơn hàng: {formatNumber(editTarget.totalOrders)}</p>
-              <p>Tổng chi tiêu: {formatCurrency(editTarget.totalSpent)}</p>
+              <p>Ngày tham gia: {editTarget.createdAt ? formatDate(editTarget.createdAt) : 'N/A'}</p>
             </div>
             <div className="flex justify-end gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => setEditTarget(null)}
                 className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
               >
                 Hủy
               </button>
               <button
-                onClick={() => setEditTarget(null)}
+                type="submit"
                 className="px-4 py-2 rounded-xl bg-emerald-500 text-white text-sm font-medium hover:bg-emerald-600 transition-colors shadow-sm shadow-emerald-200"
               >
                 Lưu thay đổi
               </button>
             </div>
-          </div>
+          </form>
         )}
       </Modal>
     </div>
