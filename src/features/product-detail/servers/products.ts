@@ -22,8 +22,13 @@ export type ApiProduct = {
   nutrition?: string[];
   storageTips?: string[];
   stockText?: string;
+  createdAt?: string;
 };
 
 export async function fetchProductDetail(slug: string) {
   return get<ApiProduct>(`/products/${slug}`);
+}
+
+export async function fetchRelatedProducts(slug: string) {
+  return get<ApiProduct[]>(`/products/${slug}/related`);
 }
