@@ -77,7 +77,6 @@ const FilterSidebar = ({
                   <span className="font-medium text-foreground/85">
                     {category}
                   </span>
-                  <span className="text-primary text-sm font-semibold">Chuyển danh mục</span>
                 </button>
               ))}
             </div>
@@ -111,7 +110,6 @@ const FilterSidebar = ({
                     <FiStar className="text-amber-500" />
                     Từ {rating} sao trở lên
                   </span>
-                  <span className="text-primary font-semibold">Chọn</span>
                 </button>
               ))}
             </div>

@@ -188,13 +188,6 @@ const Header = () => {
               placeholder="Tìm kiếm trái cây, combo..."
               className="ml-3 w-full bg-transparent text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
             />
-            <button
-              type="button"
-              onClick={handleSearch}
-              className="ml-2 rounded-full bg-primary px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary/90"
-            >
-              Tìm
-            </button>
           </div>
         </div>
 
