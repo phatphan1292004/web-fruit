@@ -1,9 +1,17 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiTrash2, FiEye, FiEyeOff, FiMessageCircle, FiSend } from 'react-icons/fi';
 import SearchInput from '../components/SearchInput';
 import StarRating from '../components/StarRating';
 import ConfirmDialog from '../components/ConfirmDialog';
+import { formatDate } from '../utils/formatters';
+import {
+  fetchAdminReviews,
+  updateAdminReview,
+  deleteAdminReview,
+  type BackendReview
+} from '../servers/reviews';
+
 interface AdminReview {
   id: string;
   userId: string;
@@ -19,121 +27,26 @@ interface AdminReview {
   reply: string;
 }
 
-const mockReviews: AdminReview[] = [
-  {
-    id: 'rev1',
-    userId: 'u1',
-    userName: 'Nguyễn Văn An',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=an',
-    productId: 'prod1',
-    productName: 'Sầu Riêng Monthong Thái',
-    productImage: 'https://images.unsplash.com/photo-1588165171080-c89acfa5ee83?w=80&h=80&fit=crop',
-    rating: 5,
-    comment: 'Sầu riêng rất ngon, cơm vàng, hạt lép. Giao hàng nhanh, đóng gói cẩn thận. Sẽ mua lại!',
-    date: '2024-12-14',
-    isHidden: false,
-    reply: 'Cảm ơn bạn đã ủng hộ! Chúc bạn ngon miệng ạ 🥰',
-  },
-  {
-    id: 'rev2',
-    userId: 'u2',
-    userName: 'Trần Thị Bình',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=binh',
-    productId: 'prod3',
-    productName: 'Nho Xanh Mỹ',
-    productImage: 'https://images.unsplash.com/photo-1537640538966-79f369143f8f?w=80&h=80&fit=crop',
-    rating: 4,
-    comment: 'Nho ngon, giòn, ngọt. Tuy nhiên có vài quả hơi mềm. Nhìn chung hài lòng.',
-    date: '2024-12-13',
-    isHidden: false,
-    reply: '',
-  },
-  {
-    id: 'rev3',
-    userId: 'u5',
-    userName: 'Hoàng Thị Em',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=em',
-    productId: 'prod8',
-    productName: 'Xoài Sấy Dẻo',
-    productImage: 'https://images.unsplash.com/photo-1601493700631-2b16ec4b4716?w=80&h=80&fit=crop',
-    rating: 5,
-    comment: 'Xoài sấy dẻo ngon ngọt vừa, rất ngon. Gói cẩn thận.',
-    date: '2024-12-12',
-    isHidden: false,
-    reply: '',
-  },
-  {
-    id: 'rev4',
-    userId: 'u8',
-    userName: 'Bùi Quốc Huy',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=huy',
-    productId: 'prod2',
-    productName: 'Xoài Cát Hòa Lộc',
-    productImage: 'https://images.unsplash.com/photo-1553279768-865429fa0078?w=80&h=80&fit=crop',
-    rating: 3,
-    comment: 'Xoài hơi chua, chưa chín đều. Kỳ vọng nhiều hơn với giá này.',
-    date: '2024-12-11',
-    isHidden: false,
-    reply: 'Xin lỗi bạn về trải nghiệm này. Shop sẽ chọn lọc kỹ hơn. Liên hệ hotline để được hỗ trợ đổi trả ạ.',
-  },
-  {
-    id: 'rev5',
-    userId: 'u5',
-    userName: 'Hoàng Thị Em',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=em',
-    productId: 'prod7',
-    productName: 'Combo Trái Cây Mix 5 Loại',
-    productImage: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=80&h=80&fit=crop',
-    rating: 5,
-    comment: 'Combo rất đa dạng, trái cây tươi ngon. Mua tặng bạn bè ai cũng khen!',
-    date: '2024-12-10',
-    isHidden: false,
-    reply: '',
-  },
-  {
-    id: 'rev6',
-    userId: 'u3',
-    userName: 'Lê Hoàng Cường',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=cuong',
-    productId: 'prod4',
-    productName: 'Dâu Tây Đà Lạt',
-    productImage: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?w=80&h=80&fit=crop',
-    rating: 4,
-    comment: 'Dâu tây thơm, ngọt vừa. Hộp đẹp, giao hàng đúng hẹn.',
-    date: '2024-12-09',
-    isHidden: false,
-    reply: 'Cảm ơn bạn! Dâu tây mùa này rất ngon đó ạ 🍓',
-  },
-  {
-    id: 'rev7',
-    userId: 'u7',
-    userName: 'Đặng Thu Giang',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=giang',
-    productId: 'prod5',
-    productName: 'Bưởi Da Xanh',
-    productImage: 'https://images.unsplash.com/photo-1611080626919-7cf5a9dbab5b?w=80&h=80&fit=crop',
-    rating: 5,
-    comment: 'Bưởi ngọt lịm, múi dày, ít hạt. Cả nhà ai cũng thích!',
-    date: '2024-12-08',
-    isHidden: false,
-    reply: '',
-  },
-  {
-    id: 'rev8',
-    userId: 'u4',
-    userName: 'Phạm Minh Đức',
-    userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=duc',
-    productId: 'prod7',
-    productName: 'Combo Trái Cây Mix 5 Loại',
-    productImage: 'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?w=80&h=80&fit=crop',
-    rating: 2,
-    comment: 'Trái cây không tươi lắm, một số quả dập. Rất thất vọng!',
-    date: '2024-12-07',
-    isHidden: true,
-    reply: '',
-  },
-];
-import { formatDate } from '../utils/formatters';
+const mapBackendReviewToAdmin = (r: BackendReview): AdminReview => {
+  const productObj = typeof r.productId === 'object' ? r.productId : null;
+  const productName = productObj?.name ?? 'Sản phẩm';
+  const productImage = productObj?.gallery?.[0] ?? productObj?.image ?? 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=80&h=80&fit=crop';
+
+  return {
+    id: r._id,
+    userId: r.firebaseUid,
+    userName: r.displayName,
+    userAvatar: r.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${r.displayName}`,
+    productId: productObj?._id ?? String(r.productId ?? ''),
+    productName,
+    productImage,
+    rating: r.rating,
+    comment: r.comment,
+    date: r.createdAt,
+    isHidden: r.isHidden,
+    reply: r.reply || '',
+  };
+};
 
 const ratingFilters = [
   { key: 'all', label: 'Tất cả' },
@@ -145,12 +58,28 @@ const ratingFilters = [
 ];
 
 const ReviewManagementPage = () => {
-  const [reviews, setReviews] = useState<AdminReview[]>(mockReviews);
+  const [reviews, setReviews] = useState<AdminReview[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [ratingFilter, setRatingFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState<AdminReview | null>(null);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+
+  useEffect(() => {
+    const loadReviews = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchAdminReviews();
+        setReviews(data.map(mapBackendReviewToAdmin));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadReviews();
+  }, []);
 
   const filteredReviews = reviews.filter((r) => {
     const matchSearch =
@@ -161,32 +90,62 @@ const ReviewManagementPage = () => {
     return matchSearch && matchRating;
   });
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (deleteTarget) {
-      setReviews((prev) => prev.filter((r) => r.id !== deleteTarget.id));
-      setDeleteTarget(null);
+      try {
+        await deleteAdminReview(deleteTarget.id);
+        setReviews((prev) => prev.filter((r) => r.id !== deleteTarget.id));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setDeleteTarget(null);
+      }
     }
   };
 
-  const toggleHidden = (id: string) => {
-    setReviews((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isHidden: !r.isHidden } : r))
-    );
+  const toggleHidden = async (id: string) => {
+    const review = reviews.find((r) => r.id === id);
+    if (!review) return;
+    try {
+      const updated = await updateAdminReview(id, { isHidden: !review.isHidden });
+      if (updated) {
+        setReviews((prev) =>
+          prev.map((r) => (r.id === id ? mapBackendReviewToAdmin(updated) : r))
+        );
+      }
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const handleReply = (id: string) => {
+  const handleReply = async (id: string) => {
     if (replyText.trim()) {
-      setReviews((prev) =>
-        prev.map((r) => (r.id === id ? { ...r, reply: replyText.trim() } : r))
-      );
-      setReplyingTo(null);
-      setReplyText('');
+      try {
+        const updated = await updateAdminReview(id, { reply: replyText.trim() });
+        if (updated) {
+          setReviews((prev) =>
+            prev.map((r) => (r.id === id ? mapBackendReviewToAdmin(updated) : r))
+          );
+          setReplyingTo(null);
+          setReplyText('');
+        }
+      } catch (err) {
+        console.error(err);
+      }
     }
   };
 
   const avgRating = reviews.length > 0
     ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
     : '0';
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

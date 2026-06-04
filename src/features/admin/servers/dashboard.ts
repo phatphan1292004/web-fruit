@@ -36,5 +36,5 @@ const setupAuth = () => {
 
 export async function fetchDashboardStats(): Promise<BackendDashboardStats | null> {
   setupAuth();
-  return store.get<BackendDashboardStats>('/dashboard');
+  return store.get<BackendDashboardStats>('/admin/dashboard');
 }
