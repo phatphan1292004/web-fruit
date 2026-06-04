@@ -190,7 +190,7 @@ const CategoryPage = () => {
                     <FiChevronDown className="text-foreground/40" />
                   </button>
                   {sortMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-white shadow-xl z-30">
+                    <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-white shadow-xl z-100">
                       {sortOptions.map((option) => (
                         <button key={option.id} type="button" onClick={() => { setSort(option.id); setSortMenuOpen(false); }} className={`w-full px-4 py-3 text-left text-sm transition-colors ${sort === option.id ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white text-foreground'}`}>
                           {option.label}
