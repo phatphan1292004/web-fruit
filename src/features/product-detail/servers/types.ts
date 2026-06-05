@@ -27,4 +27,5 @@ export type ApiProduct = {
   nutrition?: string[];
   storageTips?: string[];
   stockText?: string;
+  createdAt?: string;
 };

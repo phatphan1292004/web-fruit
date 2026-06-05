@@ -12,6 +12,7 @@ const resolveField = (value?: string | number | null) =>
   value === undefined || value === null || value === '' ? 'Chưa cập nhật' : String(value);
 
 const PersonalInfoForm = ({ userProfile, isLoading }: PersonalInfoFormProps) => {
+  console.log('User Profile:', userProfile); // Debug log to check the structure of userProfile
   const avatar = userProfile?.avatarUrl || userProfile?.avatar || fallbackAvatar;
   const name = resolveField(userProfile?.displayName || userProfile?.name);
   const email = resolveField(userProfile?.email);

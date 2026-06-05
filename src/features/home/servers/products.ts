@@ -12,10 +12,52 @@ export type HomeProduct = {
   badge?: 'Hot' | 'Sale' | 'New' | 'Organic';
 };
 
+type ApiCategoryRef = {
+  slug?: string;
+  name?: string;
+};
+
+type ApiProduct = {
+  _id?: string;
+  id: number;
+  slug: string;
+  name: string;
+  category?: string;
+  categoryId?: ApiCategoryRef;
+  price: number;
+  rating?: number;
+  badges?: string[];
+  gallery?: string[];
+  image?: string;
+};
+
+const toFruitCategory = (value?: string): string => {
+  const normalized = (value ?? '').toLowerCase();
+  if (normalized.includes('nhap')) return 'Nhập khẩu';
+  if (normalized.includes('huu')) return 'Hữu cơ';
+  if (normalized.includes('gio')) return 'Giỏ quà';
+  if (normalized.includes('mua')) return 'Theo mùa';
+  return 'Trong nước';
+};
+
+const mapProduct = (product: ApiProduct): HomeProduct => ({
+  _id: product._id,
+  id: product.id,
+  slug: product.slug,
+  name: product.name,
+  category: toFruitCategory(product.categoryId?.name ?? product.category),
+  price: product.price,
+  rating: product.rating ?? 0,
+  image: product.gallery?.[0] ?? product.image ?? '',
+  badge: product.badges?.[0] as any ?? 'New',
+});
+
 export async function fetchHomeProducts(categorySlug?: string) {
   if (categorySlug) {
-    return get<HomeProduct[]>(`/products/category/${categorySlug}`, {}, []);
+    const data = await get<ApiProduct[]>(`/products/category/${categorySlug}`, {}, []);
+    return data.map(mapProduct);
   }
 
-  return get<HomeProduct[]>('/products', {}, []);
+  const data = await get<ApiProduct[]>('/products', {}, []);
+  return data.map(mapProduct);
 }

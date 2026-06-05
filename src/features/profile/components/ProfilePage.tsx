@@ -5,6 +5,7 @@ import ProfileSidebar from './ProfileSidebar';
 import ProfileBanner from './ProfileBanner';
 import PersonalInfoForm from './PersonalInfoForm';
 import OrderHistory from './OrderHistory';
+import OrderDetail from './OrderDetail';
 import WishlistSection from './WishlistSection';
 import AddressSection from './AddressSection';
 import VoucherSection from './VoucherSection';
@@ -28,13 +29,8 @@ const notifications: NotificationItem[] = [
   { id: 3, title: 'Voucher mới đã được thêm vào ví', description: 'Bạn vừa nhận voucher ORGANIC20 cho trái cây hữu cơ.', time: '3 giờ trước' },
 ];
 
-const recentOrders: ProfileOrder[] = [
-  { id: '#MF24018', date: '2026-05-18', items: 'Táo Envy, Dâu tây Hàn Quốc', total: 418000, status: 'Đang giao' },
-  { id: '#MF24011', date: '2026-05-12', items: 'Giỏ quà trái cây Premium', total: 549000, status: 'Hoàn thành' },
-  { id: '#MF24005', date: '2026-05-03', items: 'Xoài Thái, Thanh long ruột đỏ', total: 209000, status: 'Đang xử lý' },
-  { id: '#MF23996', date: '2026-04-28', items: 'Táo hữu cơ Đà Lạt', total: 129000, status: 'Đã hủy' },
-];
-import { fetchFavoriteProducts, fetchUserByFirebaseUid, type ApiFavoriteProduct, type ApiUser } from '../servers';
+const recentOrders: ProfileOrder[] = [];
+import { fetchFavoriteProducts, fetchUserByFirebaseUid, fetchOrdersByFirebaseUid, type ApiFavoriteProduct, type ApiUser } from '../servers';
 
 const fallbackFavoriteImage =
   'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?q=80&w=1200&auto=format&fit=crop';
@@ -52,6 +48,10 @@ const ProfilePage = () => {
   const [favorites, setFavorites] = useState<ApiFavoriteProduct[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+  const [orders, setOrders] = useState<ProfileOrder[]>(recentOrders);
+  const [ordersLoaded, setOrdersLoaded] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -107,12 +107,66 @@ const ProfilePage = () => {
     };
   }, [activeTab, favoritesLoaded]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadOrders = async () => {
+      if (activeTab !== 'orders' || ordersLoaded) return;
+      const userId = readCookie('userId');
+      if (!userId) {
+        setOrders([]);
+        setOrdersLoaded(true);
+        return;
+      }
+
+      setLoadingOrders(true);
+      try {
+        const data = await fetchOrdersByFirebaseUid(userId);
+        if (!isActive) return;
+        const mapped = (data ?? []).map((o) => ({
+          id: o._id || '',
+          date: o.createdAt ? o.createdAt.split('T')[0] : '',
+          items: Array.isArray((o as any).items) ? ((o as any).items).map((it: any) => it.name).join(', ') : o.customer?.name || '',
+          total: o.total || 0,
+          status: ((): ProfileOrder['status'] => {
+            switch (o.status) {
+              case 'shipping': return 'Đang giao';
+              case 'completed': return 'Hoàn thành';
+              case 'cancelled': return 'Đã hủy';
+              case 'pending':
+              default:
+                return 'Đang xử lý';
+            }
+          })(),
+          address: o.address || '',
+          customer: o.customer ? {
+            name: o.customer.name || '',
+            phone: o.customer.phone || '',
+          } : undefined,
+          paymentMethod: o.paymentMethod || '',
+        }));
+        setOrders(mapped);
+      } catch (err) {
+        console.error('Failed to load orders', err);
+        setOrders([]);
+      }
+      if (!isActive) return;
+      setLoadingOrders(false);
+      setOrdersLoaded(true);
+    };
+
+    loadOrders();
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, ordersLoaded]);
+
   const content = useMemo(() => {
     switch (activeTab) {
       case 'personal':
         return null;
       case 'orders':
-        return <OrderHistory orders={recentOrders} />;
+        return <OrderHistory orders={orders} onOpen={(id) => setSelectedOrderId(id)} />;
       case 'wishlist':
         return (
           <WishlistSection
@@ -171,6 +225,9 @@ const ProfilePage = () => {
             )}
           </div>
         </div>
+        {selectedOrderId && (
+          <OrderDetail orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
+        )}
       </div>
     </Layout>
   );

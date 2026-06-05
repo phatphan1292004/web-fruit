@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../../components/layout/layout';
-import { fetchProductDetail, fetchReviewsByProductId } from '../servers';
+import { fetchProductDetail, fetchReviewsByProductId, fetchRelatedProducts } from '../servers';
 import type { ApiProduct } from '../servers';
 import ProductGallery from './ProductGallery';
 import ProductInfo from './ProductInfo';
@@ -9,33 +9,38 @@ import ProductTabs from './ProductTabs';
 import ReviewSection from './ReviewSection';
 import RelatedProducts from './RelatedProducts';
 import { fruitProducts } from '../../category/components/constants';
-import type { FruitProduct } from '../../category/components/types';
-const productReviews: ProductReview[] = [
-  {
-    id: 1,
-    name: 'Ngọc Anh',
-    avatar: 'https://i.pravatar.cc/120?img=32',
-    rating: 5,
-    date: '2026-05-10',
-    content: 'Táo rất tươi, giòn và đóng gói cực kỳ đẹp. Giao hàng nhanh, xứng đáng với mức giá premium.',
-  },
-  {
-    id: 2,
-    name: 'Minh Tuấn',
-    avatar: 'https://i.pravatar.cc/120?img=12',
-    rating: 5,
-    date: '2026-05-08',
-    content: 'Mình mua làm quà tặng, hộp sang trọng và sản phẩm ngon hơn mong đợi. Sẽ đặt lại.',
-  },
-  {
-    id: 3,
-    name: 'Thu Hằng',
-    avatar: 'https://i.pravatar.cc/120?img=45',
-    rating: 4,
-    date: '2026-05-03',
-    content: 'Táo giòn, ngọt dịu, hợp khẩu vị gia đình mình. Chỉ mong có thêm nhiều lựa chọn size hơn.',
-  },
-];
+import type { FruitProduct, FruitCategory } from '../../category/components/types';
+
+const toFruitCategory = (value?: string): FruitCategory => {
+  const normalized = (value ?? '').toLowerCase();
+  if (normalized.includes('nhap')) return 'Nhập khẩu';
+  if (normalized.includes('huu')) return 'Hữu cơ';
+  if (normalized.includes('gio')) return 'Giỏ quà';
+  if (normalized.includes('mua')) return 'Theo mùa';
+  return 'Trong nước';
+};
+
+const toFruitLabel = (badge?: string): 'Hot' | 'Sale' | 'New' => {
+  const normalized = (badge ?? '').toLowerCase();
+  if (normalized.includes('sale')) return 'Sale';
+  if (normalized.includes('hot')) return 'Hot';
+  return 'New';
+};
+
+const mapApiProductToFruit = (p: ApiProduct): FruitProduct => ({
+  id: p.id,
+  slug: p.slug,
+  name: p.name,
+  category: toFruitCategory(p.categoryId?.name ?? p.category),
+  price: p.price,
+  originalPrice: p.originalPrice ?? p.price,
+  rating: p.rating ?? 0,
+  reviews: p.reviewsCount ?? p.reviews ?? 0,
+  label: toFruitLabel(p.label ?? p.badges?.[0]),
+  image: p.gallery?.[0] ?? p.image ?? 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=1200&auto=format&fit=crop',
+  bestseller: 0,
+  createdAt: p.createdAt ?? new Date().toISOString(),
+});
 import { useCartStore } from '../../cart/store/cart-store';
 import { addFavoriteProduct, fetchFavoriteProducts } from '../../profile/servers';
 import type { ProductDetail, ProductReview } from './types';
@@ -98,7 +103,7 @@ const ProductDetailPage = () => {
   const addItem = useCartStore((state) => state.addItem);
   const isFavoriteAdded = product._id ? favoriteAddedId === product._id : false;
 
-  const relatedProducts: FruitProduct[] = useMemo(() => fruitProducts.filter((item) => item.id !== product.id).slice(0, 4), [product.id]);
+  const [relatedProducts, setRelatedProducts] = useState<FruitProduct[]>([]);
   const categorySlug = getCategorySlug(product as unknown as ApiProduct);
   const categoryLink = categorySlug ? `/category/${categorySlug}` : '/category';
 
@@ -111,6 +116,10 @@ const ProductDetailPage = () => {
       if (detail._id) {
         const list = await fetchReviewsByProductId(detail._id);
         setReviews(list);
+      }
+      const related = await fetchRelatedProducts(slug);
+      if (related) {
+        setRelatedProducts(related.map(mapApiProductToFruit));
       }
     } catch (err) {
       console.error('Reload failed:', err);
@@ -126,6 +135,10 @@ const ProductDetailPage = () => {
         if (detail._id) {
           const list = await fetchReviewsByProductId(detail._id);
           setReviews(list);
+        }
+        const related = await fetchRelatedProducts(slug);
+        if (related) {
+          setRelatedProducts(related.map(mapApiProductToFruit));
         }
       } catch {
         const fallback = fruitProducts.find((item) => item.slug === slug);
@@ -154,7 +167,9 @@ const ProductDetailPage = () => {
             storageTips: ['Bảo quản ngăn mát', 'Tránh ánh nắng trực tiếp', 'Dùng sớm để ngon nhất'],
             gallery: [fallback.image],
           });
-          setReviews(productReviews);
+          setReviews([]);
+          const fallbackList = fruitProducts.filter((item) => item.id !== fallback.id).slice(0, 4);
+          setRelatedProducts(fallbackList);
         }
       } finally {
         setIsLoading(false);
