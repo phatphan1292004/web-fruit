@@ -5,6 +5,7 @@ import ProfileSidebar from './ProfileSidebar';
 import ProfileBanner from './ProfileBanner';
 import PersonalInfoForm from './PersonalInfoForm';
 import OrderHistory from './OrderHistory';
+import OrderDetail from './OrderDetail';
 import WishlistSection from './WishlistSection';
 import AddressSection from './AddressSection';
 import VoucherSection from './VoucherSection';
@@ -12,8 +13,29 @@ import NotificationPanel from './NotificationPanel';
 import type { ProfileTab, AddressItem, NotificationItem, ProfileOrder, VoucherItem } from './types';
 
 const addresses: AddressItem[] = [
-  { id: 1, label: 'Nhà riêng', address: '123 Lê Lợi, Quận 1, TP.HCM', isDefault: true },
-  { id: 2, label: 'Văn phòng', address: '45 Nguyễn Huệ, Quận 3, TP.HCM' },
+  {
+    id: 1,
+    label: 'Nhà riêng',
+    receiverName: 'Ngô Tiến Phát',
+    phone: '0901234567',
+    province: 'TP. Hồ Chí Minh',
+    district: 'Quận 1',
+    ward: 'Phường Bến Nghé',
+    detailedAddress: '123 Lê Lợi',
+    address: '123 Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    isDefault: true,
+  },
+  {
+    id: 2,
+    label: 'Văn phòng',
+    receiverName: 'Ngô Tiến Phát',
+    phone: '0987654321',
+    province: 'TP. Hồ Chí Minh',
+    district: 'Quận 3',
+    ward: 'Phường Võ Thị Sáu',
+    detailedAddress: '45 Nguyễn Huệ',
+    address: '45 Nguyễn Huệ, Phường Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh',
+  },
 ];
 
 const vouchers: VoucherItem[] = [
@@ -28,13 +50,9 @@ const notifications: NotificationItem[] = [
   { id: 3, title: 'Voucher mới đã được thêm vào ví', description: 'Bạn vừa nhận voucher ORGANIC20 cho trái cây hữu cơ.', time: '3 giờ trước' },
 ];
 
-const recentOrders: ProfileOrder[] = [
-  { id: '#MF24018', date: '2026-05-18', items: 'Táo Envy, Dâu tây Hàn Quốc', total: 418000, status: 'Đang giao' },
-  { id: '#MF24011', date: '2026-05-12', items: 'Giỏ quà trái cây Premium', total: 549000, status: 'Hoàn thành' },
-  { id: '#MF24005', date: '2026-05-03', items: 'Xoài Thái, Thanh long ruột đỏ', total: 209000, status: 'Đang xử lý' },
-  { id: '#MF23996', date: '2026-04-28', items: 'Táo hữu cơ Đà Lạt', total: 129000, status: 'Đã hủy' },
-];
-import { fetchFavoriteProducts, fetchUserByFirebaseUid, type ApiFavoriteProduct, type ApiUser } from '../servers';
+const recentOrders: ProfileOrder[] = [];
+import { fetchFavoriteProducts, fetchUserByFirebaseUid, fetchOrdersByFirebaseUid, type ApiFavoriteProduct, type ApiUser } from '../servers';
+import { RefreshCw } from 'lucide-react';
 
 const fallbackFavoriteImage =
   'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?q=80&w=1200&auto=format&fit=crop';
@@ -52,6 +70,10 @@ const ProfilePage = () => {
   const [favorites, setFavorites] = useState<ApiFavoriteProduct[]>([]);
   const [loadingFavorites, setLoadingFavorites] = useState(false);
   const [favoritesLoaded, setFavoritesLoaded] = useState(false);
+  const [orders, setOrders] = useState<ProfileOrder[]>(recentOrders);
+  const [ordersLoaded, setOrdersLoaded] = useState(false);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     let isActive = true;
@@ -107,12 +129,73 @@ const ProfilePage = () => {
     };
   }, [activeTab, favoritesLoaded]);
 
+  useEffect(() => {
+    let isActive = true;
+
+    const loadOrders = async () => {
+      if (activeTab !== 'orders' || ordersLoaded) return;
+      const userId = readCookie('userId');
+      if (!userId) {
+        setOrders([]);
+        setOrdersLoaded(true);
+        return;
+      }
+
+      setLoadingOrders(true);
+      try {
+        const data = await fetchOrdersByFirebaseUid(userId);
+        if (!isActive) return;
+        const mapped = (data ?? []).map((o) => ({
+          id: o._id || '',
+          date: o.createdAt ? o.createdAt.split('T')[0] : '',
+          items: Array.isArray((o as any).items) ? ((o as any).items).map((it: any) => it.name).join(', ') : o.customer?.name || '',
+          total: o.total || 0,
+          status: ((): ProfileOrder['status'] => {
+            switch (o.status) {
+              case 'shipping': return 'Đang giao';
+              case 'completed': return 'Hoàn thành';
+              case 'cancelled': return 'Đã hủy';
+              case 'pending':
+              default:
+                return 'Đang xử lý';
+            }
+          })(),
+          address: o.address || '',
+          customer: o.customer ? {
+            name: o.customer.name || '',
+            phone: o.customer.phone || '',
+          } : undefined,
+          paymentMethod: o.paymentMethod || '',
+        }));
+        setOrders(mapped);
+      } catch (err) {
+        console.error('Failed to load orders', err);
+        setOrders([]);
+      }
+      if (!isActive) return;
+      setLoadingOrders(false);
+      setOrdersLoaded(true);
+    };
+
+    loadOrders();
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, ordersLoaded]);
+
   const content = useMemo(() => {
     switch (activeTab) {
       case 'personal':
         return null;
       case 'orders':
-        return <OrderHistory orders={recentOrders} />;
+        return loadingOrders ? (
+          <div className="flex flex-col items-center justify-center py-20 text-neutral-500 gap-3 bg-white rounded-[2rem] border border-border/60 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+            <RefreshCw className="h-8 w-8 animate-spin text-emerald-600" />
+            <p className="text-sm font-medium">Đang tải lịch sử đơn hàng...</p>
+          </div>
+        ) : (
+          <OrderHistory orders={orders} onOpen={(id) => setSelectedOrderId(id)} />
+        );
       case 'wishlist':
         return (
           <WishlistSection
@@ -141,7 +224,7 @@ const ProfilePage = () => {
       default:
         return <PersonalInfoForm userProfile={userProfile} isLoading={loadingProfile} />;
     }
-  }, [activeTab, favorites, loadingFavorites]);
+  }, [activeTab, favorites, loadingFavorites, orders, loadingOrders]);
 
   return (
     <Layout mainClassName="bg-gradient-to-b from-emerald-50 via-white to-orange-50 pt-28 pb-16">
@@ -171,6 +254,9 @@ const ProfilePage = () => {
             )}
           </div>
         </div>
+        {selectedOrderId && (
+          <OrderDetail orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
+        )}
       </div>
     </Layout>
   );

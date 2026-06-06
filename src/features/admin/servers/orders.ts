@@ -39,7 +39,7 @@ const setupAuth = () => {
 
 export async function fetchAdminOrders(): Promise<BackendOrder[]> {
   setupAuth();
-  const res = await store.get<BackendOrder[]>('/orders');
+  const res = await store.get<BackendOrder[]>('/admin/orders');
   return res || [];
 }
 

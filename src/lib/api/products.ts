@@ -1,6 +1,7 @@
 import { get } from '../../integrations/store';
 
 export type ApiProduct = {
+  _id?: string;
   id: number;
   slug: string;
   name: string;

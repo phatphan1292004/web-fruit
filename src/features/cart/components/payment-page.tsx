@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import QRCode from 'qrcode';
 import { useNavigate } from 'react-router-dom';
 import CartHeader from './cart-header';
 import CartSteps from './cart-steps';
@@ -121,6 +122,43 @@ const PaymentPage = () => {
     }
   };
 
+  // VietQR generation
+  const [qrSrc, setQrSrc] = useState<string | null>(null);
+  const [qrContent, setQrContent] = useState<string>('');
+  const bankName = import.meta.env.VITE_VIETQR_BANK_NAME ?? 'Ngân hàng';
+  const bankAccount = import.meta.env.VITE_VIETQR_ACCOUNT_NO ?? '';
+  const accountName = import.meta.env.VITE_VIETQR_ACCOUNT_NAME ?? '';
+  const transferPrefix = import.meta.env.VITE_VIETQR_TRANSFER_PREFIX ?? 'PAY';
+
+  useEffect(() => {
+    if (selected !== 'vietqr') {
+      setQrSrc(null);
+      return;
+    }
+
+    const amount = (totals?.total ?? 0) || 0;
+    const suffix = String(Date.now()).slice(-4);
+    const content = `${transferPrefix} ${suffix}`;
+    setQrContent(content);
+
+    // Build a simple QR payload containing bank transfer info.
+    // This is a readable payload; for full VietQR EMV spec use a proper generator.
+    const payload = `VietQR\nBANK:${bankName}\nACC:${bankAccount}\nNAME:${accountName}\nAMOUNT:${amount}\nCONTENT:${content}`;
+
+    let mounted = true;
+    QRCode.toDataURL(payload, { margin: 1, width: 300 })
+      .then((url) => {
+        if (mounted) setQrSrc(url);
+      })
+      .catch(() => {
+        if (mounted) setQrSrc(null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [selected, totals]);
+
   return (
     <Layout mainClassName="bg-gradient-to-b from-background to-muted/30 relative pt-20">
       <div className="absolute top-24 left-10 w-72 h-72 bg-primary/20 rounded-full mix-blend-multiply filter blur-3xl opacity-60 animate-pulse" />
@@ -187,6 +225,48 @@ const PaymentPage = () => {
                     );
                   })}
                 </div>
+                {selected === 'vietqr' && (
+                  <div className="mt-6 p-6 rounded-2xl bg-rose-50 border border-rose-100">
+                    <div className="flex gap-6 items-start">
+                      <div className="flex-shrink-0 bg-white p-4 rounded-lg shadow-sm">
+                        {qrSrc ? (
+                          // eslint-disable-next-line jsx-a11y/img-redundant-alt
+                          <img src={qrSrc} alt="QR code" className="w-48 h-48 object-cover" />
+                        ) : (
+                          <div className="w-48 h-48 bg-white/50 flex items-center justify-center text-sm text-foreground/60">QR đang tải...</div>
+                        )}
+                      </div>
+
+                      <div className="flex-1">
+                        <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                          <div>
+                            <p className="text-xs text-foreground/50 uppercase tracking-wider">Ngân hàng</p>
+                            <p className="font-semibold text-foreground">{bankName}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-foreground/50 uppercase tracking-wider">Số tài khoản</p>
+                            <p className="font-semibold text-foreground">{bankAccount}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-foreground/50 uppercase tracking-wider">Chủ tài khoản</p>
+                            <p className="font-semibold text-foreground">{accountName}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-foreground/50 uppercase tracking-wider">Số tiền</p>
+                            <p className="font-semibold text-rose-600">{formatCurrency(totals?.total ?? 0)}</p>
+                          </div>
+                        </div>
+
+                        <div className="mb-3">
+                          <p className="text-xs text-foreground/50 uppercase tracking-wider">Nội dung chuyển khoản</p>
+                          <div className="mt-2 p-3 border-dashed border border-border rounded-md bg-white">{qrContent}</div>
+                        </div>
+
+                        <p className="text-sm text-foreground/60">Vui lòng chuyển đúng số tiền và đúng nội dung để hệ thống xác nhận nhanh hơn.</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

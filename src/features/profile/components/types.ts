@@ -16,6 +16,12 @@ export type ProfileOrder = {
   items: string;
   total: number;
   status: ProfileOrderStatus;
+  address?: string;
+  customer?: {
+    name?: string;
+    phone?: string;
+  };
+  paymentMethod?: string;
 };
 
 export type WishlistItem = {
@@ -29,6 +35,12 @@ export type WishlistItem = {
 export type AddressItem = {
   id: number;
   label: string;
+  receiverName?: string;
+  phone?: string;
+  province?: string;
+  district?: string;
+  ward?: string;
+  detailedAddress?: string;
   address: string;
   isDefault?: boolean;
 };

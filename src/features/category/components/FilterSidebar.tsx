@@ -1,34 +1,63 @@
+import { useEffect, useState } from 'react';
 import { FiFilter, FiStar } from 'react-icons/fi';
-import type { PriceRange, FruitCategory } from './types';
+import type { FruitCategory } from './types';
 import { fruitCategoryOptions, getFruitCategorySlug } from './constants';
 
-const priceOptions: { id: PriceRange; label: string }[] = [
-  { id: 'all', label: 'Tất cả giá' },
-  { id: 'under-100', label: 'Dưới 100k' },
-  { id: '100-300', label: '100k - 300k' },
-  { id: '300-500', label: '300k - 500k' },
-  { id: 'over-500', label: 'Trên 500k' },
+const pricePresets = [
+  { label: 'Dưới 100k', min: 0, max: 100000 },
+  { label: '100k - 300k', min: 100000, max: 300000 },
+  { label: '300k - 500k', min: 300000, max: 500000 },
+  { label: 'Trên 500k', min: 500000, max: undefined },
 ];
 
 type FilterSidebarProps = {
-  selectedPrices: PriceRange[];
+  minPrice: number | '';
+  maxPrice: number | '';
   selectedRating: number;
   selectedCategorySlug?: string;
-  onTogglePrice: (price: PriceRange) => void;
+  onApplyPriceRange: (min: number | '', max: number | '') => void;
   onNavigateCategory: (category: FruitCategory) => void;
   onSelectRating: (rating: number) => void;
   onReset: () => void;
 };
 
 const FilterSidebar = ({
-  selectedPrices,
+  minPrice,
+  maxPrice,
   selectedRating,
   selectedCategorySlug,
-  onTogglePrice,
+  onApplyPriceRange,
   onNavigateCategory,
   onSelectRating,
   onReset,
 }: FilterSidebarProps) => {
+  const [minVal, setMinVal] = useState<string>('');
+  const [maxVal, setMaxVal] = useState<string>('');
+
+  useEffect(() => {
+    setMinVal(minPrice === '' || minPrice === 0 ? '' : String(minPrice));
+    setMaxVal(maxPrice === '' ? '' : String(maxPrice));
+  }, [minPrice, maxPrice]);
+
+  const handleApply = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const min = minVal === '' ? '' : Math.max(0, Number(minVal));
+    const max = maxVal === '' ? '' : Math.max(0, Number(maxVal));
+    
+    // Simple validation: swap if min > max and both are not empty
+    if (min !== '' && max !== '' && min > max) {
+      onApplyPriceRange(max, min);
+      setMinVal(String(max));
+      setMaxVal(String(min));
+    } else {
+      onApplyPriceRange(min, max);
+    }
+  };
+
+  const handlePresetClick = (min: number, max: number | undefined) => {
+    onApplyPriceRange(min || '', max || '');
+  };
+
   return (
     <aside className="lg:w-80 shrink-0">
       <div className="glass rounded-[2rem] p-6 sticky top-28 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
@@ -45,25 +74,7 @@ const FilterSidebar = ({
         </div>
 
         <div className="space-y-6">
-          <div>
-            <h4 className="text-base font-bold text-foreground mb-3">Filter giá</h4>
-            <div className="space-y-2">
-              {priceOptions.map((option) => (
-                <label key={option.id} className="flex items-center gap-3 cursor-pointer group text-[15px]">
-                  <input
-                    type="checkbox"
-                    checked={selectedPrices.includes(option.id)}
-                    onChange={() => onTogglePrice(option.id)}
-                    className="w-4 h-4 accent-primary"
-                  />
-                  <span className="font-medium text-foreground/85 group-hover:text-foreground transition-colors">
-                    {option.label}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-
+          {/* 1. Loại trái cây (Category) - Top */}
           <div>
             <h4 className="text-base font-bold text-foreground mb-3">Loại trái cây</h4>
             <div className="space-y-2">
@@ -82,6 +93,64 @@ const FilterSidebar = ({
             </div>
           </div>
 
+          {/* 2. Khoảng giá (Price Range) - Middle */}
+          <div>
+            <h4 className="text-base font-bold text-foreground mb-3">Khoảng giá (VND)</h4>
+            <form onSubmit={handleApply} className="space-y-3">
+              <div className="flex items-center gap-2">
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    placeholder="Từ"
+                    value={minVal}
+                    onChange={(e) => setMinVal(e.target.value)}
+                    className="w-full rounded-2xl border border-border/60 bg-white px-4 py-2.5 text-[15px] outline-none focus:border-primary transition-all duration-350"
+                  />
+                </div>
+                <span className="text-foreground/40">—</span>
+                <div className="flex-1">
+                  <input
+                    type="number"
+                    placeholder="Đến"
+                    value={maxVal}
+                    onChange={(e) => setMaxVal(e.target.value)}
+                    className="w-full rounded-2xl border border-border/60 bg-white px-4 py-2.5 text-[15px] outline-none focus:border-primary transition-all duration-350"
+                  />
+                </div>
+              </div>
+              <button
+                type="submit"
+                className="w-full rounded-2xl bg-primary text-white py-2.5 font-bold hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-md"
+              >
+                Áp dụng
+              </button>
+            </form>
+
+            {/* Price Presets */}
+            <div className="flex flex-wrap gap-2 mt-3">
+              {pricePresets.map((preset) => {
+                const isActive =
+                  ((preset.min === 0 && (minPrice === '' || minPrice === 0)) || preset.min === minPrice) &&
+                  ((preset.max === undefined && maxPrice === '') || preset.max === maxPrice);
+                return (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => handlePresetClick(preset.min, preset.max)}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-semibold border transition-all duration-300 ${
+                      isActive
+                        ? 'border-primary bg-primary/10 text-primary shadow-sm'
+                        : 'border-border/60 bg-white text-foreground/75 hover:border-primary/50'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3. Đánh giá sao (Rating) - Bottom */}
           <div>
             <h4 className="text-base font-bold text-foreground mb-3">Đánh giá sao</h4>
             <div className="space-y-2">
@@ -115,6 +184,7 @@ const FilterSidebar = ({
             </div>
           </div>
 
+          {/* Reset button */}
           <button
             onClick={onReset}
             className="w-full rounded-full border border-primary/20 bg-primary/5 text-primary py-3 font-semibold hover:bg-primary hover:text-white transition-all duration-300"

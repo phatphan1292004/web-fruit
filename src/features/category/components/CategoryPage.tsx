@@ -6,17 +6,10 @@ import FilterSidebar from './FilterSidebar';
 import ProductGrid from './ProductGrid';
 import Pagination from './Pagination';
 import { categoryMap, fruitProducts } from './constants';
-import type { FruitCategory, PriceRange, SortOption, FruitProduct } from './types';
+import type { FruitCategory, SortOption, FruitProduct } from './types';
 import { fetchCategoryProducts, fetchProductsByCategory } from '../servers/products';
 import { getFruitCategorySlug } from './constants';
 
-const getPriceMatch = (price: number, range: PriceRange) => {
-  if (range === 'all') return true;
-  if (range === 'under-100') return price < 100000;
-  if (range === '100-300') return price >= 100000 && price <= 300000;
-  if (range === '300-500') return price > 300000 && price <= 500000;
-  return price > 500000;
-};
 
 const sortProducts = (products: FruitProduct[], sort: SortOption) => {
   const sorted = [...products];
@@ -53,7 +46,8 @@ const CategoryPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { categorySlug } = useParams();
-  const [selectedPrices, setSelectedPrices] = useState<PriceRange[]>(['all']);
+  const [minPrice, setMinPrice] = useState<number | ''>('');
+  const [maxPrice, setMaxPrice] = useState<number | ''>('');
   const [selectedCategories, setSelectedCategories] = useState<FruitCategory[]>([]);
   const [selectedRating, setSelectedRating] = useState(0);
   const [sort, setSort] = useState<SortOption>('featured');
@@ -93,8 +87,11 @@ const CategoryPage = () => {
   const filteredProducts = useMemo(() => {
     let result = [...products];
 
-    if (!selectedPrices.includes('all')) {
-      result = result.filter((product) => selectedPrices.some((range) => getPriceMatch(product.price, range)));
+    if (minPrice !== '') {
+      result = result.filter((product) => product.price >= minPrice);
+    }
+    if (maxPrice !== '') {
+      result = result.filter((product) => product.price <= maxPrice);
     }
 
     if (selectedCategories.length > 0) {
@@ -112,20 +109,17 @@ const CategoryPage = () => {
     }
 
     return sortProducts(result, sort);
-  }, [selectedPrices, selectedCategories, selectedRating, sort, featuredHover, products]);
+  }, [minPrice, maxPrice, selectedCategories, selectedRating, sort, featuredHover, products]);
 
   const totalPages = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const safePage = Math.min(currentPage, totalPages);
 
   const paginatedProducts = useMemo(() => filteredProducts.slice((safePage - 1) * pageSize, safePage * pageSize), [filteredProducts, safePage]);
 
-  const togglePrice = (price: PriceRange) => {
+  const handleApplyPriceRange = (min: number | '', max: number | '') => {
     setCurrentPage(1);
-    setSelectedPrices((prev) => {
-      if (price === 'all') return ['all'];
-      const next = prev.filter((item) => item !== 'all');
-      return next.includes(price) ? next.filter((item) => item !== price) : [...next, price];
-    });
+    setMinPrice(min);
+    setMaxPrice(max);
   };
 
   const toggleCategory = (category: FruitCategory) => {
@@ -135,7 +129,8 @@ const CategoryPage = () => {
 
   const resetFilters = () => {
     setCurrentPage(1);
-    setSelectedPrices(['all']);
+    setMinPrice('');
+    setMaxPrice('');
     setSelectedCategories([]);
     setSelectedRating(0);
     setSort('featured');
@@ -167,9 +162,9 @@ const CategoryPage = () => {
       </section>
       <section className="pb-16 px-4 md:px-8">
         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 items-start">
-          <FilterSidebar selectedPrices={selectedPrices} selectedRating={selectedRating} selectedCategorySlug={categorySlug} onTogglePrice={togglePrice} onNavigateCategory={toggleCategory} onSelectRating={setSelectedRating} onReset={resetFilters} />
+          <FilterSidebar minPrice={minPrice} maxPrice={maxPrice} selectedRating={selectedRating} selectedCategorySlug={categorySlug} onApplyPriceRange={handleApplyPriceRange} onNavigateCategory={toggleCategory} onSelectRating={setSelectedRating} onReset={resetFilters} />
           <div className="space-y-6">
-            <div className="glass rounded-4xl p-4 md:p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="glass relative z-30 rounded-4xl p-4 md:p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <p className="text-sm text-foreground/60">Tìm thấy {filteredProducts.length} sản phẩm</p>
                 <h2 className="text-2xl font-bold text-foreground">Sản phẩm nổi bật</h2>
@@ -184,18 +179,20 @@ const CategoryPage = () => {
                     className="w-full bg-transparent text-sm outline-none placeholder:text-foreground/40"
                   />
                 </div>
-                <div className="relative" onMouseEnter={() => setSortMenuOpen(true)} onMouseLeave={() => setSortMenuOpen(false)}>
+                <div className="relative z-20" onMouseEnter={() => setSortMenuOpen(true)} onMouseLeave={() => setSortMenuOpen(false)}>
                   <button type="button" className="flex items-center gap-3 rounded-full border border-border bg-white px-5 py-3 text-sm font-medium text-foreground outline-none shadow-sm hover:shadow-md transition-all duration-300">
                     {sortOptions.find((item) => item.id === sort)?.label}
                     <FiChevronDown className="text-foreground/40" />
                   </button>
                   {sortMenuOpen && (
-                    <div className="absolute right-0 top-full mt-2 w-56 overflow-hidden rounded-2xl border border-border bg-white shadow-xl z-100">
-                      {sortOptions.map((option) => (
-                        <button key={option.id} type="button" onClick={() => { setSort(option.id); setSortMenuOpen(false); }} className={`w-full px-4 py-3 text-left text-sm transition-colors ${sort === option.id ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white text-foreground'}`}>
-                          {option.label}
-                        </button>
-                      ))}
+                    <div className="absolute right-0 top-full pt-2 w-56 z-50">
+                      <div className="overflow-hidden rounded-2xl border border-border bg-white shadow-xl">
+                        {sortOptions.map((option) => (
+                          <button key={option.id} type="button" onClick={() => { setSort(option.id); setSortMenuOpen(false); }} className={`w-full px-4 py-3 text-left text-sm transition-colors ${sort === option.id ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white text-foreground'}`}>
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
