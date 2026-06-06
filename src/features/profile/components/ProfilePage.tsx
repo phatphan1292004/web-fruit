@@ -13,8 +13,29 @@ import NotificationPanel from './NotificationPanel';
 import type { ProfileTab, AddressItem, NotificationItem, ProfileOrder, VoucherItem } from './types';
 
 const addresses: AddressItem[] = [
-  { id: 1, label: 'Nhà riêng', address: '123 Lê Lợi, Quận 1, TP.HCM', isDefault: true },
-  { id: 2, label: 'Văn phòng', address: '45 Nguyễn Huệ, Quận 3, TP.HCM' },
+  {
+    id: 1,
+    label: 'Nhà riêng',
+    receiverName: 'Ngô Tiến Phát',
+    phone: '0901234567',
+    province: 'TP. Hồ Chí Minh',
+    district: 'Quận 1',
+    ward: 'Phường Bến Nghé',
+    detailedAddress: '123 Lê Lợi',
+    address: '123 Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
+    isDefault: true,
+  },
+  {
+    id: 2,
+    label: 'Văn phòng',
+    receiverName: 'Ngô Tiến Phát',
+    phone: '0987654321',
+    province: 'TP. Hồ Chí Minh',
+    district: 'Quận 3',
+    ward: 'Phường Võ Thị Sáu',
+    detailedAddress: '45 Nguyễn Huệ',
+    address: '45 Nguyễn Huệ, Phường Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh',
+  },
 ];
 
 const vouchers: VoucherItem[] = [
@@ -31,6 +52,7 @@ const notifications: NotificationItem[] = [
 
 const recentOrders: ProfileOrder[] = [];
 import { fetchFavoriteProducts, fetchUserByFirebaseUid, fetchOrdersByFirebaseUid, type ApiFavoriteProduct, type ApiUser } from '../servers';
+import { RefreshCw } from 'lucide-react';
 
 const fallbackFavoriteImage =
   'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?q=80&w=1200&auto=format&fit=crop';
@@ -166,7 +188,14 @@ const ProfilePage = () => {
       case 'personal':
         return null;
       case 'orders':
-        return <OrderHistory orders={orders} onOpen={(id) => setSelectedOrderId(id)} />;
+        return loadingOrders ? (
+          <div className="flex flex-col items-center justify-center py-20 text-neutral-500 gap-3 bg-white rounded-[2rem] border border-border/60 shadow-[0_10px_30px_rgba(0,0,0,0.06)]">
+            <RefreshCw className="h-8 w-8 animate-spin text-emerald-600" />
+            <p className="text-sm font-medium">Đang tải lịch sử đơn hàng...</p>
+          </div>
+        ) : (
+          <OrderHistory orders={orders} onOpen={(id) => setSelectedOrderId(id)} />
+        );
       case 'wishlist':
         return (
           <WishlistSection
@@ -195,7 +224,7 @@ const ProfilePage = () => {
       default:
         return <PersonalInfoForm userProfile={userProfile} isLoading={loadingProfile} />;
     }
-  }, [activeTab, favorites, loadingFavorites]);
+  }, [activeTab, favorites, loadingFavorites, orders, loadingOrders]);
 
   return (
     <Layout mainClassName="bg-gradient-to-b from-emerald-50 via-white to-orange-50 pt-28 pb-16">

@@ -35,6 +35,12 @@ export type WishlistItem = {
 export type AddressItem = {
   id: number;
   label: string;
+  receiverName?: string;
+  phone?: string;
+  province?: string;
+  district?: string;
+  ward?: string;
+  detailedAddress?: string;
   address: string;
   isDefault?: boolean;
 };

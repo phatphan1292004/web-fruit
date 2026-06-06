@@ -33,10 +33,10 @@ type ApiProduct = {
 
 const toFruitCategory = (value?: string): string => {
   const normalized = (value ?? '').toLowerCase();
-  if (normalized.includes('nhap')) return 'Nhập khẩu';
-  if (normalized.includes('huu')) return 'Hữu cơ';
-  if (normalized.includes('gio')) return 'Giỏ quà';
-  if (normalized.includes('mua')) return 'Theo mùa';
+  if (normalized.includes('nhap') || normalized.includes('nhập')) return 'Nhập khẩu';
+  if (normalized.includes('huu') || normalized.includes('hữu')) return 'Hữu cơ';
+  if (normalized.includes('gio') || normalized.includes('giỏ')) return 'Giỏ quà';
+  if (normalized.includes('mua') || normalized.includes('mùa')) return 'Theo mùa';
   return 'Trong nước';
 };
 
