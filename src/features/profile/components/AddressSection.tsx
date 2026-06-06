@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FiEdit3, FiTrash2, FiPlus, FiMapPin, FiCheck, FiUser, FiPhone } from 'react-icons/fi';
 import type { AddressItem } from './types';
 
@@ -128,7 +128,7 @@ const AddressSection = ({ addresses: initialAddresses }: Props) => {
   const handleDelete = (id: number) => {
     const itemToDelete = list.find((item) => item.id === id);
     let updatedList = list.filter((item) => item.id !== id);
-    
+
     if (itemToDelete?.isDefault && updatedList.length > 0) {
       updatedList[0].isDefault = true;
     }
@@ -301,7 +301,7 @@ const AddressSection = ({ addresses: initialAddresses }: Props) => {
                         </span>
                       )}
                     </div>
-                    
+
                     {/* Receiver detail text */}
                     {(address.receiverName || address.phone) && (
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs font-semibold text-foreground/60">
@@ -317,7 +317,7 @@ const AddressSection = ({ addresses: initialAddresses }: Props) => {
                         )}
                       </div>
                     )}
-                    
+
                     <p className="pt-1 text-sm font-semibold text-foreground/75 leading-relaxed">{address.address}</p>
                   </div>
                 </div>
