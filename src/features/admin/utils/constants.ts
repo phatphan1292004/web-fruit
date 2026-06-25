@@ -1,4 +1,4 @@
-import { FiHome, FiUsers, FiPackage, FiShoppingCart, FiStar, FiBarChart2, FiSettings, FiLogOut } from 'react-icons/fi';
+import { FiHome, FiUsers, FiPackage, FiShoppingCart, FiStar, FiBarChart2, FiSettings, FiLogOut, FiMessageSquare } from 'react-icons/fi';
 import type { IconType } from 'react-icons';
 
 export interface SidebarMenuItem {
@@ -14,6 +14,7 @@ export const SIDEBAR_MENU: SidebarMenuItem[] = [
   { id: 'products', label: 'Quản lý sản phẩm', icon: FiPackage, path: '/admin/products' },
   { id: 'orders', label: 'Quản lý đơn hàng', icon: FiShoppingCart, path: '/admin/orders' },
   { id: 'reviews', label: 'Quản lý đánh giá', icon: FiStar, path: '/admin/reviews' },
+  { id: 'chat', label: 'Chat', icon: FiMessageSquare, path: '/admin/chat' },
   { id: 'analytics', label: 'Thống kê', icon: FiBarChart2, path: '/admin/analytics' },
   { id: 'settings', label: 'Cài đặt', icon: FiSettings, path: '/admin/settings' },
 ];
