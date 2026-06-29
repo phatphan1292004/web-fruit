@@ -1,7 +1,42 @@
+import { useState, useEffect } from 'react';
 import { MapPin, Phone, Mail, ArrowRight } from 'lucide-react';
 import { FaFacebook, FaInstagram, FaTwitter } from 'react-icons/fa';
 
 const Footer = () => {
+  const [storeLogo, setStoreLogo] = useState<string | null>(() => localStorage.getItem('store_logo'));
+  const [socialLinks, setSocialLinks] = useState(() => {
+    try {
+      const savedLinks = localStorage.getItem('social_links');
+      return savedLinks ? JSON.parse(savedLinks) : {
+        facebook: 'https://facebook.com/fruitshop',
+        instagram: 'https://instagram.com/fruitshop',
+        twitter: '',
+        tiktok: 'https://tiktok.com/@fruitshop',
+      };
+    } catch {
+      return {
+        facebook: 'https://facebook.com/fruitshop',
+        instagram: 'https://instagram.com/fruitshop',
+        twitter: '',
+        tiktok: 'https://tiktok.com/@fruitshop',
+      };
+    }
+  });
+
+  useEffect(() => {
+    const handleUpdate = () => {
+      setStoreLogo(localStorage.getItem('store_logo'));
+      try {
+        const savedLinks = localStorage.getItem('social_links');
+        if (savedLinks) setSocialLinks(JSON.parse(savedLinks));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    window.addEventListener('theme-changed', handleUpdate);
+    return () => window.removeEventListener('theme-changed', handleUpdate);
+  }, []);
+
   return (
     <footer className="bg-foreground text-background pt-20 pb-10 rounded-t-[3rem] mt-10 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] relative overflow-hidden">
       <div className="absolute top-0 right-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
@@ -10,9 +45,13 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="flex flex-col gap-6">
             <a href="#" className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                M
-              </div>
+              {storeLogo ? (
+                <img src={storeLogo} alt="Logo" className="w-10 h-10 rounded-full object-cover shadow-lg border border-white/20" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                  M
+                </div>
+              )}
               <span className="text-2xl font-bold tracking-tight text-white">
                 Morning Fruit
               </span>
@@ -21,15 +60,21 @@ const Footer = () => {
               Mang đến những loại trái cây tươi ngon, hữu cơ cao cấp trực tiếp từ các nông trại bền vững đến tận cửa nhà bạn. Cảm nhận sự khác biệt từ thiên nhiên thuần khiết.
             </p>
             <div className="flex items-center gap-4 mt-2">
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
-                <FaFacebook className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
-                <FaInstagram className="w-5 h-5" />
-              </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
-                <FaTwitter className="w-5 h-5" />
-              </a>
+              {socialLinks.facebook && (
+                <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
+                  <FaFacebook className="w-5 h-5" />
+                </a>
+              )}
+              {socialLinks.instagram && (
+                <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
+                  <FaInstagram className="w-5 h-5" />
+                </a>
+              )}
+              {socialLinks.twitter && (
+                <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center hover:bg-primary hover:text-white transition-all duration-300">
+                  <FaTwitter className="w-5 h-5" />
+                </a>
+              )}
             </div>
           </div>
 
