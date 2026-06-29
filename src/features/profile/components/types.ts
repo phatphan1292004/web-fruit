@@ -26,6 +26,8 @@ export type ProfileOrder = {
 
 export type WishlistItem = {
   id: number;
+  _id?: string;
+  slug: string;
   name: string;
   price: number;
   rating: number;

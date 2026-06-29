@@ -1,1 +1,1 @@
-export { CartPage, ShippingPage, PaymentPage } from './components';
+export { CartPage, ShippingPage, PaymentPage, VNPayReturnPage } from './components';

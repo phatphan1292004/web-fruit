@@ -1,6 +1,7 @@
 export { default as CartPage } from './cart-page';
 export { default as ShippingPage } from './shipping-page';
 export { default as PaymentPage } from './payment-page';
+export { default as VNPayReturnPage } from './vnpay-return-page';
 export { default as CartHeader } from './cart-header';
 export { default as CartSteps } from './cart-steps';
 export { default as CartItems } from './cart-items';

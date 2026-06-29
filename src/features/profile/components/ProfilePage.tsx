@@ -201,10 +201,12 @@ const ProfilePage = () => {
           <WishlistSection
             items={favorites.map((item) => ({
               id: Number(item.id) || 0,
+              _id: item._id,
+              slug: (item as any).slug || '',
               name: item.name,
               price: item.price,
               rating: item.rating ?? 0,
-              image: item.image || fallbackFavoriteImage,
+              image: (item as any).gallery?.[0] || item.image || fallbackFavoriteImage,
             }))}
             isLoading={loadingFavorites}
           />

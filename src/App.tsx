@@ -2,7 +2,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import HomePage from "./features/home/components/HomePage";
 import LoginPage from "./features/login/components/login-page";
 import RegisterPage from "./features/register/components/register-page";
-import { CartPage, PaymentPage, ShippingPage } from "./features/cart";
+import { CartPage, PaymentPage, ShippingPage, VNPayReturnPage } from "./features/cart";
 import CategoryPage from "./features/category/components/CategoryPage";
 import ProductDetailPage from "./features/product-detail/components/ProductDetailPage";
 import ProfilePage from "./features/profile/components/ProfilePage";
@@ -47,6 +47,7 @@ function App() {
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout/shipping" element={<ShippingPage />} />
         <Route path="/checkout/payment" element={<PaymentPage />} />
+        <Route path="/checkout/vnpay-return" element={<VNPayReturnPage />} />
 
         {/* Admin Routes */}
         <Route path="/admin" element={<AdminRoute />}>
