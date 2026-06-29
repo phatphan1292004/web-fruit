@@ -48,12 +48,23 @@ const ProductSection = () => {
     };
   }, [activeCategory]);
 
-  const visibleProducts = useMemo(() => products.slice(page, page + 4), [products, page]);
-  const canPrev = page > 0;
-  const canNext = page + 4 < products.length;
+  const [isMobile, setIsMobile] = useState(false);
 
-  const handlePrev = () => setPage((prev) => Math.max(0, prev - 4));
-  const handleNext = () => setPage((prev) => Math.min(Math.max(0, products.length - 4), prev + 4));
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 640);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const pageSize = isMobile ? 2 : 4;
+
+  const visibleProducts = useMemo(() => products.slice(page, page + pageSize), [products, page, pageSize]);
+  const canPrev = page > 0;
+  const canNext = page + pageSize < products.length;
+
+  const handlePrev = () => setPage((prev) => Math.max(0, prev - pageSize));
+  const handleNext = () => setPage((prev) => Math.min(Math.max(0, products.length - pageSize), prev + pageSize));
 
   return (
     <section className="py-24 bg-muted/10 relative" id="fruits">
@@ -75,54 +86,65 @@ const ProductSection = () => {
           </motion.div>
         </div>
 
-        <div className="relative">
-          <div className="flex items-center justify-end gap-3 mb-6">
-            <button onClick={handlePrev} disabled={!canPrev} className="w-9 h-9 rounded-full border border-border bg-white flex items-center justify-center shadow-sm hover:shadow-md hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-foreground disabled:hover:shadow-sm" aria-label="Sản phẩm trước">
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button onClick={handleNext} disabled={!canNext} className="w-9 h-9 rounded-full border border-border bg-white flex items-center justify-center shadow-sm hover:shadow-md hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-foreground disabled:hover:shadow-sm" aria-label="Sản phẩm tiếp theo">
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
+        <div className="relative px-6 sm:px-12">
+          {/* Left Arrow Button */}
+          <button
+            onClick={handlePrev}
+            disabled={!canPrev}
+            className="absolute -left-2 sm:left-0 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border bg-white flex items-center justify-center shadow-lg hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-foreground z-20"
+            aria-label="Sản phẩm trước"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+
+          {/* Right Arrow Button */}
+          <button
+            onClick={handleNext}
+            disabled={!canNext}
+            className="absolute -right-2 sm:right-0 top-1/2 -translate-y-1/2 w-9 h-9 sm:w-11 sm:h-11 rounded-full border border-border bg-white flex items-center justify-center shadow-lg hover:bg-primary hover:text-white transition-all duration-300 disabled:opacity-30 disabled:hover:bg-white disabled:hover:text-foreground z-20"
+            aria-label="Sản phẩm tiếp theo"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </button>
 
           <AnimatePresence mode="wait">
-            <motion.div key={`${activeCategory}-${page}`} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.35, ease: 'easeOut' }} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {loading ? Array.from({ length: 4 }).map((_, index) => (
-                <div key={index} className="rounded-4xl bg-white h-105 animate-pulse" />
+            <motion.div key={`${activeCategory}-${page}`} initial={{ opacity: 0, x: 60 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -60 }} transition={{ duration: 0.35, ease: 'easeOut' }} className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
+              {loading ? Array.from({ length: pageSize }).map((_, index) => (
+                <div key={index} className="rounded-2xl bg-white h-80 sm:h-105 animate-pulse" />
               )) : visibleProducts.map((product) => {
                 const discount = product.badge ? 'Hot' : 'New';
                 return (
-                  <motion.div key={product.id} whileHover={{ y: -6 }} className="group rounded-4xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.08)] overflow-hidden border border-border/60">
+                  <motion.div key={product.id} whileHover={{ y: -6 }} className="group rounded-3xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] overflow-hidden border border-border/50 text-slate-700">
                     <Link to={`/product/${product.slug}`} className="relative overflow-hidden block">
-                      <img src={product.image ?? undefined} alt={product.name} className="h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                      <div className="absolute top-4 left-4 flex gap-2">
-                        {product.badge && <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white shadow-md">{product.badge}</span>}
-                        <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-foreground shadow-md">{discount}</span>
+                      <img src={product.image ?? undefined} alt={product.name} className="h-32 sm:h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                      <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex gap-1.5">
+                        {product.badge && <span className="rounded-full bg-primary px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-white shadow-md">{product.badge}</span>}
+                        <span className="rounded-full bg-white/90 px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-foreground shadow-md">{discount}</span>
                       </div>
                     </Link>
 
-                    <div className="p-5 space-y-4">
+                    <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
                       <div>
-                        <p className="text-xs uppercase tracking-wider text-primary font-semibold mb-1">{product.category}</p>
+                        <p className="text-[10px] sm:text-xs uppercase tracking-wider text-primary font-semibold mb-0.5">{product.category}</p>
                         <Link to={`/product/${product.slug}`}>
-                          <h3 className="text-lg font-bold text-foreground leading-snug group-hover:text-primary transition-colors">{product.name}</h3>
+                          <h3 className="text-xs sm:text-lg font-bold text-slate-800 leading-snug group-hover:text-primary transition-colors line-clamp-2 min-h-[2rem] sm:min-h-0">{product.name}</h3>
                         </Link>
                       </div>
 
-                      <div className="flex items-center gap-2 text-sm text-foreground/70">
-                        <Star className="text-amber-500 w-4 h-4" />
+                      <div className="flex items-center gap-1.5 text-xs text-foreground/70">
+                        <Star className="text-amber-500 w-3.5 h-3.5" />
                         <span className="font-semibold text-foreground">{(product.rating ?? 0).toFixed(1)}</span>
-                        <span>đánh giá</span>
+                        <span className="hidden sm:inline">đánh giá</span>
                       </div>
 
                       <div className="flex items-end gap-3">
-                        <span className="text-xl font-bold text-foreground">{formatVND(product.price)}</span>
+                        <span className="text-sm sm:text-xl font-extrabold text-slate-800">{formatVND(product.price)}</span>
                       </div>
 
-                      <div className="flex items-center gap-3 pt-2">
-                        <Link to={`/product/${product.slug}`} className="flex-1 rounded-full bg-primary text-white py-3 font-semibold flex items-center justify-center gap-2 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
-                          <ShoppingCart className="w-4 h-4" />
-                          Xem chi tiết
+                      <div className="flex items-center gap-2 pt-1 sm:pt-2">
+                        <Link to={`/product/${product.slug}`} className="flex-1 rounded-full bg-primary text-white py-1.5 sm:py-3 text-[10px] sm:text-sm font-semibold flex items-center justify-center gap-1 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg">
+                          <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+                          <span>Chi tiết</span>
                         </Link>
                         <button
                           type="button"
@@ -137,9 +159,9 @@ const ProductSection = () => {
                               badge: product.badge,
                             })
                           }
-                          className="w-12 h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300"
+                          className="w-7 h-7 sm:w-12 sm:h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300 shrink-0"
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                         </button>
                       </div>
                     </div>

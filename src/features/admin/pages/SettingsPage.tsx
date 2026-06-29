@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { FiCheck, FiUpload } from 'react-icons/fi';
 import { FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa';
 import { FaXTwitter } from 'react-icons/fa6';
+import { toast } from 'react-toastify';
 
 const themeColors = [
   { name: 'Xanh lá', value: '#22c55e', class: 'bg-emerald-500' },
@@ -14,24 +15,90 @@ const themeColors = [
 ];
 
 const SettingsPage = () => {
-  const [selectedColor, setSelectedColor] = useState('#22c55e');
+  const [selectedColor, setSelectedColor] = useState(() => {
+    return localStorage.getItem('theme_color') || '#22c55e';
+  });
+  const [logo, setLogo] = useState<string>(() => {
+    return localStorage.getItem('store_logo') || '';
+  });
+  const [banner, setBanner] = useState<string>(() => {
+    return localStorage.getItem('homepage_banner') || '';
+  });
   const [saved, setSaved] = useState(false);
-  const [socialLinks, setSocialLinks] = useState({
-    facebook: 'https://facebook.com/fruitshop',
-    instagram: 'https://instagram.com/fruitshop',
-    twitter: '',
-    tiktok: 'https://tiktok.com/@fruitshop',
+  const [socialLinks, setSocialLinks] = useState(() => {
+    try {
+      const savedLinks = localStorage.getItem('social_links');
+      return savedLinks ? JSON.parse(savedLinks) : {
+        facebook: 'https://facebook.com/fruitshop',
+        instagram: 'https://instagram.com/fruitshop',
+        twitter: '',
+        tiktok: 'https://tiktok.com/@fruitshop',
+      };
+    } catch {
+      return {
+        facebook: 'https://facebook.com/fruitshop',
+        instagram: 'https://instagram.com/fruitshop',
+        twitter: '',
+        tiktok: 'https://tiktok.com/@fruitshop',
+      };
+    }
   });
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Kích thước logo không được vượt quá 2MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setLogo(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleBannerUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Kích thước banner không được vượt quá 5MB');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          setBanner(event.target.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+    try {
+      localStorage.setItem('theme_color', selectedColor);
+      localStorage.setItem('store_logo', logo);
+      localStorage.setItem('homepage_banner', banner);
+      localStorage.setItem('social_links', JSON.stringify(socialLinks));
+      
+      window.dispatchEvent(new Event('theme-changed'));
+      setSaved(true);
+      toast.success('Lưu cài đặt cấu hình thành công!');
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      console.error(err);
+      toast.error('Lưu cài đặt thất bại. Dung lượng ảnh tải lên có thể đã vượt quá giới hạn của LocalStorage.');
+    }
   };
 
   const sectionCard = "bg-white rounded-2xl p-6 shadow-sm border border-slate-100";
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-3xl text-slate-700">
       {/* Theme Color */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -71,15 +138,20 @@ const SettingsPage = () => {
         <h3 className="text-base font-bold text-slate-800 mb-1">Logo cửa hàng</h3>
         <p className="text-sm text-slate-400 mb-4">Tải lên logo cho cửa hàng (khuyến nghị 200×200px)</p>
         <div className="flex items-center gap-6">
-          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-emerald-200">
-            FS
-          </div>
+          {logo ? (
+            <img src={logo} alt="Store Logo" className="w-20 h-20 rounded-2xl object-cover border border-slate-100 shadow-sm" />
+          ) : (
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-emerald-200">
+              FS
+            </div>
+          )}
           <div className="flex-1">
-            <div className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-emerald-300 transition-colors cursor-pointer">
+            <label className="border-2 border-dashed border-slate-200 rounded-xl p-4 text-center hover:border-emerald-300 transition-colors cursor-pointer block">
+              <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
               <FiUpload className="text-xl text-slate-400 mx-auto mb-1" />
               <p className="text-sm text-slate-500">Kéo thả hoặc click để tải ảnh</p>
               <p className="text-xs text-slate-400 mt-1">PNG, JPG, SVG (tối đa 2MB)</p>
-            </div>
+            </label>
           </div>
         </div>
       </motion.div>
@@ -93,11 +165,22 @@ const SettingsPage = () => {
       >
         <h3 className="text-base font-bold text-slate-800 mb-1">Banner trang chủ</h3>
         <p className="text-sm text-slate-400 mb-4">Banner hiển thị trên trang chủ (khuyến nghị 1920×600px)</p>
-        <div className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-emerald-300 transition-colors cursor-pointer bg-gradient-to-r from-emerald-50 to-orange-50">
-          <FiUpload className="text-2xl text-slate-400 mx-auto mb-2" />
-          <p className="text-sm text-slate-500">Kéo thả hoặc click để tải banner</p>
-          <p className="text-xs text-slate-400 mt-1">PNG, JPG (tối đa 5MB)</p>
-        </div>
+        {banner ? (
+          <div className="space-y-3">
+            <img src={banner} alt="Homepage Banner" className="w-full h-40 object-cover rounded-xl border border-slate-200 shadow-sm" />
+            <label className="border border-dashed border-slate-200 rounded-xl py-3 text-center hover:border-emerald-300 transition-colors cursor-pointer block bg-slate-50">
+              <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
+              <p className="text-xs font-semibold text-slate-600">Thay đổi banner mới (tối đa 5MB)</p>
+            </label>
+          </div>
+        ) : (
+          <label className="border-2 border-dashed border-slate-200 rounded-xl p-8 text-center hover:border-emerald-300 transition-colors cursor-pointer block bg-gradient-to-r from-emerald-50 to-orange-50">
+            <input type="file" accept="image/*" className="hidden" onChange={handleBannerUpload} />
+            <FiUpload className="text-2xl text-slate-400 mx-auto mb-2" />
+            <p className="text-sm text-slate-500">Kéo thả hoặc click để tải banner</p>
+            <p className="text-xs text-slate-400 mt-1">PNG, JPG (tối đa 5MB)</p>
+          </label>
+        )}
       </motion.div>
 
       {/* Social Links */}

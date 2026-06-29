@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, startTransition } from 'react';
-import { FiChevronDown, FiSearch } from 'react-icons/fi';
+import { FiChevronDown, FiSearch, FiFilter } from 'react-icons/fi';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import Header from '../../../components/layout/Header';
 import FilterSidebar from './FilterSidebar';
 import ProductGrid from './ProductGrid';
@@ -56,6 +57,7 @@ const CategoryPage = () => {
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const [products, setProducts] = useState<FruitProduct[]>(fruitProducts);
   const [isSwitchingCategory, setIsSwitchingCategory] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const searchQuery = new URLSearchParams(location.search).get('search')?.trim() ?? '';
 
   const pageSize = 8;
@@ -162,7 +164,57 @@ const CategoryPage = () => {
       </section>
       <section className="pb-16 px-4 md:px-8">
         <div className="container mx-auto grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-8 items-start">
-          <FilterSidebar minPrice={minPrice} maxPrice={maxPrice} selectedRating={selectedRating} selectedCategorySlug={categorySlug} onApplyPriceRange={handleApplyPriceRange} onNavigateCategory={toggleCategory} onSelectRating={setSelectedRating} onReset={resetFilters} />
+          {/* Desktop Filter Sidebar */}
+          <div className="hidden lg:block">
+            <FilterSidebar minPrice={minPrice} maxPrice={maxPrice} selectedRating={selectedRating} selectedCategorySlug={categorySlug} onApplyPriceRange={handleApplyPriceRange} onNavigateCategory={toggleCategory} onSelectRating={setSelectedRating} onReset={resetFilters} />
+          </div>
+
+          {/* Mobile Filter Sidebar Drawer */}
+          <AnimatePresence>
+            {isMobileFilterOpen && (
+              <>
+                {/* Backdrop Overlay */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 0.5 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsMobileFilterOpen(false)}
+                  className="fixed inset-0 bg-black z-[990] lg:hidden"
+                />
+                {/* Drawer Panel */}
+                <motion.div
+                  initial={{ x: "-100%" }}
+                  animate={{ x: 0 }}
+                  exit={{ x: "-100%" }}
+                  transition={{ type: "tween", duration: 0.3 }}
+                  className="fixed left-0 top-0 bottom-0 w-80 bg-white z-[999] shadow-2xl p-6 overflow-y-auto lg:hidden text-slate-700"
+                >
+                  <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+                    <span className="text-lg font-bold text-slate-800">Bộ lọc</span>
+                    <button
+                      onClick={() => setIsMobileFilterOpen(false)}
+                      className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
+                    >
+                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                  <FilterSidebar
+                    minPrice={minPrice}
+                    maxPrice={maxPrice}
+                    selectedRating={selectedRating}
+                    selectedCategorySlug={categorySlug}
+                    onApplyPriceRange={(min, max) => { handleApplyPriceRange(min, max); setIsMobileFilterOpen(false); }}
+                    onNavigateCategory={(cat) => { toggleCategory(cat); setIsMobileFilterOpen(false); }}
+                    onSelectRating={(rat) => { setSelectedRating(rat); setIsMobileFilterOpen(false); }}
+                    onReset={() => { resetFilters(); setIsMobileFilterOpen(false); }}
+                  />
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+
           <div className="space-y-6">
             <div className="glass relative z-30 rounded-4xl p-4 md:p-6 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
@@ -179,6 +231,14 @@ const CategoryPage = () => {
                     className="w-full bg-transparent text-sm outline-none placeholder:text-foreground/40"
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMobileFilterOpen(true)}
+                  className="lg:hidden flex items-center justify-center gap-2 rounded-full border border-border bg-white px-5 py-3 text-sm font-medium text-slate-700 outline-none shadow-sm hover:shadow-md transition-all duration-300"
+                >
+                  <FiFilter className="text-slate-500" />
+                  <span>Bộ lọc</span>
+                </button>
                 <div className="relative z-20" onMouseEnter={() => setSortMenuOpen(true)} onMouseLeave={() => setSortMenuOpen(false)}>
                   <button type="button" className="flex items-center gap-3 rounded-full border border-border bg-white px-5 py-3 text-sm font-medium text-foreground outline-none shadow-sm hover:shadow-md transition-all duration-300">
                     {sortOptions.find((item) => item.id === sort)?.label}

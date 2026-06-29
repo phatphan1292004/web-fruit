@@ -7,7 +7,7 @@ import Testimonials from './Testimonials';
 
 const HomePage = () => {
   return (
-    <DefaultLayout mainClassName="bg-background relative pt-20">
+    <DefaultLayout mainClassName="bg-background relative pt-16 sm:pt-20">
       <HeroBanner />
       <Features />
       <ProductSection />

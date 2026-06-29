@@ -50,27 +50,27 @@ const itemVariants: Variants = {
 
 const Features = () => {
   return (
-    <section className="py-20 bg-background relative z-20">
+    <section className="py-8 sm:py-20 bg-background relative z-20">
       <div className="container mx-auto px-4 md:px-8">
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: '-100px' }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+          className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8"
         >
           {features.map((feature, idx) => (
             <motion.div
               key={idx}
               variants={itemVariants}
               whileHover={{ y: -10 }}
-              className="glass p-8 rounded-3xl flex flex-col items-center text-center group transition-all duration-300 hover:shadow-2xl"
+              className="glass p-4 sm:p-8 rounded-[2rem] flex flex-col items-center text-center group transition-all duration-300 hover:shadow-2xl text-slate-700"
             >
-              <div className={cn('w-20 h-20 rounded-2xl flex items-center justify-center mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6', feature.color)}>
-                <feature.icon className="w-10 h-10" />
+              <div className={cn('w-12 h-12 sm:w-20 sm:h-20 rounded-2xl flex items-center justify-center mb-3 sm:mb-6 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-6', feature.color)}>
+                <feature.icon className="w-6 h-6 sm:w-10 sm:h-10" />
               </div>
-              <h3 className="text-xl font-bold mb-3 text-foreground">{feature.title}</h3>
-              <p className="text-foreground/70 leading-relaxed">
+              <h3 className="text-sm sm:text-xl font-bold mb-1 sm:mb-3 text-slate-800">{feature.title}</h3>
+              <p className="hidden sm:block text-foreground/70 leading-relaxed text-sm">
                 {feature.description}
               </p>
             </motion.div>

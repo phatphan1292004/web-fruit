@@ -1,5 +1,6 @@
 import { FiHeart, FiShare2, FiShield, FiTruck, FiRefreshCw, FiStar, FiClock } from 'react-icons/fi';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import QuantitySelector from './QuantitySelector';
 import type { ProductDetail } from './types';
 
@@ -15,6 +16,7 @@ type ProductInfoProps = {
 };
 
 const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart, onAddToFavorite, isFavoriteLoading, isFavoriteAdded }: ProductInfoProps) => {
+  const navigate = useNavigate();
   const discount = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);
 
   return (
@@ -57,31 +59,43 @@ const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart, o
           ))}
         </div>
 
-        <div className="flex flex-wrap items-center gap-4 pt-2">
-          <QuantitySelector quantity={quantity} onDecrease={onDecrease} onIncrease={onIncrease} />
-          <button
-            type="button"
-            onClick={onAddToCart}
-            className="rounded-full bg-primary px-6 py-3.5 text-white font-semibold shadow-md hover:shadow-xl hover:bg-primary/90 transition-all duration-300"
-          >
-            Thêm vào giỏ hàng
-          </button>
-          <button className="rounded-full border border-border px-5 py-3.5 text-foreground hover:border-primary hover:text-primary transition-all duration-300">
-            Mua ngay
-          </button>
-          <button
-            type="button"
-            onClick={onAddToFavorite}
-            disabled={isFavoriteLoading}
-            className={`rounded-full border px-4 py-3.5 transition-all duration-300 ${
-              isFavoriteAdded
-                ? 'border-rose-500 text-rose-500 bg-rose-50'
-                : 'border-border text-foreground hover:border-primary hover:text-primary'
-            } ${isFavoriteLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-            aria-label="Them vao yeu thich"
-          >
-            <FiHeart />
-          </button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 pt-2">
+          <div className="flex items-center gap-3">
+            <QuantitySelector quantity={quantity} onDecrease={onDecrease} onIncrease={onIncrease} />
+            <button
+              type="button"
+              onClick={onAddToFavorite}
+              disabled={isFavoriteLoading}
+              className={`rounded-full border p-3.5 transition-all duration-300 flex items-center justify-center shrink-0 ${
+                isFavoriteAdded
+                  ? 'border-rose-500 text-rose-500 bg-rose-50'
+                  : 'border-border text-slate-700 hover:border-primary hover:text-primary'
+              } ${isFavoriteLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
+              aria-label="Them vao yeu thich"
+            >
+              <FiHeart className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="flex gap-3 flex-1 w-full">
+            <button
+              type="button"
+              onClick={onAddToCart}
+              className="flex-1 rounded-full bg-primary py-3.5 text-white font-semibold shadow-md hover:shadow-xl hover:bg-primary/90 transition-all duration-300 text-center text-sm"
+            >
+              Thêm giỏ hàng
+            </button>
+            <button 
+              type="button"
+              onClick={() => {
+                onAddToCart();
+                navigate('/cart');
+              }}
+              className="flex-1 rounded-full border border-primary text-primary py-3.5 font-semibold hover:bg-primary hover:text-white transition-all duration-300 text-center text-sm"
+            >
+              Mua ngay
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 text-foreground/60">
