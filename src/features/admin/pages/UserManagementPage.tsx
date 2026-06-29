@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { FiEdit2, FiTrash2, FiSlash, FiCheckCircle } from 'react-icons/fi';
+import { FiEdit2, FiTrash2, FiSlash, FiCheckCircle, FiEye } from 'react-icons/fi';
 import DataTable from '../components/DataTable';
 import type { Column } from '../components/DataTable';
 import SearchInput from '../components/SearchInput';
@@ -27,6 +27,7 @@ const UserManagementPage = () => {
   const [roleFilter, setRoleFilter] = useState('all');
   const [deleteTarget, setDeleteTarget] = useState<BackendUser | null>(null);
   const [editTarget, setEditTarget] = useState<BackendUser | null>(null);
+  const [detailTarget, setDetailTarget] = useState<BackendUser | null>(null);
 
   const loadUsers = async () => {
     try {
@@ -174,6 +175,16 @@ const UserManagementPage = () => {
       label: '',
       render: (user) => (
         <div className="flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setDetailTarget(user);
+            }}
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors text-slate-400 hover:text-emerald-500"
+            title="Xem chi tiết"
+          >
+            <FiEye className="text-sm" />
+          </button>
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -353,6 +364,79 @@ const UserManagementPage = () => {
               </button>
             </div>
           </form>
+        )}
+      </Modal>
+
+      {/* Detail Modal */}
+      <Modal isOpen={!!detailTarget} onClose={() => setDetailTarget(null)} title="Thông tin người dùng" size="md">
+        {detailTarget && (
+          <div className="space-y-6 text-slate-700">
+            <div className="flex items-center gap-4 pb-4 border-b border-slate-100">
+              <img
+                src={
+                  detailTarget.avatarUrl ||
+                  `https://api.dicebear.com/7.x/avataaars/svg?seed=${detailTarget.displayName}`
+                }
+                alt={detailTarget.displayName}
+                className="w-16 h-16 rounded-full bg-slate-100 object-cover shadow-sm"
+              />
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">{detailTarget.displayName}</h3>
+                <p className="text-sm text-slate-400">{detailTarget.email}</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 text-sm">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-slate-400 block mb-0.5 text-xs">Vai trò</span>
+                  <StatusBadge status={detailTarget.role} statusMap={USER_ROLE_MAP} />
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5 text-xs">Trạng thái</span>
+                  <StatusBadge status={detailTarget.active ? 'active' : 'banned'} statusMap={USER_STATUS_MAP} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <div>
+                  <span className="text-slate-400 block mb-0.5 text-xs">Giới tính</span>
+                  <span className="font-semibold text-slate-700">{detailTarget.gender || 'Chưa cập nhật'}</span>
+                </div>
+                <div>
+                  <span className="text-slate-400 block mb-0.5 text-xs">Ngày sinh</span>
+                  <span className="font-semibold text-slate-700">{detailTarget.birthDay || 'Chưa cập nhật'}</span>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-50 space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-slate-400">UID (Firebase):</span>
+                  <span className="font-mono text-xs text-slate-600">{detailTarget.firebaseUid}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Mã người dùng (DB ID):</span>
+                  <span className="font-mono text-xs text-slate-600">{detailTarget._id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Ngày tham gia:</span>
+                  <span className="font-semibold text-slate-700">
+                    {detailTarget.createdAt ? formatDate(detailTarget.createdAt) : 'N/A'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setDetailTarget(null)}
+                className="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
         )}
       </Modal>
     </div>
