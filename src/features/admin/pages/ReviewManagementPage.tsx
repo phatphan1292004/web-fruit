@@ -4,6 +4,9 @@ import { FiTrash2, FiEye, FiEyeOff, FiMessageCircle, FiSend } from 'react-icons/
 import SearchInput from '../components/SearchInput';
 import StarRating from '../components/StarRating';
 import ConfirmDialog from '../components/ConfirmDialog';
+import Pagination from '../components/Pagination';
+import { usePagination } from '../hooks/usePagination';
+import { PAGE_SIZE } from '../utils/constants';
 import { formatDate } from '../utils/formatters';
 import {
   fetchAdminReviews,
@@ -89,6 +92,13 @@ const ReviewManagementPage = () => {
     const matchRating = ratingFilter === 'all' || r.rating === parseInt(ratingFilter);
     return matchSearch && matchRating;
   });
+
+  const pagination = usePagination({ totalItems: filteredReviews.length, pageSize: PAGE_SIZE });
+  const paginatedReviews = filteredReviews.slice(pagination.startIndex, pagination.endIndex);
+
+  useEffect(() => {
+    pagination.setPage(1);
+  }, [search, ratingFilter]);
 
   const handleDelete = async () => {
     if (deleteTarget) {
@@ -204,7 +214,7 @@ const ReviewManagementPage = () => {
 
       {/* Review Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {filteredReviews.map((review, idx) => (
+        {paginatedReviews.map((review, idx) => (
           <motion.div
             key={review.id}
             initial={{ opacity: 0, y: 20 }}
@@ -302,6 +312,18 @@ const ReviewManagementPage = () => {
           <p className="text-sm">Không tìm thấy đánh giá nào</p>
         </div>
       )}
+
+      {/* Pagination */}
+      <div className="mt-6 flex justify-end bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+        <Pagination
+          currentPage={pagination.currentPage}
+          totalPages={pagination.totalPages}
+          onPageChange={pagination.setPage}
+          startIndex={pagination.startIndex}
+          endIndex={pagination.endIndex}
+          totalItems={filteredReviews.length}
+        />
+      </div>
 
       {/* Delete Confirm */}
       <ConfirmDialog
