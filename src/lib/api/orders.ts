@@ -56,6 +56,7 @@ export type OrderResponse = {
   shippingFee: number;
   discount: number;
   total: number;
+  paymentUrl?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -66,4 +67,8 @@ export function previewOrder(payload: OrderPreviewPayload) {
 
 export function createOrder(payload: OrderCreatePayload) {
   return store.post<OrderResponse, OrderCreatePayload>('/orders', payload);
+}
+
+export function verifyVNPay(queryString: string) {
+  return store.get<{ success: boolean; message?: string; orderId?: string; total?: number }>(`/orders/vnpay/verify?${queryString}`);
 }

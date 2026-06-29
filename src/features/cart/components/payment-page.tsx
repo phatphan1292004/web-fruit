@@ -115,7 +115,11 @@ const PaymentPage = () => {
       if (result?._id) {
         clearCart();
         resetShippingInfo();
-        navigate('/');
+        if (selected === 'vnpay' && result.paymentUrl) {
+          window.location.href = result.paymentUrl;
+        } else {
+          navigate('/');
+        }
       }
     } finally {
       setIsSubmitting(false);
