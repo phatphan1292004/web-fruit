@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Star, ChevronLeft, ChevronRight, Quote } from 'lucide-react';
+import { fetchPublicReviews } from '../servers/products';
 
 const testimonials = [
   {
@@ -30,6 +31,7 @@ const testimonials = [
 ];
 
 const Testimonials = () => {
+  const [items, setItems] = useState<any[]>(testimonials);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
@@ -59,21 +61,51 @@ const Testimonials = () => {
   };
 
   const paginate = (newDirection: number) => {
+    if (items.length === 0) return;
     setDirection(newDirection);
     setCurrentIndex((prevIndex) => {
       let nextIndex = prevIndex + newDirection;
-      if (nextIndex < 0) nextIndex = testimonials.length - 1;
-      if (nextIndex >= testimonials.length) nextIndex = 0;
+      if (nextIndex < 0) nextIndex = items.length - 1;
+      if (nextIndex >= items.length) nextIndex = 0;
       return nextIndex;
     });
   };
 
   useEffect(() => {
+    let isActive = true;
+    const load = async () => {
+      try {
+        const data = await fetchPublicReviews();
+        if (isActive) {
+          if (data && data.length > 0) {
+            const mapped = data.map((rev) => ({
+              id: rev._id,
+              name: rev.displayName,
+              role: rev.productId?.name ? `Đã mua: ${rev.productId.name}` : 'Khách hàng',
+              avatar: rev.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${rev.displayName}`,
+              content: rev.comment,
+              rating: rev.rating,
+            }));
+            setItems(mapped);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load public reviews:', err);
+      }
+    };
+    load();
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (items.length <= 1) return;
     const timer = setInterval(() => {
       paginate(1);
     }, 5000);
     return () => clearInterval(timer);
-  }, []);
+  }, [items]);
 
   return (
     <section className="py-24 bg-background relative overflow-hidden">
@@ -133,30 +165,30 @@ const Testimonials = () => {
               <div className="glass p-10 md:p-14 rounded-[2.5rem] flex flex-col items-center text-center shadow-2xl border border-white/40 max-w-3xl mx-auto">
                 <Quote className="w-12 h-12 text-primary/20 absolute top-8 left-8" />
                 
-                <div className="flex gap-1 mb-6">
+                 <div className="flex gap-1 mb-6">
                   {[...Array(5)].map((_, i) => (
                     <Star 
                       key={i} 
-                      className={`w-5 h-5 ${i < Math.floor(testimonials[currentIndex].rating) ? 'fill-accent text-accent' : 'text-muted-foreground'}`} 
+                      className={`w-5 h-5 ${i < Math.floor(items[currentIndex]?.rating || 5) ? 'fill-accent text-accent' : 'text-muted-foreground'}`} 
                     />
                   ))}
                 </div>
 
                 <p className="text-xl md:text-2xl font-medium text-foreground/80 leading-relaxed mb-8 italic">
-                  "{testimonials[currentIndex].content}"
+                  "{items[currentIndex]?.content}"
                 </p>
 
                 <div className="flex flex-col items-center gap-3">
                   <div className="w-16 h-16 rounded-full p-1 bg-gradient-to-tr from-primary to-secondary">
                     <img
-                      src={testimonials[currentIndex].avatar}
-                      alt={testimonials[currentIndex].name}
+                      src={items[currentIndex]?.avatar}
+                      alt={items[currentIndex]?.name}
                       className="w-full h-full object-cover rounded-full border-2 border-white"
                     />
                   </div>
                   <div>
-                    <h4 className="font-bold text-lg text-foreground">{testimonials[currentIndex].name}</h4>
-                    <span className="text-sm text-foreground/60">{testimonials[currentIndex].role}</span>
+                    <h4 className="font-bold text-lg text-foreground">{items[currentIndex]?.name}</h4>
+                    <span className="text-sm text-foreground/60">{items[currentIndex]?.role}</span>
                   </div>
                 </div>
               </div>
@@ -182,7 +214,7 @@ const Testimonials = () => {
 
         {/* Indicators */}
         <div className="flex justify-center gap-2 mt-8">
-          {testimonials.map((_, idx) => (
+          {items.map((_, idx) => (
             <button
               key={idx}
               onClick={() => {

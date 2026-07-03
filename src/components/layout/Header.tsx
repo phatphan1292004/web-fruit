@@ -53,7 +53,22 @@ const Header = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [storeLogo, setStoreLogo] = useState<string | null>(() => localStorage.getItem('store_logo'));
-  
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
+
+  useEffect(() => {
+    setIsSearchOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsSearchOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
   useEffect(() => {
     const handleLogoUpdate = () => {
       setStoreLogo(localStorage.getItem('store_logo'));
@@ -63,6 +78,7 @@ const Header = () => {
   }, []);
   const fruitMenuRef = useRef<HTMLDivElement | null>(null);
   const userMenuRef = useRef<HTMLDivElement | null>(null);
+  const searchMenuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -132,6 +148,12 @@ const Header = () => {
       ) {
         setUserMenuOpen(false);
       }
+      if (
+        searchMenuRef.current &&
+        !searchMenuRef.current.contains(event.target as Node)
+      ) {
+        setIsSearchOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", onClickOutside);
@@ -171,169 +193,197 @@ const Header = () => {
           isScrolled ? "py-3 glass" : "py-5 bg-transparent",
         )}
       >
-      <div className="container mx-auto px-4 md:px-8 flex items-center justify-between gap-4">
-        <div className="flex items-center gap-4 lg:gap-6 min-w-0 flex-1">
-          <Link to="/" className="flex items-center gap-2 group shrink-0">
-            {storeLogo ? (
-              <img src={storeLogo} alt="Logo" className="w-10 h-10 rounded-full object-cover shadow-lg border border-slate-100" />
-            ) : (
-              <motion.div
-                whileHover={{ rotate: 10 }}
-                className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg"
-              >
-                M
-              </motion.div>
-            )}
-            <span className="text-xl md:text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
-              Morning Fruit
-            </span>
-          </Link>
-
-          <div className="hidden lg:flex flex-1 max-w-md items-center rounded-full border border-border/60 bg-white/80 backdrop-blur-md px-4 py-2 shadow-sm">
-            <Search className="w-5 h-5 text-foreground/50" />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                  handleSearch();
-                }
-              }}
-              placeholder="Tìm kiếm trái cây, combo..."
-              className="ml-3 w-full bg-transparent text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
-            />
+        <div className="container mx-auto px-4 md:px-8 flex items-center justify-between gap-4">
+          <div className="flex items-center justify-start flex-1 min-w-0">
+            <Link to="/" className="flex items-center gap-2 group shrink-0">
+              {storeLogo ? (
+                <img src={storeLogo} alt="Logo" className="w-10 h-10 rounded-full object-cover shadow-lg border border-slate-100" />
+              ) : (
+                <motion.div
+                  whileHover={{ rotate: 10 }}
+                  className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl shadow-lg"
+                >
+                  M
+                </motion.div>
+              )}
+              <span className="text-xl md:text-2xl font-bold tracking-tight text-foreground group-hover:text-primary transition-colors">
+                Morning Fruit
+              </span>
+            </Link>
           </div>
-        </div>
 
-        <nav className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) =>
-            link.name === "Trái cây" ? (
-              <div
-                key={link.name}
-                className="relative"
-                ref={fruitMenuRef}
-                onMouseEnter={() => setFruitMenuOpen(true)}
-                onMouseLeave={() => setFruitMenuOpen(false)}
-              >
-                <Link
-                  to={link.href}
-                  className="flex items-center gap-1 text-foreground/80 hover:text-primary font-medium transition-colors relative group text-sm uppercase tracking-wider"
-                  onClick={() => setFruitMenuOpen(false)}
+          <nav className="hidden md:flex items-center justify-center gap-8 flex-none">
+            {navLinks.map((link) =>
+              link.name === "Trái cây" ? (
+                <div
+                  key={link.name}
+                  className="relative"
+                  ref={fruitMenuRef}
+                  onMouseEnter={() => setFruitMenuOpen(true)}
+                  onMouseLeave={() => setFruitMenuOpen(false)}
+                >
+                  <Link
+                    to={link.href}
+                    className="flex items-center gap-1 text-foreground/80 hover:text-primary font-medium transition-colors relative group text-sm uppercase tracking-wider"
+                    onClick={() => setFruitMenuOpen(false)}
+                  >
+                    {link.name}
+                    <ChevronDown className="w-4 h-4" />
+                  </Link>
+
+                  <AnimatePresence>
+                    {fruitMenuOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 8 }}
+                        className="absolute top-full left-0 mt-3 w-72 rounded-3xl border border-border/60 bg-white shadow-2xl overflow-hidden"
+                      >
+                        {(fruitCategories.length
+                          ? fruitCategories
+                          : fruitCategoryMenu
+                        ).map((category) => (
+                          <Link
+                            key={category.slug}
+                            to={`/category/${category.slug}`}
+                            className="block px-5 py-3 text-sm font-medium text-foreground/80 hover:bg-primary hover:text-white transition-colors"
+                            onClick={() => setFruitMenuOpen(false)}
+                          >
+                            {category.name}
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ) : (
+                <a
+                  key={link.name}
+                  href={link.href}
+                  className="text-foreground/80 hover:text-primary font-medium transition-colors relative group text-sm uppercase tracking-wider"
                 >
                   {link.name}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full rounded-full"></span>
+                </a>
+              ),
+            )}
+          </nav>
+
+          <div className="flex items-center justify-end gap-3 flex-1 shrink-0">
+            <div className="relative hidden md:block" ref={searchMenuRef}>
+              <button
+                type="button"
+                onClick={() => setIsSearchOpen((prev) => !prev)}
+                className="p-2 text-foreground/80 hover:text-primary transition-colors group"
+                aria-label="Tìm kiếm"
+              >
+                <Search className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
+
+              <AnimatePresence>
+                {isSearchOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 top-full mt-2 w-[450px] rounded-2xl border border-border/60 bg-white p-3 shadow-2xl z-50"
+                  >
+                    <div className="flex items-center rounded-lg border border-border/60 bg-white px-4 py-2.5 shadow-sm">
+                      <Search className="w-4 h-4 text-foreground/50 shrink-0" />
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(event) => setSearchTerm(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter") {
+                            handleSearch();
+                            setIsSearchOpen(false);
+                          }
+                        }}
+                        placeholder="Tìm kiếm trái cây, combo..."
+                        className="ml-2.5 w-full bg-transparent text-sm text-foreground placeholder:text-foreground/40 focus:outline-none"
+                        autoFocus
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+
+            <Link
+              to="/cart"
+              className="p-2 text-foreground/80 hover:text-primary transition-colors relative group"
+              aria-label="Giỏ hàng"
+            >
+              <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
+                {totalQuantity}
+              </span>
+            </Link>
+
+            {userId ? (
+              <div className="relative hidden sm:flex" ref={userMenuRef}>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+                  onClick={() => setUserMenuOpen((open) => !open)}
+                >
+                  <User className="w-4 h-4" />
+                  <span className="max-w-35 truncate">{userName}</span>
                   <ChevronDown className="w-4 h-4" />
-                </Link>
+                </button>
 
                 <AnimatePresence>
-                  {fruitMenuOpen && (
+                  {userMenuOpen && (
                     <motion.div
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
-                      className="absolute top-full left-0 mt-3 w-72 rounded-3xl border border-border/60 bg-white shadow-2xl overflow-hidden"
+                      className="absolute right-0 top-full mt-3 w-56 rounded-2xl border border-border/60 bg-white shadow-2xl overflow-hidden"
                     >
-                      {(fruitCategories.length
-                        ? fruitCategories
-                        : fruitCategoryMenu
-                      ).map((category) => (
-                        <Link
-                          key={category.slug}
-                          to={`/category/${category.slug}`}
-                          className="block px-5 py-3 text-sm font-medium text-foreground/80 hover:bg-primary hover:text-white transition-colors"
-                          onClick={() => setFruitMenuOpen(false)}
-                        >
-                          {category.name}
-                        </Link>
-                      ))}
+                      <Link
+                        to="/profile"
+                        className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:bg-primary hover:text-white transition-colors"
+                        onClick={() => setUserMenuOpen(false)}
+                      >
+                        <User className="w-4 h-4" />
+                        Thông tin cá nhân
+                      </Link>
+                      <button
+                        type="button"
+                        className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:bg-destructive hover:text-white transition-colors"
+                        onClick={handleLogout}
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Đăng xuất
+                      </button>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             ) : (
-              <a
-                key={link.name}
-                href={link.href}
-                className="text-foreground/80 hover:text-primary font-medium transition-colors relative group text-sm uppercase tracking-wider"
-              >
-                {link.name}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full rounded-full"></span>
-              </a>
-            ),
-          )}
-        </nav>
-
-        <div className="flex items-center gap-3 shrink-0">
-          <Link
-            to="/cart"
-            className="p-2 text-foreground/80 hover:text-primary transition-colors relative group"
-            aria-label="Giỏ hàng"
-          >
-            <ShoppingBag className="w-5 h-5 group-hover:scale-110 transition-transform" />
-            <span className="absolute top-0 right-0 w-4 h-4 bg-secondary text-secondary-foreground text-[10px] font-bold rounded-full flex items-center justify-center shadow-sm">
-              {totalQuantity}
-            </span>
-          </Link>
-
-          {userId ? (
-            <div className="relative hidden sm:flex" ref={userMenuRef}>
-              <button
-                type="button"
-                className="flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
-                onClick={() => setUserMenuOpen((open) => !open)}
+              <Link
+                to="/login"
+                className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
               >
                 <User className="w-4 h-4" />
-                <span className="max-w-35 truncate">{userName}</span>
-                <ChevronDown className="w-4 h-4" />
-              </button>
+                <span>Tài khoản</span>
+              </Link>
+            )}
 
-              <AnimatePresence>
-                {userMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    className="absolute right-0 top-full mt-3 w-56 rounded-2xl border border-border/60 bg-white shadow-2xl overflow-hidden"
-                  >
-                    <Link
-                      to="/profile"
-                      className="flex items-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:bg-primary hover:text-white transition-colors"
-                      onClick={() => setUserMenuOpen(false)}
-                    >
-                      <User className="w-4 h-4" />
-                      Thông tin cá nhân
-                    </Link>
-                    <button
-                      type="button"
-                      className="w-full flex items-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:bg-destructive hover:text-white transition-colors"
-                      onClick={handleLogout}
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Đăng xuất
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <Link
-              to="/login"
-              className="hidden sm:flex items-center gap-2 bg-foreground text-background hover:bg-primary hover:text-white px-5 py-2 rounded-full transition-all duration-300 shadow-md hover:shadow-lg text-sm font-medium"
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="md:hidden p-2 text-foreground hover:text-primary transition-colors shrink-0"
+              aria-label="Mở menu"
             >
-              <User className="w-4 h-4" />
-              <span>Tài khoản</span>
-            </Link>
-          )}
-
-          <button
-            onClick={() => setMobileMenuOpen(true)}
-            className="md:hidden p-2 text-foreground hover:text-primary transition-colors shrink-0"
-            aria-label="Mở menu"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </div>
-      </div>
+
+
       </header>
 
       {/* Mobile Navigation Drawer */}
@@ -371,7 +421,7 @@ const Header = () => {
 
               {/* Mobile Search Bar */}
               <div className="mt-6">
-                <div className="flex items-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2.5">
+                <div className="flex items-center rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5">
                   <Search className="w-4 h-4 text-slate-400 shrink-0" />
                   <input
                     type="text"
