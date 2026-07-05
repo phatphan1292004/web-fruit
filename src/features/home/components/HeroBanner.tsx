@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Leaf, Truck, ShieldCheck } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const stats = [
   { icon: ShieldCheck, text: '100% hữu cơ', color: 'text-primary' },
@@ -64,13 +65,13 @@ const HeroBanner = () => {
              transition={{ duration: 0.6, delay: 0.3 }}
              className="flex flex-wrap gap-3 pt-2"
            >
-             <button className="bg-primary text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full font-semibold text-sm sm:text-lg shadow-lg hover:shadow-xl hover:bg-primary/90 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 group">
+             <Link to="/category" className="bg-primary text-white px-6 py-3 sm:px-8 sm:py-4 rounded-full font-semibold text-sm sm:text-lg shadow-lg hover:shadow-xl hover:bg-primary/90 hover:-translate-y-1 transition-all duration-300 flex items-center gap-2 group">
                Mua ngay
                <ArrowRight className="w-4 h-4 sm:w-5 h-5 group-hover:translate-x-1 transition-transform" />
-             </button>
-             <button className="hidden sm:block bg-white text-foreground border border-border px-8 py-4 rounded-full font-semibold text-lg shadow-sm hover:shadow-md hover:bg-muted transition-all duration-300">
+             </Link>
+             <Link to="/category" className="hidden sm:inline-block bg-white text-foreground border border-border px-8 py-4 rounded-full font-semibold text-lg shadow-sm hover:shadow-md hover:bg-muted transition-all duration-300 text-center">
                Khám phá menu
-             </button>
+             </Link>
            </motion.div>
  
            <motion.div

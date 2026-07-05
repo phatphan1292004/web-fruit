@@ -15,3 +15,14 @@ export type CartTotals = {
   discount: number;
   total: number;
 };
+
+export type VoucherItem = {
+  id?: string | number;
+  _id?: string;
+  code: string;
+  condition: string;
+  expiry: string;
+  discountAmount?: number;
+  minOrderValue?: number;
+  isActive?: boolean;
+};

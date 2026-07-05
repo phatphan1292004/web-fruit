@@ -1,6 +1,7 @@
 import { create } from "zustand";
+import { toast } from "react-toastify";
 import { previewOrder } from "../../../lib/api/orders";
-import type { CartItem, CartTotals } from "../components/types";
+import type { CartItem, CartTotals, VoucherItem } from "../components/types";
 
 type CartItemInput = Omit<CartItem, "quantity"> & {
   quantity?: number;
@@ -19,7 +20,7 @@ export type ShippingInfo = {
 
 type CartState = {
   items: CartItem[];
-  addItem: (item: CartItemInput) => void;
+  addItem: (item: CartItemInput, showToast?: boolean) => void;
   increase: (id: number) => void;
   decrease: (id: number) => void;
   remove: (id: number) => void;
@@ -31,6 +32,8 @@ type CartState = {
   shippingInfo: ShippingInfo;
   setShippingInfo: (info: Partial<ShippingInfo>) => void;
   resetShippingInfo: () => void;
+  appliedVoucher: VoucherItem | null;
+  setAppliedVoucher: (voucher: VoucherItem | null) => void;
 };
 
 export const useCartStore = create<CartState>((set, get) => ({
@@ -48,10 +51,15 @@ export const useCartStore = create<CartState>((set, get) => ({
     addressDetail: "",
     note: "",
   },
-  addItem: (item) =>
+  addItem: (item, showToast = true) =>
     set((state) => {
       const quantity = item.quantity ?? 1;
       const existing = state.items.find((entry) => entry.id === item.id);
+      
+      if (showToast) {
+        toast.success(`Đã thêm "${item.name}" vào giỏ hàng!`);
+      }
+
       if (existing) {
         return {
           items: state.items.map((entry) =>
@@ -90,7 +98,14 @@ export const useCartStore = create<CartState>((set, get) => ({
       0
     );
     const shipping = 0;
-    const discount = 0;
+    const voucher = get().appliedVoucher;
+    let discount = 0;
+    if (voucher) {
+      const minVal = voucher.minOrderValue ?? 0;
+      if (subtotal >= minVal) {
+        discount = voucher.discountAmount ?? 0;
+      }
+    }
 
     return {
       subtotal,
@@ -114,13 +129,27 @@ export const useCartStore = create<CartState>((set, get) => ({
     }
 
     set({ isPreviewLoading: true });
+    
+    const subtotal = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+    const voucher = get().appliedVoucher;
+    let discount = 0;
+    if (voucher) {
+      const minVal = voucher.minOrderValue ?? 0;
+      if (subtotal >= minVal) {
+        discount = voucher.discountAmount ?? 0;
+      }
+    }
+
     const payload = {
       items: items.map((item) => ({
         productId: item.productId ?? String(item.id),
         quantity: item.quantity,
       })),
       shippingFee: 0,
-      discount: 0,
+      discount,
     };
 
     try {
@@ -163,4 +192,9 @@ export const useCartStore = create<CartState>((set, get) => ({
         note: "",
       },
     }),
+  appliedVoucher: null,
+  setAppliedVoucher: (voucher) => {
+    set({ appliedVoucher: voucher });
+    get().fetchPreview();
+  },
 }));
