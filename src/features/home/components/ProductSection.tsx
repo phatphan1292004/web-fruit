@@ -45,7 +45,7 @@ const ProductSection = () => {
     };
   }, [activeCategory]);
 
-  const visibleProducts = useMemo(() => products.slice(0, 8), [products]);
+  const visibleProducts = useMemo(() => products.slice(0, 12), [products]);
 
   return (
     <section className="py-24 bg-muted/10 relative" id="fruits">
@@ -79,7 +79,7 @@ const ProductSection = () => {
         <div className="relative">
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
             {loading
-              ? Array.from({ length: 8 }).map((_, index) => (
+              ? Array.from({ length: 12 }).map((_, index) => (
                   <div key={index} className="rounded-2xl bg-white h-80 sm:h-105 animate-pulse" />
                 ))
               : visibleProducts.map((product) => {
