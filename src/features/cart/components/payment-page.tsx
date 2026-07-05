@@ -40,21 +40,6 @@ const paymentOptions = [
     description: 'Thanh toán online qua cổng VNPAY.',
   },
 ];
-
-const tierLabels: Record<string, string> = {
-  bronze: 'Đồng (Bronze)',
-  silver: 'Bạc (Silver)',
-  gold: 'Vàng (Gold)',
-  platinum: 'Kim cương (Platinum)'
-};
-
-const tierColors: Record<string, string> = {
-  bronze: 'bg-amber-100 text-amber-800 border-amber-200',
-  silver: 'bg-slate-100 text-slate-800 border-slate-200',
-  gold: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-  platinum: 'bg-purple-100 text-purple-800 border-purple-200'
-};
-
 const PaymentPage = () => {
   const navigate = useNavigate();
   const [selected, setSelected] = useState('cod');
@@ -100,6 +85,16 @@ const PaymentPage = () => {
   }, []);
 
   const runPromoEngine = async (codeStr?: string, walletVId?: string) => {
+    // Reset/un-apply voucher if both arguments are empty
+    if (!codeStr && !walletVId) {
+      setDiscountOverride(null);
+      setTotalOverride(null);
+      setDiscountBreakdown(null);
+      setEngineAppliedVoucherId(null);
+      setSelectedWalletVoucherId(null);
+      return;
+    }
+
     const firebaseUid = readCookie('userId') ?? undefined;
     const orderItems = items.map((item) => ({
       productId: item.productId ?? String(item.id),
@@ -316,95 +311,6 @@ const PaymentPage = () => {
                 </div>
               </div>
 
-              {/* Promotions Engine and Voucher Wallet */}
-              <div className="glass rounded-3xl border border-border/60 p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)] space-y-6">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <h3 className="text-lg font-bold text-foreground">Mã giảm giá & Hạng thành viên</h3>
-                  {walletData?.tier && (
-                    <span className={`inline-block px-3 py-1 text-xs font-bold border rounded-full ${tierColors[walletData.tier] || ''}`}>
-                      Thành viên: {tierLabels[walletData.tier]}
-                    </span>
-                  )}
-                </div>
-
-                {/* Direct code apply input */}
-                <div className="flex gap-3 max-w-md">
-                  <input
-                    type="text"
-                    value={voucherCodeInput}
-                    onChange={(e) => setVoucherCodeInput(e.target.value)}
-                    placeholder="Nhập mã voucher (ví dụ: SUMMER50)..."
-                    className="flex-1 px-4 py-2.5 rounded-xl border border-border bg-white text-sm outline-none uppercase font-mono"
-                  />
-                  <button
-                    onClick={() => runPromoEngine(voucherCodeInput)}
-                    className="px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors shadow-sm"
-                  >
-                    Áp dụng
-                  </button>
-                </div>
-
-                {/* Vouchers list from wallet */}
-                {walletData && walletData.vouchers.length > 0 && (
-                  <div className="space-y-3">
-                    <p className="text-xs font-bold text-foreground/50 uppercase tracking-wider">Ví Voucher của bạn</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {walletData.vouchers.map((v) => {
-                        const isSelected = selectedWalletVoucherId === v.id;
-                        return (
-                          <div 
-                            key={v.id} 
-                            onClick={() => runPromoEngine(undefined, v.id)}
-                            className={`p-4 rounded-2xl border bg-white/50 cursor-pointer transition-all flex flex-col justify-between gap-2 hover:shadow-md ${
-                              isSelected ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border/60'
-                            }`}
-                          >
-                            <div>
-                              <p className="font-bold text-foreground text-sm flex items-center justify-between">
-                                <span>{v.name}</span>
-                                {v.code && <span className="text-xs bg-slate-100 px-2 py-0.5 rounded font-mono text-slate-600">{v.code}</span>}
-                              </p>
-                              {v.description && <p className="text-xs text-foreground/60 mt-1">{v.description}</p>}
-                            </div>
-                            <div className="flex justify-between items-center mt-2 border-t border-dashed border-border/60 pt-2">
-                              <span className="text-[10px] text-foreground/40 font-medium">Hạn dùng: {new Date(v.expiresAt).toLocaleDateString('vi-VN')}</span>
-                              <span className={`text-xs font-bold ${isSelected ? 'text-primary' : 'text-foreground/75'}`}>
-                                {isSelected ? 'Đang chọn' : 'Áp dụng'}
-                              </span>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
-                {/* Custom discount breakdown breakdown */}
-                {discountBreakdown && (discountBreakdown.flashSale > 0 || discountBreakdown.combo > 0 || discountBreakdown.voucher > 0) && (
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 text-sm space-y-2">
-                    <p className="font-bold text-foreground/75 text-xs uppercase tracking-wider mb-2">Chi tiết ưu đãi áp dụng:</p>
-                    {discountBreakdown.flashSale > 0 && (
-                      <div className="flex justify-between text-foreground/80">
-                        <span>Giảm giá trực tiếp Flash Sale:</span>
-                        <span className="font-semibold text-rose-600">-{formatCurrency(discountBreakdown.flashSale)}</span>
-                      </div>
-                    )}
-                    {discountBreakdown.combo > 0 && (
-                      <div className="flex justify-between text-foreground/80">
-                        <span>Giảm giá Combo sản phẩm:</span>
-                        <span className="font-semibold text-rose-600">-{formatCurrency(discountBreakdown.combo)}</span>
-                      </div>
-                    )}
-                    {discountBreakdown.voucher > 0 && (
-                      <div className="flex justify-between text-foreground/80">
-                        <span>Giảm giá mã Voucher:</span>
-                        <span className="font-semibold text-rose-600">-{formatCurrency(discountBreakdown.voucher)}</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
               {/* Payment Methods */}
               <div className="glass rounded-3xl border border-border/60 p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
                 <h3 className="text-lg font-bold text-foreground mb-6">Phương thức thanh toán</h3>
@@ -488,6 +394,14 @@ const PaymentPage = () => {
               onPrimaryClick={handleSubmit}
               secondaryLabel="Quay lại giao hàng"
               secondaryHref="/checkout/shipping"
+              isCheckoutPage={true}
+              walletData={walletData}
+              voucherCodeInput={voucherCodeInput}
+              setVoucherCodeInput={setVoucherCodeInput}
+              selectedWalletVoucherId={selectedWalletVoucherId}
+              engineAppliedVoucherId={engineAppliedVoucherId}
+              onApplyVoucher={runPromoEngine}
+              discountBreakdown={discountBreakdown}
             />
           </div>
         </div>

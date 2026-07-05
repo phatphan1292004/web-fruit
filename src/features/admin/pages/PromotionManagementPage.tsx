@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   FiPlus, FiEdit2, FiTrash2, FiBarChart2, FiToggleLeft, FiToggleRight, FiPercent,
   FiTag, FiZap, FiClock, FiDollarSign, FiInfo, FiAlertTriangle, FiSave, FiCheckCircle
@@ -43,6 +43,17 @@ const statusLabels: Record<string, { label: string; color: string; bg: string }>
 const inputCls = 'w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-800 outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-50 transition-all';
 const labelCls = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1.5';
 
+// ─── Reusable section card wrapper (Declared globally to avoid re-creation & focus loss on render) ───
+const SectionCard = ({ title, icon, color, children }: { title: string; icon?: React.ReactNode; color: string; children: React.ReactNode }) => (
+  <div className={`rounded-xl border overflow-hidden ${color === 'slate' ? 'border-slate-200' : color === 'blue' ? 'border-blue-200' : color === 'emerald' ? 'border-emerald-200' : 'border-orange-200'}`}>
+    <div className={`px-5 py-3 border-b flex items-center gap-2 ${color === 'slate' ? 'bg-slate-50 border-slate-200' : color === 'blue' ? 'bg-blue-50 border-blue-100' : color === 'emerald' ? 'bg-emerald-50 border-emerald-100' : 'bg-orange-50 border-orange-100'}`}>
+      {icon && <span className={`text-base ${color === 'slate' ? 'text-slate-500' : color === 'blue' ? 'text-blue-500' : color === 'emerald' ? 'text-emerald-500' : 'text-orange-500'}`}>{icon}</span>}
+      <span className={`text-sm font-bold ${color === 'slate' ? 'text-slate-700' : color === 'blue' ? 'text-blue-700' : color === 'emerald' ? 'text-emerald-700' : 'text-orange-700'}`}>{title}</span>
+    </div>
+    <div className="p-5">{children}</div>
+  </div>
+);
+
 const PromotionManagementPage = () => {
   const [promotions, setPromotions] = useState<FrontendPromotion[]>([]);
   const [products, setProducts] = useState<BackendProduct[]>([]);
@@ -67,10 +78,10 @@ const PromotionManagementPage = () => {
   const [endDate, setEndDate] = useState('');
   const [usageLimit, setUsageLimit] = useState<number | ''>('');
   const [discountType, setDiscountType] = useState<'percentage' | 'fixed_amount' | 'fixed_price'>('percentage');
-  const [discountValue, setDiscountValue] = useState(0);
+  const [discountValue, setDiscountValue] = useState<number | ''>('');
   const [maxDiscountAmount, setMaxDiscountAmount] = useState<number | ''>('');
-  const [minOrderValue, setMinOrderValue] = useState(0);
-  const [limitPerAccount, setLimitPerAccount] = useState(1);
+  const [minOrderValue, setMinOrderValue] = useState<number | ''>('');
+  const [limitPerAccount, setLimitPerAccount] = useState<number | ''>(1);
   const [targetMemberTier, setTargetMemberTier] = useState<'bronze' | 'silver' | 'gold' | 'platinum'>('bronze');
   const [selectedProducts, setSelectedProducts] = useState<Array<{ productId: string; customPrice: number }>>([]);
 
@@ -154,10 +165,10 @@ const PromotionManagementPage = () => {
       usageLimit: usageLimit === '' ? undefined : Number(usageLimit),
       config: {
         discountType,
-        discountValue: Number(discountValue),
+        discountValue: discountValue === '' ? 0 : Number(discountValue),
         maxDiscountAmount: maxDiscountAmount === '' ? undefined : Number(maxDiscountAmount),
-        minOrderValue: Number(minOrderValue),
-        limitPerAccount: Number(limitPerAccount),
+        minOrderValue: minOrderValue === '' ? 0 : Number(minOrderValue),
+        limitPerAccount: limitPerAccount === '' ? 1 : Number(limitPerAccount),
       }
     };
 
@@ -194,8 +205,8 @@ const PromotionManagementPage = () => {
   const resetForm = () => {
     setName(''); setDescription(''); setType('voucher_code'); setCode('');
     setStartDate(''); setEndDate(''); setUsageLimit('');
-    setDiscountType('percentage'); setDiscountValue(0); setMaxDiscountAmount('');
-    setMinOrderValue(0); setLimitPerAccount(1); setTargetMemberTier('bronze');
+    setDiscountType('percentage'); setDiscountValue(''); setMaxDiscountAmount('');
+    setMinOrderValue(''); setLimitPerAccount(1); setTargetMemberTier('bronze');
     setSelectedProducts([]); setShowAddModal(false); setEditTarget(null);
   };
 
@@ -208,7 +219,7 @@ const PromotionManagementPage = () => {
     setDiscountType(promo.config.discountType || 'percentage');
     setDiscountValue(promo.config.discountValue);
     setMaxDiscountAmount(promo.config.maxDiscountAmount ?? '');
-    setMinOrderValue(promo.config.minOrderValue ?? 0);
+    setMinOrderValue(promo.config.minOrderValue ?? '');
     setLimitPerAccount(promo.config.limitPerAccount ?? 1);
     setTargetMemberTier(promo.config.targetMemberTier || 'bronze');
     setSelectedProducts(promo.config.products?.map(p => ({ productId: p.productId, customPrice: p.customPrice ?? 0 })) ?? []);
@@ -226,7 +237,7 @@ const PromotionManagementPage = () => {
   const pagination = usePagination({ totalItems: filteredList.length, pageSize: PAGE_SIZE });
   const paginatedList = filteredList.slice(pagination.startIndex, pagination.endIndex);
 
-  const columns: Column<FrontendPromotion>[] = [
+  const columns = useMemo<Column<FrontendPromotion>[]>(() => [
     {
       key: 'name',
       label: 'Chương trình',
@@ -312,18 +323,9 @@ const PromotionManagementPage = () => {
         </div>
       )
     }
-  ];
+  ], [promotions, typeLabels, statusLabels]);
 
-  // ─── Reusable section card wrapper ───
-  const SectionCard = ({ title, icon, color, children }: { title: string; icon?: React.ReactNode; color: string; children: React.ReactNode }) => (
-    <div className={`rounded-xl border overflow-hidden ${color === 'slate' ? 'border-slate-200' : color === 'blue' ? 'border-blue-200' : color === 'emerald' ? 'border-emerald-200' : 'border-orange-200'}`}>
-      <div className={`px-5 py-3 border-b flex items-center gap-2 ${color === 'slate' ? 'bg-slate-50 border-slate-200' : color === 'blue' ? 'bg-blue-50 border-blue-100' : color === 'emerald' ? 'bg-emerald-50 border-emerald-100' : 'bg-orange-50 border-orange-100'}`}>
-        {icon && <span className={`text-base ${color === 'slate' ? 'text-slate-500' : color === 'blue' ? 'text-blue-500' : color === 'emerald' ? 'text-emerald-500' : 'text-orange-500'}`}>{icon}</span>}
-        <span className={`text-sm font-bold ${color === 'slate' ? 'text-slate-700' : color === 'blue' ? 'text-blue-700' : color === 'emerald' ? 'text-emerald-700' : 'text-orange-700'}`}>{title}</span>
-      </div>
-      <div className="p-5">{children}</div>
-    </div>
-  );
+
 
   return (
     <div className="space-y-6">
@@ -528,7 +530,7 @@ const PromotionManagementPage = () => {
                       <label className={labelCls}>Số lần / tài khoản</label>
                       <input
                         type="number" value={limitPerAccount}
-                        onChange={(e) => setLimitPerAccount(Number(e.target.value))}
+                        onChange={(e) => setLimitPerAccount(e.target.value === '' ? '' : Number(e.target.value))}
                         className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-50 transition-all"
                       />
                     </div>
@@ -542,12 +544,13 @@ const PromotionManagementPage = () => {
 
               {/* Voucher / New User / Member Tier discount config */}
               {(type === 'voucher_code' || type === 'new_user' || type === 'member_tier') && (
-                <SectionCard title="Cấu hình ưu đãi" icon={<FiDollarSign />} color="emerald">
+                <SectionCard key="voucher-config-card" title="Cấu hình ưu đãi" icon={<FiDollarSign />} color="emerald">
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className={labelCls}>Cách thức giảm giá</label>
+                        <label htmlFor="discountTypeSelect" className={labelCls}>Cách thức giảm giá</label>
                         <select
+                          id="discountTypeSelect"
                           value={discountType}
                           onChange={(e) => setDiscountType(e.target.value as any)}
                           className={inputCls}
@@ -557,12 +560,13 @@ const PromotionManagementPage = () => {
                         </select>
                       </div>
                       <div>
-                        <label className={labelCls}>
+                        <label htmlFor="discountValueInput" className={labelCls}>
                           Giá trị giảm {discountType === 'percentage' ? '(%)' : '(đ)'} <span className="text-red-400 normal-case">*</span>
                         </label>
                         <input
+                          id="discountValueInput"
                           type="number" required min={0} value={discountValue}
-                          onChange={(e) => setDiscountValue(Number(e.target.value))}
+                          onChange={(e) => setDiscountValue(e.target.value === '' ? '' : Number(e.target.value))}
                           placeholder={discountType === 'percentage' ? 'Ví dụ: 20' : 'Ví dụ: 50000'}
                           className={inputCls}
                         />
@@ -570,8 +574,9 @@ const PromotionManagementPage = () => {
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <label className={labelCls}>Giảm tối đa (đ)</label>
+                        <label htmlFor="maxDiscountInput" className={labelCls}>Giảm tối đa (đ)</label>
                         <input
+                          id="maxDiscountInput"
                           type="number" value={maxDiscountAmount}
                           onChange={(e) => setMaxDiscountAmount(e.target.value === '' ? '' : Number(e.target.value))}
                           placeholder="Không giới hạn"
@@ -580,10 +585,11 @@ const PromotionManagementPage = () => {
                         <p className="text-xs text-slate-400 mt-1.5 flex items-center gap-1"><FiInfo className="text-xs" /> Áp dụng khi giảm theo %</p>
                       </div>
                       <div>
-                        <label className={labelCls}>Đơn tối thiểu (đ)</label>
+                        <label htmlFor="minOrderInput" className={labelCls}>Đơn tối thiểu (đ)</label>
                         <input
+                          id="minOrderInput"
                           type="number" value={minOrderValue}
-                          onChange={(e) => setMinOrderValue(Number(e.target.value))}
+                          onChange={(e) => setMinOrderValue(e.target.value === '' ? '' : Number(e.target.value))}
                           placeholder="0 = không giới hạn"
                           className={inputCls}
                         />
@@ -634,9 +640,9 @@ const PromotionManagementPage = () => {
                               <input
                                 type="number"
                                 placeholder="Giá sale..."
-                                value={matched?.customPrice ?? ''}
+                                value={matched?.customPrice === 0 ? '' : (matched?.customPrice ?? '')}
                                 onChange={(e) => {
-                                  const val = Number(e.target.value);
+                                  const val = e.target.value === '' ? 0 : Number(e.target.value);
                                   setSelectedProducts(prev => prev.map(sp => sp.productId === p._id ? { ...sp, customPrice: val } : sp));
                                 }}
                                 className="ml-2 w-28 px-3 py-1.5 border border-orange-300 rounded-lg text-xs text-orange-700 font-semibold outline-none focus:ring-2 focus:ring-orange-100 flex-shrink-0"
@@ -671,7 +677,7 @@ const PromotionManagementPage = () => {
                         <label className={labelCls}>Giá trị <span className="text-red-400 normal-case">*</span></label>
                         <input
                           type="number" required min={0} value={discountValue}
-                          onChange={(e) => setDiscountValue(Number(e.target.value))}
+                          onChange={(e) => setDiscountValue(e.target.value === '' ? '' : Number(e.target.value))}
                           className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white outline-none focus:border-orange-400"
                         />
                       </div>
@@ -680,7 +686,7 @@ const PromotionManagementPage = () => {
                       <label className={labelCls}>Đơn tối thiểu (đ)</label>
                       <input
                         type="number" value={minOrderValue}
-                        onChange={(e) => setMinOrderValue(Number(e.target.value))}
+                        onChange={(e) => setMinOrderValue(e.target.value === '' ? '' : Number(e.target.value))}
                         placeholder="0 = không giới hạn"
                         className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white outline-none focus:border-orange-400"
                       />

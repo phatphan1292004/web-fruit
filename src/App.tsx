@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import HomePage from "./features/home/components/HomePage";
+import PromotionsPage from "./features/home/components/PromotionsPage";
 import LoginPage from "./features/login/components/login-page";
 import RegisterPage from "./features/register/components/register-page";
 import { CartPage, PaymentPage, ShippingPage, VNPayReturnPage } from "./features/cart";
@@ -95,6 +96,7 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/promotions" element={<PromotionsPage />} />
         <Route path="/category" element={<CategoryPage />} />
         <Route path="/category/:categorySlug" element={<CategoryPage />} />
         <Route path="/product/:slug" element={<ProductDetailPage />} />

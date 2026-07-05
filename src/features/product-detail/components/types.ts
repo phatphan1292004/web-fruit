@@ -23,6 +23,14 @@ export type ProductDetail = {
   nutrition: string[];
   storageTips: string[];
   gallery: string[];
+  flashSaleInfo?: {
+    onSale: boolean;
+    salePrice: number;
+    originalPrice: number;
+    discountPercent: number;
+    promotionName: string;
+    endDate: string;
+  };
 };
 
 export type ProductReview = {
