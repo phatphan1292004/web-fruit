@@ -80,12 +80,21 @@ const ProfilePage = () => {
         if (!isActive) return;
         if (wallet) {
           setUserTier(wallet.tier);
-          const mapped = wallet.vouchers.map(v => ({
-            id: v.id as any,
-            code: v.code,
-            condition: v.description || `Đơn từ ${(v.config?.minOrderValue ?? 0).toLocaleString('vi-VN')}đ`,
-            expiry: new Date(v.expiresAt).toLocaleDateString('vi-VN')
-          }));
+          const mapped = wallet.vouchers.map(v => {
+            const discVal = v.config?.discountValue ?? 0;
+            const discountInfo = v.config?.discountType === 'percentage'
+              ? `Giảm ${discVal}%`
+              : `Giảm ${discVal.toLocaleString('vi-VN')}đ`;
+            return {
+              id: v.id || (v as any)._id,
+              code: v.code,
+              name: v.name,
+              type: v.type,
+              discountInfo,
+              condition: v.description || `Đơn tối thiểu ${(v.config?.minOrderValue ?? 0).toLocaleString('vi-VN')}đ`,
+              expiry: new Date(v.expiresAt).toLocaleDateString('vi-VN')
+            };
+          });
           setVouchers(mapped);
         }
       } catch (err) {

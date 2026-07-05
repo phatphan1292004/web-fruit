@@ -171,6 +171,32 @@ export async function fetchPublicFlashSales(): Promise<PublicFlashSale[]> {
   return get<PublicFlashSale[]>('/promotions/public/flash-sales', {}, []);
 }
 
-export async function fetchPublicVouchers(): Promise<PublicVoucherPromo[]> {
-  return get<PublicVoucherPromo[]>('/promotions/public/vouchers', {}, []);
+export async function fetchPublicVouchers(firebaseUid?: string): Promise<PublicVoucherPromo[]> {
+  return get<PublicVoucherPromo[]>('/promotions/public/vouchers', { firebaseUid }, []);
 }
+
+export interface ProductSalePriceInfo {
+  onSale: boolean;
+  salePrice: number | null;
+  originalPrice: number | null;
+  discountPercent: number;
+  promotionName: string | null;
+  endDate: string | null;
+}
+
+export async function fetchPublicProductSalePrice(productId: string): Promise<ProductSalePriceInfo> {
+  return get<ProductSalePriceInfo>(`/promotions/public/price/${productId}`, {}, {
+    onSale: false,
+    salePrice: null,
+    originalPrice: null,
+    discountPercent: 0,
+    promotionName: null,
+    endDate: null
+  });
+}
+
+export async function claimVoucher(promotionId: string, firebaseUid: string): Promise<{ message: string; voucherId?: string } | null> {
+  setupAuth();
+  return store.post<any, any>('/promotions/claim', { promotionId, firebaseUid });
+}
+

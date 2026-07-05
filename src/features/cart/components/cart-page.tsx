@@ -78,6 +78,7 @@ const CartPage = () => {
               primaryHref="/checkout/shipping"
               secondaryLabel="Tiếp tục mua sắm"
               secondaryHref="/"
+              hideVoucherSection={true}
             />
           </div>
         </div>

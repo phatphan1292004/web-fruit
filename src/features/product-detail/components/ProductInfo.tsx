@@ -1,8 +1,38 @@
-import { FiHeart, FiShare2, FiShield, FiTruck, FiRefreshCw, FiStar, FiClock } from 'react-icons/fi';
+import { FiHeart, FiShare2, FiShield, FiTruck, FiRefreshCw, FiStar, FiClock, FiZap } from 'react-icons/fi';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import QuantitySelector from './QuantitySelector';
 import type { ProductDetail } from './types';
+
+function ProductInfoCountdown({ endDate }: { endDate: string }) {
+  const calc = () => {
+    const diff = Math.max(0, new Date(endDate).getTime() - Date.now());
+    return {
+      h: Math.floor(diff / 3_600_000),
+      m: Math.floor((diff % 3_600_000) / 60_000),
+      s: Math.floor((diff % 60_000) / 1_000),
+    };
+  };
+
+  const [time, setTime] = useState(calc);
+
+  useEffect(() => {
+    const id = setInterval(() => setTime(calc()), 1000);
+    return () => clearInterval(id);
+  }, [endDate]);
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return (
+    <div className="flex items-center gap-1.5 bg-white/20 px-3 py-1 rounded-lg">
+      <FiClock className="text-white text-xs animate-pulse" />
+      <span className="font-mono text-white text-xs font-bold tracking-wider">
+        {pad(time.h)}:{pad(time.m)}:{pad(time.s)}
+      </span>
+    </div>
+  );
+}
 
 type ProductInfoProps = {
   product: ProductDetail;
@@ -22,8 +52,15 @@ const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart, o
   return (
     <div className="space-y-6">
       <div className="space-y-3">
-        <p className="text-sm uppercase tracking-wider text-primary font-semibold">{product.category}</p>
-        <h1 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">{product.name}</h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm uppercase tracking-wider text-primary font-semibold">{product.category}</p>
+          {product.flashSaleInfo?.onSale && (
+            <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full animate-bounce flex items-center gap-1">
+              <FiZap className="fill-red-600 text-[10px]" /> FLASH SALE
+            </span>
+          )}
+        </div>
+        <h1 className="text-3xl md:text-5xl font-bold text-slate-800 leading-tight">{product.name}</h1>
 
         <div className="flex flex-wrap items-center gap-3 text-sm text-foreground/70">
           <div className="flex items-center gap-1">
@@ -35,11 +72,38 @@ const ProductInfo = ({ product, quantity, onIncrease, onDecrease, onAddToCart, o
         </div>
       </div>
 
+      {product.flashSaleInfo?.onSale && (
+        <div className="rounded-3xl bg-gradient-to-r from-red-500 via-rose-500 to-orange-500 p-4 text-white flex flex-wrap items-center justify-between gap-3 shadow-lg shadow-red-100">
+          <div className="flex items-center gap-2">
+            <FiZap className="text-white text-lg fill-white animate-pulse" />
+            <div>
+              <p className="text-xs uppercase font-extrabold tracking-widest text-red-100">Đang diễn ra</p>
+              <h4 className="text-sm font-bold">{product.flashSaleInfo.promotionName}</h4>
+            </div>
+          </div>
+          <ProductInfoCountdown endDate={product.flashSaleInfo.endDate} />
+        </div>
+      )}
+
       <div className="rounded-4xl bg-white p-6 shadow-[0_12px_40px_rgba(15,23,42,0.08)] border border-border/60 space-y-4">
         <div className="flex flex-wrap items-end gap-4">
-          <span className="text-3xl md:text-4xl font-bold text-primary">{product.price.toLocaleString('vi-VN')}đ</span>
-          <span className="text-lg text-foreground/40 line-through">{product.oldPrice.toLocaleString('vi-VN')}đ</span>
-          <span className="rounded-full bg-rose-100 px-3 py-1 text-rose-600 font-semibold">-{discount}%</span>
+          <span className={`text-3xl md:text-4xl font-extrabold ${product.flashSaleInfo?.onSale ? 'text-red-600' : 'text-primary'}`}>
+            {product.price.toLocaleString('vi-VN')}đ
+          </span>
+          {product.oldPrice > product.price && (
+            <>
+              <span className="text-lg text-foreground/40 line-through">
+                {product.oldPrice.toLocaleString('vi-VN')}đ
+              </span>
+              <span className={`rounded-full px-3 py-1 text-xs font-bold ${
+                product.flashSaleInfo?.onSale 
+                  ? 'bg-red-100 text-red-600 animate-pulse' 
+                  : 'bg-rose-100 text-rose-600'
+              }`}>
+                -{discount}%
+              </span>
+            </>
+          )}
         </div>
 
         <p className="text-foreground/70 leading-relaxed">{product.shortDescription}</p>

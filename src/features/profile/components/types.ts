@@ -51,10 +51,13 @@ export type AddressItem = {
 };
 
 export type VoucherItem = {
-  id: number;
+  id: string | number;
   code: string;
   condition: string;
   expiry: string;
+  name?: string;
+  type?: string;
+  discountInfo?: string;
 };
 
 export type NotificationItem = {

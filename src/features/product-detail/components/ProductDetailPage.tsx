@@ -43,6 +43,7 @@ const mapApiProductToFruit = (p: ApiProduct): FruitProduct => ({
 });
 import { useCartStore } from '../../cart/store/cart-store';
 import { addFavoriteProduct, fetchFavoriteProducts } from '../../profile/servers';
+import { fetchPublicProductSalePrice } from '../../admin/servers/promotions';
 import type { ProductDetail, ProductReview } from './types';
 
 const readCookie = (name: string) => {
@@ -91,6 +92,32 @@ const mapApiProductToDetail = (product: ApiProduct): ProductDetail => ({
   gallery: product.gallery?.length ? product.gallery : [product.image ?? 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=1200&auto=format&fit=crop'],
 });
 
+const enrichWithFlashSalePrice = async (mapped: ProductDetail): Promise<ProductDetail> => {
+  if (!mapped._id) return mapped;
+  try {
+    const saleInfo = await fetchPublicProductSalePrice(mapped._id);
+    if (saleInfo && saleInfo.onSale && saleInfo.salePrice) {
+      return {
+        ...mapped,
+        price: saleInfo.salePrice,
+        oldPrice: saleInfo.originalPrice ?? mapped.oldPrice,
+        badges: Array.from(new Set(['Sale' as const, ...mapped.badges])),
+        flashSaleInfo: {
+          onSale: true,
+          salePrice: saleInfo.salePrice,
+          originalPrice: saleInfo.originalPrice ?? mapped.oldPrice,
+          discountPercent: saleInfo.discountPercent,
+          promotionName: saleInfo.promotionName || 'Flash Sale',
+          endDate: saleInfo.endDate || '',
+        }
+      };
+    }
+  } catch (err) {
+    console.error('Error fetching sale price:', err);
+  }
+  return mapped;
+};
+
 const ProductDetailPage = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
@@ -112,7 +139,8 @@ const ProductDetailPage = () => {
     try {
       const detail = await fetchProductDetail(slug);
       const mapped = mapApiProductToDetail(detail);
-      setProduct(mapped);
+      const enriched = await enrichWithFlashSalePrice(mapped);
+      setProduct(enriched);
       if (detail._id) {
         const list = await fetchReviewsByProductId(detail._id);
         setReviews(list);
@@ -131,7 +159,9 @@ const ProductDetailPage = () => {
       if (!slug) return;
       try {
         const detail = await fetchProductDetail(slug);
-        setProduct(mapApiProductToDetail(detail));
+        const mapped = mapApiProductToDetail(detail);
+        const enriched = await enrichWithFlashSalePrice(mapped);
+        setProduct(enriched);
         if (detail._id) {
           const list = await fetchReviewsByProductId(detail._id);
           setReviews(list);
