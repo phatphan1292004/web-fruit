@@ -11,6 +11,8 @@ import AboutPage from "./features/about/components/AboutPage";
 import ContactPage from "./features/contact/components/ContactPage";
 import ScrollToTop from "./components/layout/ScrollToTop";
 import ChatButtons from "./components/layout/ChatButtons";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // Admin imports
 import AdminLayout from "./features/admin/layouts/AdminLayout";
@@ -118,6 +120,7 @@ function App() {
         </Route>
       </Routes>
       {!isAdminRoute && <ChatButtons />}
+      <ToastContainer position="bottom-right" autoClose={3000} theme="colored" />
     </div>
   );
 }

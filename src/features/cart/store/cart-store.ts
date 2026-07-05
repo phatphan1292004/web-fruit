@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { toast } from "react-toastify";
 import { previewOrder } from "../../../lib/api/orders";
 import type { CartItem, CartTotals, VoucherItem } from "../components/types";
 
@@ -19,7 +20,7 @@ export type ShippingInfo = {
 
 type CartState = {
   items: CartItem[];
-  addItem: (item: CartItemInput) => void;
+  addItem: (item: CartItemInput, showToast?: boolean) => void;
   increase: (id: number) => void;
   decrease: (id: number) => void;
   remove: (id: number) => void;
@@ -50,10 +51,15 @@ export const useCartStore = create<CartState>((set, get) => ({
     addressDetail: "",
     note: "",
   },
-  addItem: (item) =>
+  addItem: (item, showToast = true) =>
     set((state) => {
       const quantity = item.quantity ?? 1;
       const existing = state.items.find((entry) => entry.id === item.id);
+      
+      if (showToast) {
+        toast.success(`Đã thêm "${item.name}" vào giỏ hàng!`);
+      }
+
       if (existing) {
         return {
           items: state.items.map((entry) =>

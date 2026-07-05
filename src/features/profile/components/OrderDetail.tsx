@@ -115,7 +115,6 @@ const OrderDetail = ({ orderId, onClose }: Props) => {
         badge: matchedProduct.label,
         quantity: item.quantity
       });
-      toast.success(`Đã thêm "${matchedProduct.name}" vào giỏ hàng!`);
     } else {
       toast.error(`Không tìm thấy sản phẩm "${item.name}" trên hệ thống.`);
     }
@@ -138,7 +137,7 @@ const OrderDetail = ({ orderId, onClose }: Props) => {
             image: matchedProduct.image || (matchedProduct.gallery?.[0] ?? ''),
             badge: matchedProduct.label,
             quantity: item.quantity
-          });
+          }, false);
           addedCount++;
         }
       });

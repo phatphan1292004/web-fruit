@@ -10,6 +10,7 @@ import WishlistSection from './WishlistSection';
 import AddressSection from './AddressSection';
 import VoucherSection from './VoucherSection';
 import NotificationPanel from './NotificationPanel';
+import ChangePasswordForm from './ChangePasswordForm';
 import { useLocation } from 'react-router-dom';
 import type { ProfileTab, AddressItem, NotificationItem, ProfileOrder, VoucherItem } from './types';
 
@@ -267,11 +268,7 @@ const ProfilePage = () => {
       case 'notifications':
         return <NotificationPanel items={notifications} />;
       case 'password':
-        return (
-          <div className="rounded-[2rem] bg-white p-8 shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-border/60">
-            Tính năng đổi mật khẩu sẽ được thêm ở bước tiếp theo.
-          </div>
-        );
+        return <ChangePasswordForm />;
       default:
         return (
           <PersonalInfoForm
