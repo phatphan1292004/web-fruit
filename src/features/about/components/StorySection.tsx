@@ -26,7 +26,7 @@ const StorySection = () => {
           viewport={{ once: true, margin: '-80px' }}
           className="space-y-6"
         >
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Our Story</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Câu chuyện của chúng tôi</p>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">
             Một hành trình bắt đầu từ tình yêu với thực phẩm sạch
           </h2>

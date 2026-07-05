@@ -20,7 +20,7 @@ const Testimonials = () => {
     <section className="px-4 md:px-8 py-20">
       <div className="container mx-auto">
         <div className="mb-10 max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary mb-3">Customer Voices</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary mb-3">Ý kiến khách hàng</p>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground">Khách hàng nói gì về chúng tôi?</h2>
         </div>
 

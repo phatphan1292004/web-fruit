@@ -35,7 +35,7 @@ const WhyChooseUs = () => {
     <section className="px-4 md:px-8 py-20">
       <div className="container mx-auto">
         <div className="mb-10 max-w-2xl">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary mb-3">Why Choose Us</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary mb-3">Tại sao chọn chúng tôi</p>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">Vì sao khách hàng yêu thích Morning Fruit?</h2>
           <p className="mt-4 text-foreground/70 leading-relaxed">
             Chúng tôi tin rằng một thương hiệu tốt không chỉ bán sản phẩm, mà còn tạo ra cảm giác yên tâm, thân thiện và đáng tin trong từng lần khách hàng lựa chọn.

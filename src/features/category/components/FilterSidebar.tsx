@@ -189,7 +189,7 @@ const FilterSidebar = ({
             onClick={onReset}
             className="w-full rounded-full border border-primary/20 bg-primary/5 text-primary py-3 font-semibold hover:bg-primary hover:text-white transition-all duration-300"
           >
-            Reset filter
+            Đặt lại bộ lọc
           </button>
         </div>
       </div>

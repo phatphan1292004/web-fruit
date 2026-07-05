@@ -19,7 +19,7 @@ const FarmQuality = () => {
           viewport={{ once: true, margin: '-80px' }}
           className="space-y-5"
         >
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Farm & Quality</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Nông trại & Chất lượng</p>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground leading-tight">Chất lượng không chỉ là lời hứa, mà là quy trình</h2>
           <p className="text-foreground/70 leading-relaxed">
             Để giữ được độ tươi ngon tự nhiên, chúng tôi theo dõi từng khâu từ nông trại đến đóng gói. Mỗi bước đều được chuẩn hóa để đảm bảo sản phẩm khi đến tay khách hàng vẫn giữ được vẻ đẹp, hương vị và giá trị dinh dưỡng tốt nhất.

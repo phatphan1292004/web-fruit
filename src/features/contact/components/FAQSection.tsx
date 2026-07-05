@@ -27,7 +27,7 @@ const FAQSection = () => {
     <section id="faq" className="px-4 md:px-8 py-20">
       <div className="container mx-auto max-w-4xl">
         <div className="mb-8 text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">FAQ</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Hỏi đáp</p>
           <h2 className="mt-3 text-3xl md:text-5xl font-bold text-foreground">Câu hỏi thường gặp</h2>
         </div>
 

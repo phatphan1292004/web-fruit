@@ -83,7 +83,7 @@ const ProductSection = () => {
                   <div key={index} className="rounded-2xl bg-white h-80 sm:h-105 animate-pulse" />
                 ))
               : visibleProducts.map((product) => {
-                  const discount = product.badge ? 'Hot' : 'New';
+                  const discount = product.badge ? 'Hot' : 'Mới';
                   return (
                     <div
                       key={product.id}
