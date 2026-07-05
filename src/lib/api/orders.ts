@@ -41,6 +41,8 @@ export type OrderCreatePayload = {
   items: OrderItemInput[];
   shippingFee: number;
   discount: number;
+  appliedVoucherId?: string;
+  userVoucherId?: string;
 };
 
 export type OrderResponse = {
