@@ -4,6 +4,8 @@ import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth } from "../../../integrations/firebase";
 import Layout from "../../../components/layout/layout";
 import { createUser } from "../servers";
+import { toast } from "react-toastify";
+
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -39,11 +41,13 @@ const RegisterPage = () => {
           token,
         );
       }
+      toast.success("Đăng ký tài khoản thành công!");
       navigate("/login");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Đăng ký thất bại.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

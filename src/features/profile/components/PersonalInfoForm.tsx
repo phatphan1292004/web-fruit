@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Edit2, Check, Loader2, User } from 'lucide-react';
 import { updateUserProfile, type ApiUser } from '../servers';
+import { toast } from 'react-toastify';
+
 
 type PersonalInfoFormProps = {
   userProfile: ApiUser | null;
@@ -103,8 +105,10 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
       if (response && onProfileUpdate) {
         onProfileUpdate(response);
       }
+      toast.success('Cập nhật ảnh đại diện thành công!');
     } catch (error) {
       console.error('Failed to update avatar:', error);
+      toast.error('Cập nhật ảnh đại diện thất bại. Vui lòng thử lại!');
     } finally {
       setUpdatingAvatar(null);
     }
@@ -124,9 +128,11 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
       if (response && onProfileUpdate) {
         onProfileUpdate(response);
       }
+      toast.success('Cập nhật thông tin cá nhân thành công!');
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
+      toast.error('Cập nhật thông tin cá nhân thất bại. Vui lòng thử lại!');
     } finally {
       setIsUpdating(false);
     }

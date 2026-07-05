@@ -7,6 +7,8 @@ import OrderSummary from './order-summary';
 import Layout from '../../../components/layout/layout';
 import { createOrder } from '../../../lib/api/orders';
 import { useCartStore } from '../store/cart-store';
+import { toast } from 'react-toastify';
+
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -114,6 +116,7 @@ const PaymentPage = () => {
 
       const result = await createOrder(payload);
       if (result?._id) {
+        toast.success('Đặt hàng thành công!');
         clearCart();
         resetShippingInfo();
         setAppliedVoucher(null);
@@ -122,7 +125,12 @@ const PaymentPage = () => {
         } else {
           navigate('/');
         }
+      } else {
+        toast.error('Đặt hàng thất bại. Vui lòng thử lại!');
       }
+    } catch (error) {
+      console.error('Order submission error:', error);
+      toast.error('Đặt hàng thất bại. Vui lòng thử lại!');
     } finally {
       setIsSubmitting(false);
     }

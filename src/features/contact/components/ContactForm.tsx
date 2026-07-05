@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { FiSend, FiCheckCircle } from 'react-icons/fi';
+import { toast } from 'react-toastify';
+
 
 const initialState = {
   name: '',
@@ -34,6 +36,7 @@ const ContactForm = () => {
     setLoading(true);
     await new Promise((resolve) => window.setTimeout(resolve, 1200));
     setLoading(false);
+    toast.success('Gửi liên hệ thành công! Chúng tôi sẽ phản hồi sớm nhất.');
     setSubmitted(true);
     setForm(initialState);
     window.setTimeout(() => setSubmitted(false), 2500);

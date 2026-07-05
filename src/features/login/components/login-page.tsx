@@ -4,6 +4,8 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../../../integrations/firebase";
 import Layout from "../../../components/layout/layout";
 import { getProfile } from "../../../lib/api/users";
+import { toast } from "react-toastify";
+
 const LoginPage = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
@@ -31,10 +33,12 @@ const LoginPage = () => {
         localStorage.setItem("displayName", profile.displayName);
       }
 
+      toast.success("Đăng nhập thành công!");
       navigate(profile.role === "admin" ? "/admin" : "/");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Đăng nhập thất bại.";
       setErrorMessage(message);
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }

@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import type { ProductReview, ProductDetail } from './types';
 import { createReview } from '../servers';
+import { toast } from 'react-toastify';
+
 
 type ReviewSectionProps = {
   product: ProductDetail;
@@ -52,12 +54,15 @@ const ReviewSection = ({ product, reviews, onReviewSubmitted }: ReviewSectionPro
         rating,
         comment: comment.trim(),
       });
+      toast.success('Gửi đánh giá thành công!');
       setComment('');
       setRating(5);
       onReviewSubmitted();
     } catch (err: any) {
       console.error(err);
-      setError(err?.response?.data?.message || 'Gửi đánh giá thất bại. Vui lòng thử lại.');
+      const errMsg = err?.response?.data?.message || 'Gửi đánh giá thất bại. Vui lòng thử lại.';
+      setError(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsSubmitting(false);
     }
