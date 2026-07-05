@@ -61,3 +61,19 @@ export async function fetchHomeProducts(categorySlug?: string) {
   const data = await get<ApiProduct[]>('/products', {}, []);
   return data.map(mapProduct);
 }
+
+export type HomeReview = {
+  _id: string;
+  productId?: {
+    name?: string;
+  };
+  displayName: string;
+  avatarUrl?: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+};
+
+export async function fetchPublicReviews(): Promise<HomeReview[]> {
+  return get<HomeReview[]>('/reviews/public', {}, []);
+}

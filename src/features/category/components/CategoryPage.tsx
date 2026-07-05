@@ -55,8 +55,8 @@ const CategoryPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [featuredHover, setFeaturedHover] = useState(false);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
-  const [products, setProducts] = useState<FruitProduct[]>(fruitProducts);
-  const [isSwitchingCategory, setIsSwitchingCategory] = useState(false);
+  const [products, setProducts] = useState<FruitProduct[]>([]);
+  const [isSwitchingCategory, setIsSwitchingCategory] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
   const searchQuery = new URLSearchParams(location.search).get('search')?.trim() ?? '';
 
@@ -258,9 +258,31 @@ const CategoryPage = () => {
                 </div>
               </div>
             </div>
-            <div className={isSwitchingCategory ? 'opacity-70 transition-opacity duration-200' : 'opacity-100 transition-opacity duration-200'}>
+            {isSwitchingCategory ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
+                {Array.from({ length: 8 }).map((_, index) => (
+                  <div key={index} className="rounded-3xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] overflow-hidden border border-border/50 p-3 sm:p-5 space-y-4 animate-pulse">
+                    <div className="bg-slate-200/60 h-32 sm:h-56 w-full rounded-2xl" />
+                    <div className="space-y-2">
+                      <div className="bg-slate-200/60 h-3 w-16 rounded" />
+                      <div className="bg-slate-200/60 h-5 w-full rounded" />
+                      <div className="bg-slate-200/60 h-5 w-2/3 rounded" />
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <div className="bg-slate-200/60 h-4 w-4 rounded-full" />
+                      <div className="bg-slate-200/60 h-3 w-20 rounded" />
+                    </div>
+                    <div className="bg-slate-200/60 h-6 w-24 rounded" />
+                    <div className="flex gap-2 pt-1 sm:pt-2">
+                      <div className="bg-slate-200/60 h-8 sm:h-12 flex-1 rounded-full" />
+                      <div className="bg-slate-200/60 h-8 sm:h-12 w-8 sm:w-12 rounded-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
               <ProductGrid products={paginatedProducts} />
-            </div>
+            )}
             <Pagination currentPage={currentPage} totalPages={totalPages} onPrev={() => setCurrentPage((prev) => Math.max(1, prev - 1))} onNext={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))} />
           </div>
         </div>
