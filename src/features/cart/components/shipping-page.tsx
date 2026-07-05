@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../../../components/layout/layout';
 import { store } from '../../../integrations';
 import CartHeader from './cart-header';
@@ -26,7 +27,13 @@ type Ward = {
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 
+const readCookie = (name: string) => {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+};
+
 const ShippingPage = () => {
+  const navigate = useNavigate();
   const items = useCartStore((state) => state.items);
   const previewTotals = useCartStore((state) => state.previewTotals);
   const isPreviewLoading = useCartStore((state) => state.isPreviewLoading);
@@ -34,6 +41,7 @@ const ShippingPage = () => {
   const getTotals = useCartStore((state) => state.getTotals);
   const shippingInfo = useCartStore((state) => state.shippingInfo);
   const setShippingInfo = useCartStore((state) => state.setShippingInfo);
+
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
   const [selectedProvinceId, setSelectedProvinceId] = useState<number | ''>(
@@ -49,6 +57,11 @@ const ShippingPage = () => {
   const [addressDetail, setAddressDetail] = useState(shippingInfo.addressDetail ?? '');
   const [note, setNote] = useState(shippingInfo.note ?? '');
 
+  // Saved addresses states
+  const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
+  const [selectedSavedAddressId, setSelectedSavedAddressId] = useState<string>('');
+
+  // Fetch Provinces
   useEffect(() => {
     let isActive = true;
     setLoadingProvinces(true);
@@ -69,6 +82,7 @@ const ShippingPage = () => {
     };
   }, []);
 
+  // Fetch Wards when selectedProvinceId changes
   useEffect(() => {
     let isActive = true;
 
@@ -94,6 +108,104 @@ const ShippingPage = () => {
       isActive = false;
     };
   }, [selectedProvinceId]);
+
+  // Fetch saved addresses from backend
+  useEffect(() => {
+    const userId = readCookie('userId');
+    if (!userId) return;
+
+    store
+      .get<any[]>(`/users/${userId}/addresses`, undefined, [])
+      .then((data) => {
+        const list = Array.isArray(data) ? data : [];
+        setSavedAddresses(list);
+
+        // Find default address and auto-populate it if shippingInfo is currently empty
+        const defaultAddr = list.find((a) => a.isDefault);
+        const hasExistingInfo = shippingInfo.fullName || shippingInfo.phoneNumber || shippingInfo.addressDetail;
+        if (!hasExistingInfo && defaultAddr) {
+          const addrId = defaultAddr._id || defaultAddr.id;
+          setSelectedSavedAddressId(addrId);
+          setFullName(defaultAddr.receiverName || '');
+          setPhoneNumber(defaultAddr.phone || '');
+          setAddressDetail(defaultAddr.detailedAddress || '');
+
+          const provId = defaultAddr.provinceId ? Number(defaultAddr.provinceId) : '';
+          const wId = defaultAddr.wardId ? Number(defaultAddr.wardId) : '';
+
+          setSelectedProvinceId(provId);
+          setSelectedWardId(wId);
+
+          setShippingInfo({
+            fullName: defaultAddr.receiverName || '',
+            phoneNumber: defaultAddr.phone || '',
+            provinceId: provId || undefined,
+            provinceName: defaultAddr.province || undefined,
+            wardId: wId || undefined,
+            wardName: defaultAddr.ward || undefined,
+            addressDetail: defaultAddr.detailedAddress || '',
+          });
+        }
+      })
+      .catch((err) => console.error('Failed to fetch user addresses', err));
+  }, [setShippingInfo, shippingInfo.fullName, shippingInfo.phoneNumber, shippingInfo.addressDetail]);
+
+  const handleSelectSavedAddress = async (addressId: string) => {
+    setSelectedSavedAddressId(addressId);
+    if (!addressId) {
+      setFullName('');
+      setPhoneNumber('');
+      setSelectedProvinceId('');
+      setSelectedWardId('');
+      setAddressDetail('');
+      setShippingInfo({
+        fullName: '',
+        phoneNumber: '',
+        provinceId: undefined,
+        provinceName: undefined,
+        wardId: undefined,
+        wardName: undefined,
+        addressDetail: '',
+      });
+      return;
+    }
+
+    const addr = savedAddresses.find((a) => (a._id || a.id) === addressId);
+    if (addr) {
+      setFullName(addr.receiverName || '');
+      setPhoneNumber(addr.phone || '');
+      setAddressDetail(addr.detailedAddress || '');
+
+      const provId = addr.provinceId ? Number(addr.provinceId) : '';
+      const wId = addr.wardId ? Number(addr.wardId) : '';
+
+      setSelectedProvinceId(provId);
+      setSelectedWardId(wId);
+
+      // Fetch wards for selected province immediately so ward select matches name correctly
+      if (provId) {
+        setLoadingWards(true);
+        try {
+          const data = await store.get<Ward[]>(`/locations/provinces/${provId}/wards`, undefined, []);
+          setWards(Array.isArray(data) ? data : []);
+        } catch (err) {
+          console.error('Failed to load wards on saved address select', err);
+        } finally {
+          setLoadingWards(false);
+        }
+      }
+
+      setShippingInfo({
+        fullName: addr.receiverName || '',
+        phoneNumber: addr.phone || '',
+        provinceId: provId || undefined,
+        provinceName: addr.province || undefined,
+        wardId: wId || undefined,
+        wardName: addr.ward || undefined,
+        addressDetail: addr.detailedAddress || '',
+      });
+    }
+  };
 
   useEffect(() => {
     if (!selectedProvinceId || shippingInfo.provinceName) return;
@@ -173,9 +285,20 @@ const ShippingPage = () => {
                 <div className="flex flex-col gap-2">
                   <h3 className="text-lg font-bold text-foreground">Thông tin người nhận</h3>
                   <span className="text-sm text-primary font-medium">Chọn địa chỉ đã lưu</span>
-                  <select className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40">
-                    <option>Chọn địa chỉ đã lưu</option>
-                    <option>Phát Phan - 123, Xã Đức Thịnh, Hà Tĩnh</option>
+                  <select
+                    className="w-full rounded-2xl border border-border/60 bg-white/80 px-4 py-3 text-sm text-foreground/80 focus:outline-none focus:ring-2 focus:ring-primary/40"
+                    value={selectedSavedAddressId}
+                    onChange={(e) => handleSelectSavedAddress(e.target.value)}
+                  >
+                    <option value="">Chọn địa chỉ đã lưu</option>
+                    {savedAddresses.map((addr) => {
+                      const addrId = addr._id || addr.id;
+                      return (
+                        <option key={addrId} value={addrId}>
+                          {addr.receiverName} - {addr.detailedAddress}, {addr.ward}, {addr.province} {addr.isDefault ? '(Mặc định)' : ''}
+                        </option>
+                      );
+                    })}
                   </select>
                 </div>
 
@@ -275,10 +398,10 @@ const ShippingPage = () => {
                 </div>
 
                 <div className="flex flex-wrap gap-4">
-                  <button className="bg-primary text-white px-6 py-3 rounded-full font-semibold shadow-md hover:shadow-lg hover:bg-primary/90 transition-all">
-                    Lưu
-                  </button>
-                  <button className="border border-border px-6 py-3 rounded-full font-semibold text-foreground/70 hover:bg-muted transition-colors">
+                  <button
+                    onClick={() => navigate('/profile?tab=addresses')}
+                    className="border border-border px-6 py-3 rounded-full font-semibold text-foreground/70 hover:bg-muted transition-colors"
+                  >
                     Thêm địa chỉ mới
                   </button>
                 </div>

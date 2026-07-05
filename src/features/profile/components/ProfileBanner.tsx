@@ -7,7 +7,23 @@ type ProfileBannerProps = {
   isLoading?: boolean;
 };
 
-const fallbackAvatar = 'https://i.pravatar.cc/240?img=47';
+const sampleAvatars = [
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Felix',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Aneka',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Jack',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Milo',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Luna',
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=Oliver',
+];
+
+const getFallbackAvatar = (seed?: string) => {
+  if (!seed) return sampleAvatars[0];
+  let sum = 0;
+  for (let i = 0; i < seed.length; i++) {
+    sum += seed.charCodeAt(i);
+  }
+  return sampleAvatars[sum % sampleAvatars.length];
+};
 
 const getMemberSince = (profile: ApiUser | null) => {
   if (profile?.memberSince) return profile.memberSince;
@@ -19,7 +35,26 @@ const getMemberSince = (profile: ApiUser | null) => {
 };
 
 const ProfileBanner = ({ userProfile, isLoading }: ProfileBannerProps) => {
-  const avatar = userProfile?.avatarUrl || userProfile?.avatar || fallbackAvatar;
+  if (isLoading) {
+    return (
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-gradient-to-r from-emerald-50 via-white to-orange-50 p-6 md:p-10 shadow-[0_12px_40px_rgba(16,185,129,0.08)] border border-border/60">
+        <div className="absolute -top-16 right-0 w-64 h-64 rounded-full bg-primary/10 blur-3xl" />
+        <div className="relative flex flex-col lg:flex-row items-start lg:items-center gap-6 justify-between animate-pulse">
+          <div className="flex items-start gap-5">
+            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full bg-neutral-200/80 ring-4 ring-white shadow-xl shrink-0" />
+            <div className="space-y-3 mt-2">
+              <div className="h-4 w-16 bg-neutral-200/80 rounded" />
+              <div className="h-8 w-48 md:w-64 bg-neutral-200/80 rounded" />
+              <div className="h-4 w-32 md:w-40 bg-neutral-200/80 rounded" />
+              <div className="h-4 w-24 bg-neutral-200/80 rounded" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const avatar = userProfile?.avatarUrl || userProfile?.avatar || getFallbackAvatar(userProfile?.firebaseUid || userProfile?.email);
   const name = userProfile?.displayName || userProfile?.name || 'Chưa cập nhật';
   const email = userProfile?.email || 'Chưa cập nhật';
   const memberSince = getMemberSince(userProfile);

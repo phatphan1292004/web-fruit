@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { previewOrder } from "../../../lib/api/orders";
-import type { CartItem, CartTotals } from "../components/types";
+import type { CartItem, CartTotals, VoucherItem } from "../components/types";
 
 type CartItemInput = Omit<CartItem, "quantity"> & {
   quantity?: number;
@@ -31,6 +31,8 @@ type CartState = {
   shippingInfo: ShippingInfo;
   setShippingInfo: (info: Partial<ShippingInfo>) => void;
   resetShippingInfo: () => void;
+  appliedVoucher: VoucherItem | null;
+  setAppliedVoucher: (voucher: VoucherItem | null) => void;
 };
 
 export const useCartStore = create<CartState>((set, get) => ({
@@ -90,7 +92,14 @@ export const useCartStore = create<CartState>((set, get) => ({
       0
     );
     const shipping = 0;
-    const discount = 0;
+    const voucher = get().appliedVoucher;
+    let discount = 0;
+    if (voucher) {
+      const minVal = voucher.minOrderValue ?? 0;
+      if (subtotal >= minVal) {
+        discount = voucher.discountAmount ?? 0;
+      }
+    }
 
     return {
       subtotal,
@@ -114,13 +123,27 @@ export const useCartStore = create<CartState>((set, get) => ({
     }
 
     set({ isPreviewLoading: true });
+    
+    const subtotal = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0
+    );
+    const voucher = get().appliedVoucher;
+    let discount = 0;
+    if (voucher) {
+      const minVal = voucher.minOrderValue ?? 0;
+      if (subtotal >= minVal) {
+        discount = voucher.discountAmount ?? 0;
+      }
+    }
+
     const payload = {
       items: items.map((item) => ({
         productId: item.productId ?? String(item.id),
         quantity: item.quantity,
       })),
       shippingFee: 0,
-      discount: 0,
+      discount,
     };
 
     try {
@@ -163,4 +186,9 @@ export const useCartStore = create<CartState>((set, get) => ({
         note: "",
       },
     }),
+  appliedVoucher: null,
+  setAppliedVoucher: (voucher) => {
+    set({ appliedVoucher: voucher });
+    get().fetchPreview();
+  },
 }));

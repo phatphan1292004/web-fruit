@@ -10,39 +10,8 @@ import WishlistSection from './WishlistSection';
 import AddressSection from './AddressSection';
 import VoucherSection from './VoucherSection';
 import NotificationPanel from './NotificationPanel';
+import { useLocation } from 'react-router-dom';
 import type { ProfileTab, AddressItem, NotificationItem, ProfileOrder, VoucherItem } from './types';
-
-const addresses: AddressItem[] = [
-  {
-    id: 1,
-    label: 'Nhà riêng',
-    receiverName: 'Ngô Tiến Phát',
-    phone: '0901234567',
-    province: 'TP. Hồ Chí Minh',
-    district: 'Quận 1',
-    ward: 'Phường Bến Nghé',
-    detailedAddress: '123 Lê Lợi',
-    address: '123 Lê Lợi, Phường Bến Nghé, Quận 1, TP. Hồ Chí Minh',
-    isDefault: true,
-  },
-  {
-    id: 2,
-    label: 'Văn phòng',
-    receiverName: 'Ngô Tiến Phát',
-    phone: '0987654321',
-    province: 'TP. Hồ Chí Minh',
-    district: 'Quận 3',
-    ward: 'Phường Võ Thị Sáu',
-    detailedAddress: '45 Nguyễn Huệ',
-    address: '45 Nguyễn Huệ, Phường Võ Thị Sáu, Quận 3, TP. Hồ Chí Minh',
-  },
-];
-
-const vouchers: VoucherItem[] = [
-  { id: 1, code: 'FRUIT10', condition: 'Đơn từ 200k', expiry: '30/06/2026' },
-  { id: 2, code: 'ORGANIC20', condition: 'Áp dụng trái cây hữu cơ', expiry: '15/07/2026' },
-  { id: 3, code: 'VIP50', condition: 'Khách VIP đơn từ 500k', expiry: '01/08/2026' },
-];
 
 const notifications: NotificationItem[] = [
   { id: 1, title: 'Đơn hàng #MF24018 đang được giao', description: 'Shipper đã nhận hàng và đang trên đường tới bạn.', time: '5 phút trước' },
@@ -51,7 +20,7 @@ const notifications: NotificationItem[] = [
 ];
 
 const recentOrders: ProfileOrder[] = [];
-import { fetchFavoriteProducts, fetchUserByFirebaseUid, fetchOrdersByFirebaseUid, type ApiFavoriteProduct, type ApiUser } from '../servers';
+import { fetchFavoriteProducts, fetchUserByFirebaseUid, fetchOrdersByFirebaseUid, fetchUserAddresses, fetchVouchers, type ApiFavoriteProduct, type ApiUser } from '../servers';
 import { RefreshCw } from 'lucide-react';
 
 const fallbackFavoriteImage =
@@ -63,7 +32,17 @@ const readCookie = (name: string) => {
 };
 
 const ProfilePage = () => {
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState<ProfileTab>('personal');
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab') as ProfileTab;
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [location.search]);
+
   const [notificationOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<ApiUser | null>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -74,6 +53,69 @@ const ProfilePage = () => {
   const [ordersLoaded, setOrdersLoaded] = useState(false);
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [addresses, setAddresses] = useState<AddressItem[]>([]);
+  const [addressesLoaded, setAddressesLoaded] = useState(false);
+  const [loadingAddresses, setLoadingAddresses] = useState(false);
+  const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
+  const [vouchersLoaded, setVouchersLoaded] = useState(false);
+  const [loadingVouchers, setLoadingVouchers] = useState(false);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadVouchers = async () => {
+      if (activeTab !== 'vouchers' || vouchersLoaded) return;
+      setLoadingVouchers(true);
+      try {
+        const data = await fetchVouchers();
+        if (!isActive) return;
+        setVouchers(data ?? []);
+      } catch (err) {
+        console.error('Failed to load vouchers', err);
+        setVouchers([]);
+      }
+      if (!isActive) return;
+      setLoadingVouchers(false);
+      setVouchersLoaded(true);
+    };
+
+    loadVouchers();
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, vouchersLoaded]);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const loadAddresses = async () => {
+      if (activeTab !== 'addresses' || addressesLoaded) return;
+      const userId = readCookie('userId');
+      if (!userId) {
+        setAddresses([]);
+        setAddressesLoaded(true);
+        return;
+      }
+
+      setLoadingAddresses(true);
+      try {
+        const data = await fetchUserAddresses(userId);
+        if (!isActive) return;
+        setAddresses(data ?? []);
+      } catch (err) {
+        console.error('Failed to load addresses', err);
+        setAddresses([]);
+      }
+      if (!isActive) return;
+      setLoadingAddresses(false);
+      setAddressesLoaded(true);
+    };
+
+    loadAddresses();
+    return () => {
+      isActive = false;
+    };
+  }, [activeTab, addressesLoaded]);
 
   useEffect(() => {
     let isActive = true;
@@ -212,9 +254,16 @@ const ProfilePage = () => {
           />
         );
       case 'addresses':
-        return <AddressSection addresses={addresses} />;
+        return (
+          <AddressSection
+            addresses={addresses}
+            isLoading={loadingAddresses}
+            onAddressesChange={(updatedList) => setAddresses(updatedList)}
+            firebaseUid={readCookie('userId') || ''}
+          />
+        );
       case 'vouchers':
-        return <VoucherSection vouchers={vouchers} />;
+        return <VoucherSection vouchers={vouchers} isLoading={loadingVouchers} />;
       case 'notifications':
         return <NotificationPanel items={notifications} />;
       case 'password':
@@ -224,9 +273,15 @@ const ProfilePage = () => {
           </div>
         );
       default:
-        return <PersonalInfoForm userProfile={userProfile} isLoading={loadingProfile} />;
+        return (
+          <PersonalInfoForm
+            userProfile={userProfile}
+            isLoading={loadingProfile}
+            onProfileUpdate={(updated) => setUserProfile(updated)}
+          />
+        );
     }
-  }, [activeTab, favorites, loadingFavorites, orders, loadingOrders]);
+  }, [activeTab, favorites, loadingFavorites, orders, loadingOrders, userProfile, loadingProfile, addresses, loadingAddresses, vouchers, loadingVouchers]);
 
   return (
     <Layout mainClassName="bg-gradient-to-b from-emerald-50 via-white to-orange-50 pt-28 pb-16">
@@ -250,7 +305,11 @@ const ProfilePage = () => {
           <ProfileSidebar activeTab={activeTab} onChange={setActiveTab} />
           <div className="space-y-8">
             {activeTab === 'personal' ? (
-              <PersonalInfoForm userProfile={userProfile} isLoading={loadingProfile} />
+              <PersonalInfoForm
+                userProfile={userProfile}
+                isLoading={loadingProfile}
+                onProfileUpdate={(updated) => setUserProfile(updated)}
+              />
             ) : (
               content
             )}

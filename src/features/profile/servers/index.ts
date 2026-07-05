@@ -1,4 +1,5 @@
 import store from "../../../integrations/store";
+import type { AddressItem, VoucherItem } from "../components/types";
 
 export type ApiUser = {
   id?: number;
@@ -14,6 +15,7 @@ export type ApiUser = {
   avatar?: string;
   createdAt?: string;
   role?: string;
+  addresses?: AddressItem[];
 };
 
 export type FavoritePayload = {
@@ -32,6 +34,30 @@ export type ApiFavoriteProduct = {
 
 export async function fetchUserByFirebaseUid(firebaseUid: string) {
   return store.get<ApiUser>(`/users/${firebaseUid}`);
+}
+
+export async function updateUserProfile(firebaseUid: string, payload: Partial<ApiUser>) {
+  return store.patch<ApiUser, Partial<ApiUser>>(`/users/${firebaseUid}`, payload);
+}
+
+export async function fetchUserAddresses(firebaseUid: string) {
+  return store.get<AddressItem[]>(`/users/${firebaseUid}/addresses`).then(res => res || []);
+}
+
+export async function addUserAddress(firebaseUid: string, payload: Partial<AddressItem>) {
+  return store.post<AddressItem, Partial<AddressItem>>(`/users/${firebaseUid}/addresses`, payload);
+}
+
+export async function updateUserAddress(firebaseUid: string, addressId: string | number, payload: Partial<AddressItem>) {
+  return store.put<AddressItem, Partial<AddressItem>>(`/users/${firebaseUid}/addresses/${addressId}`, payload);
+}
+
+export async function deleteUserAddress(firebaseUid: string, addressId: string | number) {
+  return store.del<{ message: string }>(`/users/${firebaseUid}/addresses/${addressId}`);
+}
+
+export async function fetchVouchers() {
+  return store.get<VoucherItem[]>('/vouchers', undefined, []).then(res => res || []);
 }
 
 export async function addFavoriteProduct(

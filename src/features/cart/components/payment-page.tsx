@@ -46,6 +46,7 @@ const PaymentPage = () => {
   const shippingInfo = useCartStore((state) => state.shippingInfo);
   const clearCart = useCartStore((state) => state.clear);
   const resetShippingInfo = useCartStore((state) => state.resetShippingInfo);
+  const setAppliedVoucher = useCartStore((state) => state.setAppliedVoucher);
   useEffect(() => {
     fetchPreview();
   }, [fetchPreview, items]);
@@ -115,6 +116,7 @@ const PaymentPage = () => {
       if (result?._id) {
         clearCart();
         resetShippingInfo();
+        setAppliedVoucher(null);
         if (selected === 'vnpay' && result.paymentUrl) {
           window.location.href = result.paymentUrl;
         } else {
