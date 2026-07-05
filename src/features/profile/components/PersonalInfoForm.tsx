@@ -118,7 +118,7 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
       const response = await updateUserProfile(userProfile.firebaseUid, {
         displayName: formData.displayName,
         phone: formData.phone,
-        birthDay: formData.birthday ? new Date(formData.birthday).toISOString() : undefined,
+        birthday: formData.birthday ? new Date(formData.birthday).toISOString() : undefined,
         gender: formData.gender,
       });
       if (response && onProfileUpdate) {

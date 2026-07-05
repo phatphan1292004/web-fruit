@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 import { FiEdit3, FiTrash2, FiPlus, FiMapPin, FiCheck, FiUser, FiPhone } from 'react-icons/fi';
 import { Loader2, ChevronDown } from 'lucide-react';
 import { store } from '../../../integrations';
-import { addUserAddress, updateUserAddress, deleteUserAddress, type ApiUser } from '../servers';
+import { addUserAddress, updateUserAddress, deleteUserAddress } from '../servers';
 import type { AddressItem } from './types';
 
 type Props = {

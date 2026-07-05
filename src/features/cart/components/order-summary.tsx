@@ -98,7 +98,7 @@ const OrderSummary = ({
           <span className="flex items-center gap-1.5 shrink-0">
             <FiTag className="w-3.5 h-3.5" />
             <span className="tracking-wider uppercase">{appliedVoucher.code}</span>
-            <span className="font-semibold opacity-75">(-{formatCurrency(appliedVoucher.discountAmount)})</span>
+            <span className="font-semibold opacity-75">(-{formatCurrency(appliedVoucher.discountAmount ?? 0)})</span>
           </span>
           <button
             type="button"
