@@ -1,13 +1,29 @@
 import { FiTag } from 'react-icons/fi';
 import type { VoucherItem } from './types';
 
-type Props = { vouchers: VoucherItem[]; isLoading?: boolean };
+const tierLabels: Record<string, string> = {
+  bronze: 'Đồng (Bronze)',
+  silver: 'Bạc (Silver)',
+  gold: 'Vàng (Gold)',
+  platinum: 'Kim cương (Platinum)'
+};
 
-const VoucherSection = ({ vouchers, isLoading }: Props) => {
+const tierColors: Record<string, string> = {
+  bronze: 'bg-amber-100 text-amber-800 border-amber-200',
+  silver: 'bg-slate-100 text-slate-800 border-slate-200',
+  gold: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  platinum: 'bg-purple-100 text-purple-800 border-purple-200'
+};
+
+type Props = { vouchers: VoucherItem[]; isLoading?: boolean; tier?: string };
+
+const VoucherSection = ({ vouchers, isLoading, tier }: Props) => {
   if (isLoading) {
     return (
       <section className="rounded-[2rem] bg-white p-6 md:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-border/60 animate-pulse">
-        <h3 className="text-2xl font-bold text-foreground mb-6">Voucher của tôi</h3>
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-foreground">Voucher của tôi</h3>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
           {[1, 2, 3].map((i) => (
             <div key={i} className="rounded-[2rem] border border-dashed border-neutral-200 bg-neutral-50/50 p-5 space-y-3">
@@ -24,7 +40,14 @@ const VoucherSection = ({ vouchers, isLoading }: Props) => {
 
   return (
     <section className="rounded-[2rem] bg-white p-6 md:p-8 shadow-[0_10px_30px_rgba(0,0,0,0.06)] border border-border/60">
-      <h3 className="text-2xl font-bold text-foreground mb-6">Voucher của tôi</h3>
+      <div className="flex items-center justify-between border-b border-neutral-100 pb-4 mb-6 flex-wrap gap-3">
+        <h3 className="text-2xl font-bold text-foreground">Voucher của tôi</h3>
+        {tier && (
+          <span className={`inline-block px-3 py-1.5 text-xs font-bold border rounded-full ${tierColors[tier] || ''}`}>
+            Hạng thành viên: {tierLabels[tier] || tier}
+          </span>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {vouchers.length === 0 ? (
           <div className="col-span-full text-center py-10 border border-dashed border-border/80 rounded-2xl text-foreground/40 font-semibold bg-neutral-50/20">

@@ -21,8 +21,9 @@ const notifications: NotificationItem[] = [
 ];
 
 const recentOrders: ProfileOrder[] = [];
-import { fetchFavoriteProducts, fetchUserByFirebaseUid, fetchOrdersByFirebaseUid, fetchUserAddresses, fetchVouchers, type ApiFavoriteProduct, type ApiUser } from '../servers';
+import { fetchFavoriteProducts, fetchUserByFirebaseUid, fetchOrdersByFirebaseUid, fetchUserAddresses, type ApiFavoriteProduct, type ApiUser } from '../servers';
 import { RefreshCw } from 'lucide-react';
+import { fetchMyVouchers } from '../../admin/servers/promotions';
 
 const fallbackFavoriteImage =
   'https://images.unsplash.com/photo-1619566636858-adf3ef46400b?q=80&w=1200&auto=format&fit=crop';
@@ -60,17 +61,33 @@ const ProfilePage = () => {
   const [vouchers, setVouchers] = useState<VoucherItem[]>([]);
   const [vouchersLoaded, setVouchersLoaded] = useState(false);
   const [loadingVouchers, setLoadingVouchers] = useState(false);
+  const [userTier, setUserTier] = useState<string>('bronze');
 
   useEffect(() => {
     let isActive = true;
 
     const loadVouchers = async () => {
       if (activeTab !== 'vouchers' || vouchersLoaded) return;
+      const userId = readCookie('userId');
+      if (!userId) {
+        setVouchers([]);
+        setVouchersLoaded(true);
+        return;
+      }
       setLoadingVouchers(true);
       try {
-        const data = await fetchVouchers();
+        const wallet = await fetchMyVouchers(userId);
         if (!isActive) return;
-        setVouchers(data ?? []);
+        if (wallet) {
+          setUserTier(wallet.tier);
+          const mapped = wallet.vouchers.map(v => ({
+            id: v.id as any,
+            code: v.code,
+            condition: v.description || `Đơn từ ${(v.config?.minOrderValue ?? 0).toLocaleString('vi-VN')}đ`,
+            expiry: new Date(v.expiresAt).toLocaleDateString('vi-VN')
+          }));
+          setVouchers(mapped);
+        }
       } catch (err) {
         console.error('Failed to load vouchers', err);
         setVouchers([]);
@@ -264,7 +281,7 @@ const ProfilePage = () => {
           />
         );
       case 'vouchers':
-        return <VoucherSection vouchers={vouchers} isLoading={loadingVouchers} />;
+        return <VoucherSection vouchers={vouchers} isLoading={loadingVouchers} tier={userTier} />;
       case 'notifications':
         return <NotificationPanel items={notifications} />;
       case 'password':
