@@ -26,6 +26,7 @@ export interface BackendOrder {
   shippingFee: number;
   discount: number;
   total: number;
+  adminSeen?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -54,4 +55,9 @@ export async function updateAdminOrderStatus(
 export async function deleteAdminOrder(orderId: string): Promise<any> {
   setupAuth();
   return store.del(`/orders/${orderId}`);
+}
+
+export async function markAdminOrderSeen(orderId: string): Promise<BackendOrder | null> {
+  setupAuth();
+  return store.patch<BackendOrder, { adminSeen: boolean }>(`/orders/${orderId}/seen`, { adminSeen: true });
 }

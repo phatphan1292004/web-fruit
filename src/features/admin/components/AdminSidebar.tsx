@@ -6,12 +6,19 @@ import { SIDEBAR_MENU, SIDEBAR_LOGOUT } from '../utils/constants';
 import { useAdminStore } from '../hooks/useAdminStore';
 
 const AdminSidebar = () => {
-  const { sidebarCollapsed, toggleSidebar, sidebarMobileOpen, closeMobileSidebar } = useAdminStore();
+  const { sidebarCollapsed, toggleSidebar, sidebarMobileOpen, closeMobileSidebar, unreadCounts } = useAdminStore();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     closeMobileSidebar();
     navigate('/');
+  };
+
+  const getUnreadCount = (id: string) => {
+    if (id === 'orders') return unreadCounts.orders;
+    if (id === 'reviews') return unreadCounts.reviews;
+    if (id === 'chat') return unreadCounts.chat;
+    return 0;
   };
 
   const sidebarContent = (
@@ -77,17 +84,31 @@ const AdminSidebar = () => {
                     transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   />
                 )}
-                <item.icon className={`text-lg flex-shrink-0 ${isActive ? 'text-emerald-600' : ''}`} />
+                
+                <div className="relative flex items-center">
+                  <item.icon className={`text-lg flex-shrink-0 ${isActive ? 'text-emerald-600' : ''}`} />
+                  {sidebarCollapsed && getUnreadCount(item.id) > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse" />
+                  )}
+                </div>
+
                 <AnimatePresence>
                   {!sidebarCollapsed && (
-                    <motion.span
+                    <motion.div
                       initial={{ opacity: 0, width: 0 }}
                       animate={{ opacity: 1, width: 'auto' }}
                       exit={{ opacity: 0, width: 0 }}
-                      className="text-sm font-medium whitespace-nowrap overflow-hidden"
+                      className="flex-1 flex items-center justify-between overflow-hidden"
                     >
-                      {item.label}
-                    </motion.span>
+                      <span className="text-sm font-medium whitespace-nowrap overflow-hidden">
+                        {item.label}
+                      </span>
+                      {getUnreadCount(item.id) > 0 && (
+                        <span className="ml-2 px-1.5 py-0.5 text-[10px] font-extrabold bg-red-500 text-white rounded-full leading-none min-w-[20px] h-5 flex items-center justify-center animate-pulse shadow-sm shadow-red-200">
+                          {getUnreadCount(item.id)}
+                        </span>
+                      )}
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </>

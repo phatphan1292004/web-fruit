@@ -173,6 +173,7 @@ const ProductDetailPage = () => {
     const load = async () => {
       if (!slug) return;
       try {
+        setQuantity(1); // Reset selected quantity to 1 for the new product
         const detail = await fetchProductDetail(slug);
         const mapped = mapApiProductToDetail(detail);
         const enriched = await enrichWithFlashSalePrice(mapped);
@@ -295,7 +296,7 @@ const ProductDetailPage = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-pulse"><div className="rounded-4xl bg-white h-140" /><div className="space-y-4"><div className="h-8 bg-white rounded-full w-2/3" /><div className="h-6 bg-white rounded-full w-1/2" /><div className="h-40 bg-white rounded-4xl" /></div></div>
         ) : (
           <section className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            <ProductGallery product={product} />
+            <ProductGallery key={product._id || product.id} product={product} />
             <ProductInfo
               product={product}
               quantity={quantity}

@@ -16,9 +16,10 @@ interface DataTableProps<T> {
   keyExtractor: (item: T) => string;
   onRowClick?: (item: T) => void;
   emptyMessage?: string;
+  rowClassName?: (item: T) => string;
 }
 
-function DataTable<T>({ columns, data, keyExtractor, onRowClick, emptyMessage = 'Không có dữ liệu' }: DataTableProps<T>) {
+function DataTable<T>({ columns, data, keyExtractor, onRowClick, emptyMessage = 'Không có dữ liệu', rowClassName }: DataTableProps<T>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
@@ -83,7 +84,7 @@ function DataTable<T>({ columns, data, keyExtractor, onRowClick, emptyMessage = 
               onClick={() => onRowClick?.(item)}
               className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors ${
                 onRowClick ? 'cursor-pointer' : ''
-              }`}
+              } ${rowClassName ? rowClassName(item) : ''}`}
             >
               {columns.map((col) => (
                 <td key={col.key} className={`px-4 py-3 ${col.className || ''}`}>
