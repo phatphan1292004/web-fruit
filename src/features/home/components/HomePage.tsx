@@ -12,10 +12,10 @@ const HomePage = () => {
     <DefaultLayout mainClassName="bg-background relative pt-16 sm:pt-20">
       <HeroBanner />
       <Features />
+      <PromoBanner />
       <FlashSaleSection />
       <RecommendationSection />
       <ProductSection />
-      <PromoBanner />
       <Testimonials />
     </DefaultLayout>
   );

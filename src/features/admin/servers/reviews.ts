@@ -16,6 +16,7 @@ export interface BackendReview {
   comment: string;
   isHidden: boolean;
   reply?: string;
+  adminSeen?: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -35,10 +36,10 @@ export async function fetchAdminReviews(): Promise<BackendReview[]> {
 
 export async function updateAdminReview(
   reviewId: string,
-  payload: { isHidden?: boolean; reply?: string }
+  payload: { isHidden?: boolean; reply?: string; adminSeen?: boolean }
 ): Promise<BackendReview | null> {
   setupAuth();
-  return store.put<BackendReview, { isHidden?: boolean; reply?: string }>(
+  return store.put<BackendReview, { isHidden?: boolean; reply?: string; adminSeen?: boolean }>(
     `/reviews/${reviewId}`,
     payload
   );

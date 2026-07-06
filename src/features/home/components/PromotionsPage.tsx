@@ -1,9 +1,15 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FiTag, FiCopy, FiCheckCircle, FiClock, FiPercent, FiTruck, FiGift, FiInfo } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 import DefaultLayout from '../../../components/layout/layout';
 import { fetchPublicVouchers, claimVoucher, type PublicVoucherPromo } from '../../admin/servers/promotions';
+
+const bgImages = [
+  '/images/promo_fruits.png',
+  '/images/promo_citrus.png',
+  '/images/promo_berries.png',
+];
 
 const readCookie = (name: string) => {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
@@ -156,6 +162,7 @@ function VoucherCard({ voucher, isShipping, onClaimSuccess }: { voucher: PublicV
 const PromotionsPage = () => {
   const [vouchers, setVouchers] = useState<PublicVoucherPromo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentBg, setCurrentBg] = useState(0);
 
   const loadVouchers = () => {
     const firebaseUid = readCookie('userId') ?? undefined;
@@ -167,6 +174,13 @@ const PromotionsPage = () => {
 
   useEffect(() => {
     loadVouchers();
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBg((prev) => (prev + 1) % bgImages.length);
+    }, 5000);
+    return () => clearInterval(timer);
   }, []);
 
   // Split vouchers into Ship discounts and general Order discounts
@@ -189,12 +203,27 @@ const PromotionsPage = () => {
   return (
     <DefaultLayout mainClassName="bg-slate-50 relative pt-16 sm:pt-20 min-h-screen">
       {/* Banner / Header */}
-      <div className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 py-16 md:py-24 text-white text-center relative overflow-hidden">
+      <div className="relative bg-emerald-950 py-16 md:py-24 text-white text-center overflow-hidden">
+        {/* Animated background images slideshow */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={currentBg}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.35 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.8 }}
+            className="absolute inset-0 bg-cover bg-center pointer-events-none"
+            style={{ backgroundImage: `url('${bgImages[currentBg]}')` }}
+          />
+        </AnimatePresence>
+
+        {/* Dark emerald overlay gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-emerald-950/90 via-emerald-900/85 to-teal-950/90 pointer-events-none" />
+
         {/* Abstract vector backgrounds */}
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-teal-500/20 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4 pointer-events-none" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[300px] bg-white/5 rounded-full blur-3xl rotate-12 pointer-events-none" />
-
+        
         <div className="container mx-auto px-4 relative z-10 max-w-4xl">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}

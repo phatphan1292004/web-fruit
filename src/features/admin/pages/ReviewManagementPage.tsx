@@ -14,6 +14,7 @@ import {
   deleteAdminReview,
   type BackendReview
 } from '../servers/reviews';
+import { useAdminStore } from '../hooks/useAdminStore';
 
 interface AdminReview {
   id: string;
@@ -28,6 +29,7 @@ interface AdminReview {
   date: string;
   isHidden: boolean;
   reply: string;
+  adminSeen: boolean;
 }
 
 const mapBackendReviewToAdmin = (r: BackendReview): AdminReview => {
@@ -48,6 +50,7 @@ const mapBackendReviewToAdmin = (r: BackendReview): AdminReview => {
     date: r.createdAt,
     isHidden: r.isHidden,
     reply: r.reply || '',
+    adminSeen: r.adminSeen ?? false,
   };
 };
 
@@ -68,6 +71,24 @@ const ReviewManagementPage = () => {
   const [deleteTarget, setDeleteTarget] = useState<AdminReview | null>(null);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const { decrementUnreadReviews } = useAdminStore();
+
+  const handleMarkAsSeen = async (id: string) => {
+    const review = reviews.find((r) => r.id === id);
+    if (!review || review.adminSeen) return;
+
+    try {
+      const updated = await updateAdminReview(id, { adminSeen: true });
+      if (updated) {
+        setReviews((prev) =>
+          prev.map((r) => (r.id === id ? mapBackendReviewToAdmin(updated) : r))
+        );
+        decrementUnreadReviews();
+      }
+    } catch (err) {
+      console.error('Failed to mark review as seen:', err);
+    }
+  };
 
   useEffect(() => {
     const loadReviews = async () => {
@@ -221,9 +242,13 @@ const ReviewManagementPage = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
             whileHover={{ y: -2 }}
-            className={`bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden transition-shadow hover:shadow-md ${
-              review.isHidden ? 'opacity-60' : ''
-            }`}
+            onMouseEnter={() => handleMarkAsSeen(review.id)}
+            onClick={() => handleMarkAsSeen(review.id)}
+            className={`bg-white rounded-2xl shadow-sm border overflow-hidden transition-all duration-300 hover:shadow-md relative ${
+              !review.adminSeen 
+                ? 'border-l-4 border-l-emerald-500 border-emerald-100 bg-emerald-50/10' 
+                : 'border-slate-100'
+            } ${review.isHidden ? 'opacity-60' : ''}`}
           >
             <div className="p-5">
               {/* Header */}
@@ -231,7 +256,12 @@ const ReviewManagementPage = () => {
                 <div className="flex items-center gap-3">
                   <img src={review.userAvatar} alt={review.userName} className="w-10 h-10 rounded-full bg-slate-100" />
                   <div>
-                    <p className="text-sm font-semibold text-slate-700">{review.userName}</p>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-semibold text-slate-700">{review.userName}</p>
+                      {!review.adminSeen && (
+                        <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold bg-emerald-500 text-white animate-pulse uppercase tracking-wider" title="Đánh giá mới chưa xem">Mới</span>
+                      )}
+                    </div>
                     <p className="text-xs text-slate-400">{formatDate(review.date)}</p>
                   </div>
                 </div>

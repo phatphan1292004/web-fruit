@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminSidebar from '../components/AdminSidebar';
@@ -12,7 +13,13 @@ const pageVariants = {
 
 const AdminLayout = () => {
   const location = useLocation();
-  const { sidebarCollapsed } = useAdminStore();
+  const { sidebarCollapsed, fetchUnreadCounts } = useAdminStore();
+
+  useEffect(() => {
+    fetchUnreadCounts();
+    const interval = setInterval(fetchUnreadCounts, 15000);
+    return () => clearInterval(interval);
+  }, [fetchUnreadCounts]);
 
   return (
     <div className="min-h-screen bg-slate-50 overflow-x-hidden">

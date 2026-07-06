@@ -14,8 +14,10 @@ import {
   fetchAdminOrders,
   updateAdminOrderStatus,
   deleteAdminOrder,
+  markAdminOrderSeen,
   type BackendOrder
 } from '../servers/orders';
+import { useAdminStore } from '../hooks/useAdminStore';
 
 const orderStatusTabs: { key: string; label: string }[] = [
   { key: 'all', label: 'Tất cả' },
@@ -32,6 +34,22 @@ const OrderManagementPage = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<BackendOrder | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BackendOrder | null>(null);
+  const { decrementUnreadOrders } = useAdminStore();
+
+  const handleOrderClick = async (o: BackendOrder) => {
+    setSelectedOrder(o);
+    if (!o.adminSeen) {
+      try {
+        await markAdminOrderSeen(o._id);
+        setOrders((prev) =>
+          prev.map((order) => (order._id === o._id ? { ...order, adminSeen: true } : order))
+        );
+        decrementUnreadOrders();
+      } catch (err) {
+        console.error('Failed to mark order as seen:', err);
+      }
+    }
+  };
 
   useEffect(() => {
     const loadOrders = async () => {
@@ -106,9 +124,14 @@ const OrderManagementPage = () => {
       key: 'id',
       label: 'Mã đơn',
       render: (o) => (
-        <span className="text-xs font-mono font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
-          {o._id.substring(o._id.length - 8).toUpperCase()}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs font-mono font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
+            {o._id.substring(o._id.length - 8).toUpperCase()}
+          </span>
+          {!o.adminSeen && (
+            <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse flex-shrink-0" title="Đơn hàng mới chưa xem" />
+          )}
+        </div>
       ),
     },
     {
@@ -162,7 +185,7 @@ const OrderManagementPage = () => {
       render: (o) => (
         <div className="flex items-center gap-2 justify-end" onClick={(e) => e.stopPropagation()}>
           <button
-            onClick={() => setSelectedOrder(o)}
+            onClick={() => handleOrderClick(o)}
             className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
           >
             Chi tiết
@@ -240,7 +263,8 @@ const OrderManagementPage = () => {
           columns={columns}
           data={paginatedOrders}
           keyExtractor={(o) => o._id}
-          onRowClick={(o) => setSelectedOrder(o)}
+          onRowClick={(o) => handleOrderClick(o)}
+          rowClassName={(o) => !o.adminSeen ? '!bg-amber-50/20 hover:!bg-amber-50/40 border-l-4 border-l-amber-500 font-semibold transition-all' : ''}
         />
         <div className="px-4 pb-3">
           <Pagination
