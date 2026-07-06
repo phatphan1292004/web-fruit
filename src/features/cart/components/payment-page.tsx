@@ -8,7 +8,12 @@ import Layout from '../../../components/layout/layout';
 import { createOrder } from '../../../lib/api/orders';
 import { useCartStore } from '../store/cart-store';
 import { toast } from 'react-toastify';
-
+import { 
+  fetchMyVouchers, 
+  calculateOrderPromotions, 
+  applyWalletVoucher, 
+  type ClientVoucherWallet
+} from '../../admin/servers/promotions';
 
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
@@ -35,11 +40,11 @@ const paymentOptions = [
     description: 'Thanh toán online qua cổng VNPAY.',
   },
 ];
-
 const PaymentPage = () => {
   const navigate = useNavigate();
   const [selected, setSelected] = useState('cod');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const items = useCartStore((state) => state.items);
   const previewTotals = useCartStore((state) => state.previewTotals);
   const isPreviewLoading = useCartStore((state) => state.isPreviewLoading);
@@ -49,15 +54,116 @@ const PaymentPage = () => {
   const clearCart = useCartStore((state) => state.clear);
   const resetShippingInfo = useCartStore((state) => state.resetShippingInfo);
   const setAppliedVoucher = useCartStore((state) => state.setAppliedVoucher);
+
+  // Promotions & Wallet States
+  const [walletData, setWalletData] = useState<ClientVoucherWallet | null>(null);
+  const [voucherCodeInput, setVoucherCodeInput] = useState('');
+  const [selectedWalletVoucherId, setSelectedWalletVoucherId] = useState<string | null>(null);
+  const [engineAppliedVoucherId, setEngineAppliedVoucherId] = useState<string | null>(null);
+  
+  const [discountOverride, setDiscountOverride] = useState<number | null>(null);
+  const [totalOverride, setTotalOverride] = useState<number | null>(null);
+  const [discountBreakdown, setDiscountBreakdown] = useState<{ flashSale: number; combo: number; voucher: number } | null>(null);
+
   useEffect(() => {
     fetchPreview();
   }, [fetchPreview, items]);
+
+  const readCookie = (name: string) => {
+    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : null;
+  };
+
+  // Fetch personal vouchers wallet
+  useEffect(() => {
+    const firebaseUid = readCookie('userId');
+    if (firebaseUid) {
+      fetchMyVouchers(firebaseUid).then((data) => {
+        if (data) setWalletData(data);
+      });
+    }
+  }, []);
+
+  const runPromoEngine = async (codeStr?: string, walletVId?: string) => {
+    // Reset/un-apply voucher if both arguments are empty
+    if (!codeStr && !walletVId) {
+      setDiscountOverride(null);
+      setTotalOverride(null);
+      setDiscountBreakdown(null);
+      setEngineAppliedVoucherId(null);
+      setSelectedWalletVoucherId(null);
+      return;
+    }
+
+    const firebaseUid = readCookie('userId') ?? undefined;
+    const orderItems = items.map((item) => ({
+      productId: item.productId ?? String(item.id),
+      quantity: item.quantity,
+    }));
+
+    try {
+      let res;
+      if (walletVId) {
+        res = await applyWalletVoucher({
+          userVoucherId: walletVId,
+          firebaseUid,
+          items: orderItems,
+        });
+      } else {
+        res = await calculateOrderPromotions({
+          code: codeStr,
+          firebaseUid,
+          items: orderItems,
+        });
+      }
+
+      if (res) {
+        if (res.voucherError) {
+          toast.error(res.voucherError);
+          // Reset overrides on error
+          setDiscountOverride(null);
+          setTotalOverride(null);
+          setDiscountBreakdown(null);
+          setEngineAppliedVoucherId(null);
+          setSelectedWalletVoucherId(null);
+        } else {
+          setDiscountOverride(res.totalDiscount);
+          setTotalOverride(res.total);
+          setDiscountBreakdown({
+            flashSale: res.flashSaleDiscount || 0,
+            combo: res.comboDiscount || 0,
+            voucher: res.voucherDiscount || 0,
+          });
+          setEngineAppliedVoucherId(res.appliedVoucherId);
+          if (walletVId) {
+            setSelectedWalletVoucherId(walletVId);
+          } else {
+            setSelectedWalletVoucherId(null);
+          }
+          toast.success('Áp dụng ưu đãi thành công!');
+        }
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Lỗi khi áp dụng khuyến mãi.');
+    }
+  };
 
   const fallbackTotals = useMemo(() => getTotals(), [getTotals]);
   const totals =
     items.length > 0 && !isPreviewLoading && previewTotals.subtotal > 0
       ? previewTotals
       : fallbackTotals;
+
+  // Compute final totals after custom promotion engine overrides
+  const computedTotals = useMemo(() => {
+    return {
+      subtotal: totals.subtotal,
+      shipping: totals.shipping,
+      discount: discountOverride !== null ? discountOverride : totals.discount,
+      total: totalOverride !== null ? totalOverride : totals.total,
+    };
+  }, [totals, discountOverride, totalOverride]);
 
   const address = useMemo(() => {
     return [shippingInfo.addressDetail, shippingInfo.wardName, shippingInfo.provinceName]
@@ -86,11 +192,6 @@ const PaymentPage = () => {
     );
   }, [items.length, shippingInfo]);
 
-  const readCookie = (name: string) => {
-    const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
-    return match ? decodeURIComponent(match[1]) : null;
-  };
-
   const handleSubmit = async () => {
     if (isSubmitting || !isOrderReady) return;
     setIsSubmitting(true);
@@ -110,8 +211,10 @@ const PaymentPage = () => {
           productId: item.productId ?? String(item.id),
           quantity: item.quantity,
         })),
-        shippingFee: totals.shipping,
-        discount: totals.discount,
+        shippingFee: computedTotals.shipping,
+        discount: computedTotals.discount,
+        appliedVoucherId: engineAppliedVoucherId ?? undefined,
+        userVoucherId: selectedWalletVoucherId ?? undefined,
       };
 
       const result = await createOrder(payload);
@@ -150,13 +253,11 @@ const PaymentPage = () => {
       return;
     }
 
-    const amount = (totals?.total ?? 0) || 0;
+    const amount = (computedTotals?.total ?? 0) || 0;
     const suffix = String(Date.now()).slice(-4);
     const content = `${transferPrefix} ${suffix}`;
     setQrContent(content);
 
-    // Build a simple QR payload containing bank transfer info.
-    // This is a readable payload; for full VietQR EMV spec use a proper generator.
     const payload = `VietQR\nBANK:${bankName}\nACC:${bankAccount}\nNAME:${accountName}\nAMOUNT:${amount}\nCONTENT:${content}`;
 
     let mounted = true;
@@ -171,7 +272,7 @@ const PaymentPage = () => {
     return () => {
       mounted = false;
     };
-  }, [selected, totals]);
+  }, [selected, computedTotals]);
 
   return (
     <Layout mainClassName="bg-gradient-to-b from-background to-muted/30 relative pt-20">
@@ -191,6 +292,7 @@ const PaymentPage = () => {
 
           <div className="grid grid-cols-1 xl:grid-cols-[1.6fr_0.7fr] gap-8 xl:gap-10 items-start">
             <div className="flex flex-col gap-6">
+              {/* Delivery Info */}
               <div className="glass rounded-3xl border border-border/60 p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <h3 className="text-lg font-bold text-foreground">Thông tin giao hàng</h3>
@@ -209,6 +311,7 @@ const PaymentPage = () => {
                 </div>
               </div>
 
+              {/* Payment Methods */}
               <div className="glass rounded-3xl border border-border/60 p-6 md:p-8 shadow-[0_20px_60px_rgba(15,23,42,0.08)]">
                 <h3 className="text-lg font-bold text-foreground mb-6">Phương thức thanh toán</h3>
                 <div className="flex flex-col gap-4">
@@ -244,7 +347,6 @@ const PaymentPage = () => {
                     <div className="flex gap-6 items-start">
                       <div className="flex-shrink-0 bg-white p-4 rounded-lg shadow-sm">
                         {qrSrc ? (
-                          // eslint-disable-next-line jsx-a11y/img-redundant-alt
                           <img src={qrSrc} alt="QR code" className="w-48 h-48 object-cover" />
                         ) : (
                           <div className="w-48 h-48 bg-white/50 flex items-center justify-center text-sm text-foreground/60">QR đang tải...</div>
@@ -267,7 +369,7 @@ const PaymentPage = () => {
                           </div>
                           <div>
                             <p className="text-xs text-foreground/50 uppercase tracking-wider">Số tiền</p>
-                            <p className="font-semibold text-rose-600">{formatCurrency(totals?.total ?? 0)}</p>
+                            <p className="font-semibold text-rose-600">{formatCurrency(computedTotals?.total ?? 0)}</p>
                           </div>
                         </div>
 
@@ -285,13 +387,21 @@ const PaymentPage = () => {
             </div>
 
             <OrderSummary
-              totals={totals}
+              totals={computedTotals}
               formatCurrency={formatCurrency}
               primaryLabel="Xác nhận thanh toán"
               primaryDisabled={!isOrderReady || isSubmitting}
               onPrimaryClick={handleSubmit}
               secondaryLabel="Quay lại giao hàng"
               secondaryHref="/checkout/shipping"
+              isCheckoutPage={true}
+              walletData={walletData}
+              voucherCodeInput={voucherCodeInput}
+              setVoucherCodeInput={setVoucherCodeInput}
+              selectedWalletVoucherId={selectedWalletVoucherId}
+              engineAppliedVoucherId={engineAppliedVoucherId}
+              onApplyVoucher={runPromoEngine}
+              discountBreakdown={discountBreakdown}
             />
           </div>
         </div>

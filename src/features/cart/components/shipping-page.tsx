@@ -416,6 +416,7 @@ const ShippingPage = () => {
               primaryDisabled={!isFormComplete}
               secondaryLabel="Quay lại giỏ hàng"
               secondaryHref="/cart"
+              hideVoucherSection={true}
             />
           </div>
         </div>

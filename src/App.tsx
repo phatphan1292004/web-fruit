@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import HomePage from "./features/home/components/HomePage";
+import PromotionsPage from "./features/home/components/PromotionsPage";
 import LoginPage from "./features/login/components/login-page";
 import RegisterPage from "./features/register/components/register-page";
 import { CartPage, PaymentPage, ShippingPage, VNPayReturnPage } from "./features/cart";
@@ -24,6 +25,7 @@ import ReviewManagementPage from "./features/admin/pages/ReviewManagementPage";
 import AnalyticsPage from "./features/admin/pages/AnalyticsPage";
 import SettingsPage from "./features/admin/pages/SettingsPage";
 import ChatManagementPage from "./features/admin/pages/ChatManagementPage";
+import PromotionManagementPage from "./features/admin/pages/PromotionManagementPage";
 
 const AdminRoute = () => {
   const role = localStorage.getItem("role");
@@ -94,6 +96,7 @@ function App() {
       <ScrollToTop />
       <Routes>
         <Route path="/" element={<HomePage />} />
+        <Route path="/promotions" element={<PromotionsPage />} />
         <Route path="/category" element={<CategoryPage />} />
         <Route path="/category/:categorySlug" element={<CategoryPage />} />
         <Route path="/product/:slug" element={<ProductDetailPage />} />
@@ -114,6 +117,7 @@ function App() {
           <Route path="products" element={<ProductManagementPage />} />
           <Route path="orders" element={<OrderManagementPage />} />
           <Route path="reviews" element={<ReviewManagementPage />} />
+          <Route path="promotions" element={<PromotionManagementPage />} />
           <Route path="chat" element={<ChatManagementPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="settings" element={<SettingsPage />} />

@@ -2,6 +2,7 @@ import DefaultLayout from '../../../components/layout/layout';
 import HeroBanner from './HeroBanner';
 import Features from './Features';
 import ProductSection from './ProductSection';
+import FlashSaleSection from './FlashSaleSection';
 import PromoBanner from './PromoBanner';
 import Testimonials from './Testimonials';
 
@@ -10,6 +11,7 @@ const HomePage = () => {
     <DefaultLayout mainClassName="bg-background relative pt-16 sm:pt-20">
       <HeroBanner />
       <Features />
+      <FlashSaleSection />
       <ProductSection />
       <PromoBanner />
       <Testimonials />
