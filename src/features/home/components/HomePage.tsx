@@ -5,6 +5,7 @@ import ProductSection from './ProductSection';
 import FlashSaleSection from './FlashSaleSection';
 import PromoBanner from './PromoBanner';
 import Testimonials from './Testimonials';
+import RecommendationSection from './RecommendationSection';
 
 const HomePage = () => {
   return (
@@ -12,6 +13,7 @@ const HomePage = () => {
       <HeroBanner />
       <Features />
       <FlashSaleSection />
+      <RecommendationSection />
       <ProductSection />
       <PromoBanner />
       <Testimonials />

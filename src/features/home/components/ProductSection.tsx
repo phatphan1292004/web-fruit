@@ -83,7 +83,8 @@ const ProductSection = () => {
                   <div key={index} className="rounded-2xl bg-white h-80 sm:h-105 animate-pulse" />
                 ))
               : visibleProducts.map((product) => {
-                  const discount = product.badge ? 'Hot' : 'Mới';
+                  const originalPrice = product.originalPrice ?? product.price;
+                  const discountPercent = originalPrice > product.price ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
                   return (
                     <div
                       key={product.id}
@@ -101,9 +102,11 @@ const ProductSection = () => {
                               {product.badge}
                             </span>
                           )}
-                          <span className="rounded-full bg-white/90 px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-foreground shadow-md">
-                            {discount}
-                          </span>
+                          {discountPercent > 0 && (
+                            <span className="rounded-full bg-white/90 px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-foreground shadow-md">
+                              -{discountPercent}%
+                            </span>
+                          )}
                         </div>
                       </Link>
 
@@ -127,10 +130,15 @@ const ProductSection = () => {
                           <span className="hidden sm:inline">đánh giá</span>
                         </div>
 
-                        <div className="flex items-end gap-3">
+                        <div className="flex items-end gap-2">
                           <span className="text-sm sm:text-xl font-extrabold text-slate-800">
                             {formatVND(product.price)}
                           </span>
+                          {discountPercent > 0 && (
+                            <span className="text-[10px] sm:text-sm text-foreground/50 line-through">
+                              {formatVND(originalPrice)}
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-2 pt-1 sm:pt-2">

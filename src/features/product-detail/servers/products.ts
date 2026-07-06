@@ -1,4 +1,12 @@
-import { get } from '../../../integrations/store';
+import { get, post } from '../../../integrations/store';
+
+export async function trackProductActivity(userId: string | null, slug: string, action: 'view' | 'click' = 'view') {
+  return post<any, { userId: string | null; slug: string; action: string }>('/products/track', {
+    userId,
+    slug,
+    action,
+  });
+}
 
 export type ApiProduct = {
   id: number;
