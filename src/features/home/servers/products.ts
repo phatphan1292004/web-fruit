@@ -7,6 +7,7 @@ export type HomeProduct = {
   name: string;
   category: string;
   price: number;
+  originalPrice?: number;
   rating?: number;
   image?: string;
   badge?: 'Hot' | 'Sale' | 'New' | 'Organic';
@@ -25,6 +26,7 @@ type ApiProduct = {
   category?: string;
   categoryId?: ApiCategoryRef;
   price: number;
+  oldPrice?: number;
   rating?: number;
   badges?: string[];
   gallery?: string[];
@@ -47,6 +49,7 @@ const mapProduct = (product: ApiProduct): HomeProduct => ({
   name: product.name,
   category: toFruitCategory(product.categoryId?.name ?? product.category),
   price: product.price,
+  originalPrice: product.oldPrice ?? product.price,
   rating: product.rating ?? 0,
   image: product.gallery?.[0] ?? product.image ?? '',
   badge: product.badges?.[0] as any ?? 'New',
@@ -59,6 +62,18 @@ export async function fetchHomeProducts(categorySlug?: string) {
   }
 
   const data = await get<ApiProduct[]>('/products', {}, []);
+  return data.map(mapProduct);
+}
+
+export async function fetchRecommendedProducts(userId?: string | null, historySlugs?: string[]) {
+  const params: Record<string, string> = {};
+  if (userId) {
+    params.userId = userId;
+  }
+  if (historySlugs && historySlugs.length > 0) {
+    params.history = historySlugs.join(',');
+  }
+  const data = await get<ApiProduct[]>('/products/recommendations', params, []);
   return data.map(mapProduct);
 }
 

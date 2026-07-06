@@ -4,17 +4,17 @@ import { FiTarget, FiEye, FiHeart, FiSun } from 'react-icons/fi';
 const MissionVision = () => {
   const cards = [
     {
-      title: 'Mission',
+      title: 'Sứ mệnh',
       icon: FiTarget,
       text: 'Mang đến nguồn trái cây sạch, tươi ngon mỗi ngày để bữa ăn của mỗi gia đình luôn trọn vẹn sự an tâm và niềm vui.',
     },
     {
-      title: 'Vision',
+      title: 'Tầm nhìn',
       icon: FiEye,
       text: 'Trở thành thương hiệu trái cây premium được yêu thích hàng đầu, nơi khách hàng nghĩ đến đầu tiên khi muốn tìm sự tươi mới và chất lượng.',
     },
     {
-      title: 'Core Values',
+      title: 'Giá trị cốt lõi',
       icon: FiHeart,
       list: ['Tươi mới', 'Chất lượng', 'Tận tâm', 'Minh bạch', 'Sức khỏe khách hàng'],
     },

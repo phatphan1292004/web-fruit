@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import Layout from '../../../components/layout/layout';
-import { fetchProductDetail, fetchReviewsByProductId, fetchRelatedProducts } from '../servers';
+import { fetchProductDetail, fetchReviewsByProductId, fetchRelatedProducts, trackProductActivity } from '../servers';
 import type { ApiProduct } from '../servers';
 import ProductGallery from './ProductGallery';
 import ProductInfo from './ProductInfo';
@@ -141,6 +141,21 @@ const ProductDetailPage = () => {
       const mapped = mapApiProductToDetail(detail);
       const enriched = await enrichWithFlashSalePrice(mapped);
       setProduct(enriched);
+
+      // Track activity & store to local storage
+      const userId = readCookie('userId');
+      trackProductActivity(userId, slug, 'click').catch(err =>
+        console.error('Failed to track view activity:', err)
+      );
+
+      try {
+        const history = JSON.parse(localStorage.getItem('recentlyViewedSlugs') || '[]');
+        const newHistory = [slug, ...history.filter((s: string) => s !== slug)].slice(0, 10);
+        localStorage.setItem('recentlyViewedSlugs', JSON.stringify(newHistory));
+      } catch (e) {
+        console.error('Failed to save to localStorage:', e);
+      }
+
       if (detail._id) {
         const list = await fetchReviewsByProductId(detail._id);
         setReviews(list);
@@ -162,6 +177,21 @@ const ProductDetailPage = () => {
         const mapped = mapApiProductToDetail(detail);
         const enriched = await enrichWithFlashSalePrice(mapped);
         setProduct(enriched);
+
+        // Track activity & store to local storage
+        const userId = readCookie('userId');
+        trackProductActivity(userId, slug, 'click').catch(err =>
+          console.error('Failed to track view activity:', err)
+        );
+
+        try {
+          const history = JSON.parse(localStorage.getItem('recentlyViewedSlugs') || '[]');
+          const newHistory = [slug, ...history.filter((s: string) => s !== slug)].slice(0, 10);
+          localStorage.setItem('recentlyViewedSlugs', JSON.stringify(newHistory));
+        } catch (e) {
+          console.error('Failed to save to localStorage:', e);
+        }
+
         if (detail._id) {
           const list = await fetchReviewsByProductId(detail._id);
           setReviews(list);

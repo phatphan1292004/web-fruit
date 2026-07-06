@@ -13,7 +13,7 @@ const SocialMediaSection = () => {
     <section className="px-4 md:px-8 py-20 bg-muted/20">
       <div className="container mx-auto">
         <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Social Media</p>
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary">Mạng xã hội</p>
           <h2 className="mt-3 text-3xl md:text-5xl font-bold text-foreground">Kết nối với chúng tôi</h2>
         </div>
 
@@ -34,7 +34,7 @@ const SocialMediaSection = () => {
                   <item.icon className="w-7 h-7" />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wider text-foreground/45">Follow us</p>
+                  <p className="text-xs uppercase tracking-wider text-foreground/45">Theo dõi</p>
                   <h3 className="text-xl font-bold text-foreground">{item.name}</h3>
                 </div>
               </div>

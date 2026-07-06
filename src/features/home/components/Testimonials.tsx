@@ -6,26 +6,26 @@ import { fetchPublicReviews } from '../servers/products';
 const testimonials = [
   {
     id: 1,
-    name: 'Sarah Johnson',
-    role: 'Health Enthusiast',
+    name: 'Nguyễn Lan Vy',
+    role: 'Người thích lối sống lành mạnh',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026024d',
-    content: 'The quality of these organic fruits is unmatched! Every delivery is perfectly fresh, and you can truly taste the difference compared to regular supermarket produce. Highly recommended!',
+    content: 'Chất lượng trái cây hữu cơ ở đây thật tuyệt vời! Mỗi lần giao hàng đều tươi ngon hoàn hảo, và bạn thực sự có thể cảm nhận được sự khác biệt so với trái cây siêu thị thông thường. Rất khuyên dùng!',
     rating: 5,
   },
   {
     id: 2,
-    name: 'Michael Chen',
-    role: 'Chef',
+    name: 'Trần Minh Triết',
+    role: 'Đầu bếp chuyên nghiệp',
     avatar: 'https://i.pravatar.cc/150?u=a042581f4e29026704d',
-    content: 'As a chef, I rely on the best ingredients. Morning Fruit consistently delivers top-tier, vibrant, and incredibly flavorful fruits that elevate my dishes. The tropical selection is fantastic.',
+    content: 'Là một đầu bếp, tôi luôn yêu cầu những nguyên liệu tốt nhất. Morning Fruit luôn giao những loại quả cao cấp, tươi ngon và cực kỳ đậm đà hương vị để làm nổi bật món ăn của tôi. Các lựa chọn quả nhiệt đới rất tuyệt vời.',
     rating: 5,
   },
   {
     id: 3,
-    name: 'Emma Davis',
-    role: 'Working Mom',
+    name: 'Phạm Thu Hà',
+    role: 'Mẹ bỉm sữa bận rộn',
     avatar: 'https://i.pravatar.cc/150?u=a04258114e29026702d',
-    content: 'The convenience of having premium fruits delivered straight to my door is a lifesaver. My kids love the sweet strawberries and apples. The packaging is always secure and eco-friendly.',
+    content: 'Sự tiện lợi khi được giao trái cây cao cấp đến tận cửa nhà là một cứu cách lớn cho tôi. Các con tôi rất thích dâu tây và táo ngọt ở đây. Đóng gói rất chắc chắn và thân thiện với môi trường.',
     rating: 4.5,
   },
 ];
@@ -123,7 +123,7 @@ const Testimonials = () => {
             viewport={{ once: true }}
             className="text-primary font-semibold tracking-wider uppercase text-sm mb-3"
           >
-            Real Reviews
+            Đánh Giá Thực Tế
           </motion.span>
           <motion.h2 
             initial={{ opacity: 0, y: 10 }}
@@ -132,7 +132,7 @@ const Testimonials = () => {
             transition={{ delay: 0.1 }}
             className="text-4xl md:text-5xl font-bold text-center text-foreground"
           >
-            What Our Customers Say
+            Khách Hàng Nói Gì Về Chúng Tôi
           </motion.h2>
         </div>
 
