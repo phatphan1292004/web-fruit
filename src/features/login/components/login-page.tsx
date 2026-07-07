@@ -74,12 +74,20 @@ const LoginPage = () => {
             </div>
 
             <div className="space-y-2">
-              <label
-                className="text-sm font-medium text-foreground"
-                htmlFor="password"
-              >
-                Mật khẩu
-              </label>
+              <div className="flex justify-between items-center">
+                <label
+                  className="text-sm font-medium text-foreground"
+                  htmlFor="password"
+                >
+                  Mật khẩu
+                </label>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  Quên mật khẩu?
+                </Link>
+              </div>
               <input
                 id="password"
                 type="password"
