@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import HomePage from "./features/home/components/HomePage";
 import PromotionsPage from "./features/home/components/PromotionsPage";
 import LoginPage from "./features/login/components/login-page";
+import ForgotPasswordPage from "./features/login/components/forgot-password-page";
 import RegisterPage from "./features/register/components/register-page";
 import { CartPage, PaymentPage, ShippingPage, VNPayReturnPage } from "./features/cart";
 import CategoryPage from "./features/category/components/CategoryPage";
@@ -104,6 +105,7 @@ function App() {
         <Route path="/about" element={<AboutPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout/shipping" element={<ShippingPage />} />
