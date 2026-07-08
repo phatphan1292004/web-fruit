@@ -46,6 +46,8 @@ const RegisterPage = () => {
           await updateProfile(credential.user, { displayName });
         }
         const token = await credential.user.getIdToken();
+        document.cookie = `userId=${credential.user.uid}; path=/; SameSite=Lax`;
+        document.cookie = `token=${token}; path=/; SameSite=Lax`;
         await createUser(
           {
             firebaseUid: credential.user.uid,
@@ -104,9 +106,8 @@ const RegisterPage = () => {
                 type="text"
                 autoComplete="name"
                 {...register("name")}
-                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
-                  errors.name ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
-                }`}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${errors.name ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                  }`}
                 placeholder="Tên của bạn"
               />
               {errors.name && (
@@ -126,9 +127,8 @@ const RegisterPage = () => {
                 type="email"
                 autoComplete="email"
                 {...register("email")}
-                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
-                  errors.email ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
-                }`}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${errors.email ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                  }`}
                 placeholder="you@example.com"
               />
               {errors.email && (
@@ -148,9 +148,8 @@ const RegisterPage = () => {
                 type="password"
                 autoComplete="new-password"
                 {...register("password")}
-                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
-                  errors.password ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
-                }`}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${errors.password ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                  }`}
                 placeholder="Tạo mật khẩu"
               />
               {errors.password && (

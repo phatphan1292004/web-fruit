@@ -6,6 +6,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { auth } from "../../../integrations/firebase";
 import Layout from "../../../components/layout/layout";
+import { storeClient } from "../../../integrations";
 import { getProfile } from "../../../lib/api/users";
 import { toast } from "react-toastify";
 
@@ -36,7 +37,13 @@ const LoginPage = () => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
       const firebaseUid = userCredential.user.uid;
+      const token = await userCredential.user.getIdToken();
       document.cookie = `userId=${firebaseUid}; path=/; SameSite=Lax`;
+      document.cookie = `token=${token}; path=/; SameSite=Lax`;
+
+      // Set headers directly on storeClient for immediate effect
+      storeClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      storeClient.defaults.headers.common['x-user-uid'] = firebaseUid;
 
       const profile = await getProfile(firebaseUid);
       if (!profile?.role) {
@@ -93,9 +100,8 @@ const LoginPage = () => {
                 type="email"
                 autoComplete="email"
                 {...register("email")}
-                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
-                  errors.email ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
-                }`}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${errors.email ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                  }`}
                 placeholder="you@example.com"
               />
               {errors.email && (
@@ -123,9 +129,8 @@ const LoginPage = () => {
                 type="password"
                 autoComplete="current-password"
                 {...register("password")}
-                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
-                  errors.password ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
-                }`}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${errors.password ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                  }`}
                 placeholder="Nhập mật khẩu của bạn"
               />
               {errors.password && (
