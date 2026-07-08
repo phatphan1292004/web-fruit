@@ -1,44 +1,44 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { FiSend, FiCheckCircle } from 'react-icons/fi';
 import { toast } from 'react-toastify';
 
+const contactSchema = yup.object().shape({
+  name: yup.string().required('Vui lòng nhập họ và tên.'),
+  email: yup.string().email('Email chưa đúng định dạng.').required('Vui lòng nhập email.'),
+  phone: yup
+    .string()
+    .required('Vui lòng nhập số điện thoại.')
+    .matches(/^(0[3|5|7|8|9])+([0-9]{8})$/, 'Số điện thoại không đúng định dạng.'),
+  subject: yup.string().required('Vui lòng nhập chủ đề.'),
+  message: yup.string().required('Vui lòng nhập nội dung tin nhắn.'),
+});
 
-const initialState = {
-  name: '',
-  email: '',
-  phone: '',
-  subject: '',
-  message: '',
-};
+// Type ContactInput removed
 
 const ContactForm = () => {
-  const [form, setForm] = useState(initialState);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const validate = () => {
-    const next: Record<string, string> = {};
-    if (!form.name.trim()) next.name = 'Vui lòng nhập họ và tên.';
-    if (!form.email.trim()) next.email = 'Vui lòng nhập email.';
-    if (!/\S+@\S+\.\S+/.test(form.email)) next.email = 'Email chưa đúng định dạng.';
-    if (!form.phone.trim()) next.phone = 'Vui lòng nhập số điện thoại.';
-    if (!form.subject.trim()) next.subject = 'Vui lòng chọn chủ đề.';
-    if (!form.message.trim()) next.message = 'Vui lòng nhập nội dung tin nhắn.';
-    setErrors(next);
-    return Object.keys(next).length === 0;
-  };
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(contactSchema),
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const onSubmit = async (data: any) => {
     setLoading(true);
     await new Promise((resolve) => window.setTimeout(resolve, 1200));
     setLoading(false);
     toast.success('Gửi liên hệ thành công! Chúng tôi sẽ phản hồi sớm nhất.');
     setSubmitted(true);
-    setForm(initialState);
+    reset();
     window.setTimeout(() => setSubmitted(false), 2500);
   };
 
@@ -55,35 +55,71 @@ const ContactForm = () => {
         Hãy cho chúng tôi biết bạn đang quan tâm điều gì. Đội ngũ Fresh Fruit sẽ phản hồi nhanh nhất có thể với sự tận tâm và chu đáo.
       </p>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        {[
-          ['name', 'Họ và tên', 'Nhập họ và tên của bạn'],
-          ['email', 'Email', 'name@example.com'],
-          ['phone', 'Số điện thoại', '0909 123 456'],
-          ['subject', 'Chủ đề', 'Bạn cần hỗ trợ về...'],
-        ].map(([key, label, placeholder]) => (
-          <div key={key}>
-            <label className="mb-2 block text-sm font-semibold text-foreground">{label}</label>
-            <input
-              value={(form as Record<string, string>)[key]}
-              onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))}
-              placeholder={placeholder}
-              className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-foreground placeholder:text-foreground/35 outline-none transition-all duration-300 focus:ring-4 focus:ring-primary/10 ${errors[key] ? 'border-rose-300' : 'border-border/60 focus:border-primary'}`}
-            />
-            {errors[key] && <p className="mt-2 text-sm text-rose-500">{errors[key]}</p>}
-          </div>
-        ))}
+      <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-5">
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-foreground">Họ và tên</label>
+          <input
+            placeholder="Nhập họ và tên của bạn"
+            disabled={loading}
+            {...register('name')}
+            className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-foreground placeholder:text-foreground/35 outline-none transition-all duration-300 focus:ring-4 focus:ring-primary/10 ${
+              errors.name ? 'border-rose-300' : 'border-border/60 focus:border-primary'
+            }`}
+          />
+          {errors.name && <p className="mt-2 text-sm text-rose-500">{errors.name.message as string}</p>}
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-foreground">Email</label>
+          <input
+            placeholder="name@example.com"
+            disabled={loading}
+            {...register('email')}
+            className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-foreground placeholder:text-foreground/35 outline-none transition-all duration-300 focus:ring-4 focus:ring-primary/10 ${
+              errors.email ? 'border-rose-300' : 'border-border/60 focus:border-primary'
+            }`}
+          />
+          {errors.email && <p className="mt-2 text-sm text-rose-500">{errors.email.message as string}</p>}
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-foreground">Số điện thoại</label>
+          <input
+            placeholder="0909 123 456"
+            disabled={loading}
+            {...register('phone')}
+            className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-foreground placeholder:text-foreground/35 outline-none transition-all duration-300 focus:ring-4 focus:ring-primary/10 ${
+              errors.phone ? 'border-rose-300' : 'border-border/60 focus:border-primary'
+            }`}
+          />
+          {errors.phone && <p className="mt-2 text-sm text-rose-500">{errors.phone.message as string}</p>}
+        </div>
+
+        <div>
+          <label className="mb-2 block text-sm font-semibold text-foreground">Chủ đề</label>
+          <input
+            placeholder="Bạn cần hỗ trợ về..."
+            disabled={loading}
+            {...register('subject')}
+            className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-foreground placeholder:text-foreground/35 outline-none transition-all duration-300 focus:ring-4 focus:ring-primary/10 ${
+              errors.subject ? 'border-rose-300' : 'border-border/60 focus:border-primary'
+            }`}
+          />
+          {errors.subject && <p className="mt-2 text-sm text-rose-500">{errors.subject.message as string}</p>}
+        </div>
 
         <div>
           <label className="mb-2 block text-sm font-semibold text-foreground">Nội dung tin nhắn</label>
           <textarea
             rows={5}
-            value={form.message}
-            onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
             placeholder="Hãy cho chúng tôi biết nhu cầu của bạn, chúng tôi sẽ tư vấn chi tiết và tận tâm."
-            className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-foreground placeholder:text-foreground/35 outline-none transition-all duration-300 focus:ring-4 focus:ring-primary/10 ${errors.message ? 'border-rose-300' : 'border-border/60 focus:border-primary'}`}
+            disabled={loading}
+            {...register('message')}
+            className={`w-full rounded-2xl border bg-white px-4 py-3.5 text-foreground placeholder:text-foreground/35 outline-none transition-all duration-300 focus:ring-4 focus:ring-primary/10 ${
+              errors.message ? 'border-rose-300' : 'border-border/60 focus:border-primary'
+            }`}
           />
-          {errors.message && <p className="mt-2 text-sm text-rose-500">{errors.message}</p>}
+          {errors.message && <p className="mt-2 text-sm text-rose-500">{errors.message.message as string}</p>}
         </div>
 
         <motion.button

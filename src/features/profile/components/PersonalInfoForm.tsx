@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Edit2, Check, Loader2, User } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { updateUserProfile, type ApiUser } from '../servers';
 import { toast } from 'react-toastify';
-
 
 type PersonalInfoFormProps = {
   userProfile: ApiUser | null;
@@ -46,27 +48,47 @@ const displayFormatDate = (dateStr?: string | null) => {
   return date.toLocaleDateString('vi-VN');
 };
 
+const personalInfoSchema = yup.object().shape({
+  displayName: yup.string().required('Họ tên là bắt buộc'),
+  phone: yup
+    .string()
+    .nullable()
+    .transform((curr, orig) => (orig === '' ? null : curr))
+    .test('is-vietnamese-phone', 'Số điện thoại không đúng định dạng', (value) => {
+      if (!value) return true; // optional
+      return /^(0[3|5|7|8|9])+([0-9]{8})$/.test(value);
+    }),
+  birthday: yup.string().nullable().transform((curr, orig) => (orig === '' ? null : curr)),
+  gender: yup.string().nullable().transform((curr, orig) => (orig === '' ? null : curr)),
+});
+
+// Type PersonalInfoInput removed as any generic is used for useForm
+
 const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalInfoFormProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updatingAvatar, setUpdatingAvatar] = useState<string | null>(null);
-  const [formData, setFormData] = useState({
-    displayName: '',
-    phone: '',
-    birthday: '',
-    gender: '',
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(personalInfoSchema),
   });
 
   useEffect(() => {
     if (userProfile) {
-      setFormData({
+      reset({
         displayName: userProfile.displayName || userProfile.name || '',
         phone: userProfile.phone || '',
         birthday: formatDate(userProfile.birthday || (userProfile as any).birthDay),
         gender: userProfile.gender || '',
       });
     }
-  }, [userProfile]);
+  }, [userProfile, reset]);
 
   if (isLoading) {
     return (
@@ -96,6 +118,7 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
   }
 
   const avatar = userProfile?.avatarUrl || userProfile?.avatar || getFallbackAvatar(userProfile?.firebaseUid || userProfile?.email);
+  const watchDisplayName = watch('displayName');
 
   const handleSelectAvatar = async (avatarUrl: string) => {
     if (!userProfile?.firebaseUid || isUpdating || updatingAvatar) return;
@@ -114,16 +137,15 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
     }
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: any) => {
     if (!userProfile?.firebaseUid || isUpdating) return;
     setIsUpdating(true);
     try {
       const response = await updateUserProfile(userProfile.firebaseUid, {
-        displayName: formData.displayName,
-        phone: formData.phone,
-        birthday: formData.birthday ? new Date(formData.birthday).toISOString() : undefined,
-        gender: formData.gender,
+        displayName: data.displayName,
+        phone: data.phone ?? undefined,
+        birthday: data.birthday ? new Date(data.birthday).toISOString() : undefined,
+        gender: data.gender ?? undefined,
       });
       if (response && onProfileUpdate) {
         onProfileUpdate(response);
@@ -163,7 +185,7 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
         <div className="relative shrink-0">
           <img
             src={avatar}
-            alt={formData.displayName || 'User avatar'}
+            alt={watchDisplayName || 'User avatar'}
             className={`w-20 h-20 rounded-full object-cover shadow-md border-2 border-primary/20 ${
               updatingAvatar ? 'opacity-40' : ''
             }`}
@@ -214,20 +236,26 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
         </div>
       </div>
 
-      <form onSubmit={handleSaveProfile} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Full Name */}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-foreground">Họ tên</label>
             {isEditing ? (
-              <input
-                type="text"
-                required
-                value={formData.displayName}
-                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
-                className="w-full rounded-2xl border border-border focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white px-4 py-3 text-sm text-foreground focus:outline-none transition-all shadow-sm"
-                placeholder="Nhập họ và tên"
-              />
+              <div>
+                <input
+                  type="text"
+                  disabled={isUpdating}
+                  {...register('displayName')}
+                  className={`w-full rounded-2xl border focus:ring-1 focus:ring-emerald-500 bg-white px-4 py-3 text-sm text-foreground focus:outline-none transition-all shadow-sm ${
+                    errors.displayName ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-emerald-500'
+                  }`}
+                  placeholder="Nhập họ và tên"
+                />
+                {errors.displayName && (
+                  <p className="text-xs text-red-500 font-medium mt-1">{errors.displayName.message as string}</p>
+                )}
+              </div>
             ) : (
               <div className="w-full rounded-2xl border border-border/50 bg-muted/20 px-4 py-3 text-sm text-foreground/80 font-medium">
                 {resolveField(userProfile?.displayName || userProfile?.name)}
@@ -247,13 +275,20 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
           <div className="space-y-2">
             <label className="text-sm font-semibold text-foreground">Số điện thoại</label>
             {isEditing ? (
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full rounded-2xl border border-border focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white px-4 py-3 text-sm text-foreground focus:outline-none transition-all shadow-sm"
-                placeholder="Nhập số điện thoại"
-              />
+              <div>
+                <input
+                  type="tel"
+                  disabled={isUpdating}
+                  {...register('phone')}
+                  className={`w-full rounded-2xl border focus:ring-1 focus:ring-emerald-500 bg-white px-4 py-3 text-sm text-foreground focus:outline-none transition-all shadow-sm ${
+                    errors.phone ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-emerald-500'
+                  }`}
+                  placeholder="Nhập số điện thoại"
+                />
+                {errors.phone && (
+                  <p className="text-xs text-red-500 font-medium mt-1">{errors.phone.message as string}</p>
+                )}
+              </div>
             ) : (
               <div className="w-full rounded-2xl border border-border/50 bg-muted/20 px-4 py-3 text-sm text-foreground/80 font-medium">
                 {resolveField(userProfile?.phone)}
@@ -265,12 +300,19 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
           <div className="space-y-2">
             <label className="text-sm font-semibold text-foreground">Ngày sinh</label>
             {isEditing ? (
-              <input
-                type="date"
-                value={formData.birthday}
-                onChange={(e) => setFormData({ ...formData, birthday: e.target.value })}
-                className="w-full rounded-2xl border border-border focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white px-4 py-3 text-sm text-foreground focus:outline-none transition-all shadow-sm"
-              />
+              <div>
+                <input
+                  type="date"
+                  disabled={isUpdating}
+                  {...register('birthday')}
+                  className={`w-full rounded-2xl border focus:ring-1 focus:ring-emerald-500 bg-white px-4 py-3 text-sm text-foreground focus:outline-none transition-all shadow-sm ${
+                    errors.birthday ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-emerald-500'
+                  }`}
+                />
+                {errors.birthday && (
+                  <p className="text-xs text-red-500 font-medium mt-1">{errors.birthday.message as string}</p>
+                )}
+              </div>
             ) : (
               <div className="w-full rounded-2xl border border-border/50 bg-muted/20 px-4 py-3 text-sm text-foreground/80 font-medium">
                 {displayFormatDate(userProfile?.birthday || (userProfile as any).birthDay)}
@@ -282,16 +324,23 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
           <div className="space-y-2">
             <label className="text-sm font-semibold text-foreground">Giới tính</label>
             {isEditing ? (
-              <select
-                value={formData.gender}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
-                className="w-full rounded-2xl border border-border focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white px-4 py-3 text-sm text-foreground focus:outline-none transition-all shadow-sm"
-              >
-                <option value="">Chọn giới tính</option>
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-                <option value="Khác">Khác</option>
-              </select>
+              <div>
+                <select
+                  disabled={isUpdating}
+                  {...register('gender')}
+                  className={`w-full rounded-2xl border focus:ring-1 focus:ring-emerald-500 bg-white px-4 py-3 text-sm text-foreground focus:outline-none transition-all shadow-sm ${
+                    errors.gender ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-emerald-500'
+                  }`}
+                >
+                  <option value="">Chọn giới tính</option>
+                  <option value="Nam">Nam</option>
+                  <option value="Nữ">Nữ</option>
+                  <option value="Khác">Khác</option>
+                </select>
+                {errors.gender && (
+                  <p className="text-xs text-red-500 font-medium mt-1">{errors.gender.message as string}</p>
+                )}
+              </div>
             ) : (
               <div className="w-full rounded-2xl border border-border/50 bg-muted/20 px-4 py-3 text-sm text-foreground/80 font-medium">
                 {resolveField(userProfile?.gender)}
@@ -308,7 +357,7 @@ const PersonalInfoForm = ({ userProfile, isLoading, onProfileUpdate }: PersonalI
               onClick={() => {
                 setIsEditing(false);
                 if (userProfile) {
-                  setFormData({
+                  reset({
                     displayName: userProfile.displayName || userProfile.name || '',
                     phone: userProfile.phone || '',
                     birthday: formatDate(userProfile.birthday || (userProfile as any).birthDay),

@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { fetchOrderById, updateOrder, type ApiOrder } from '../servers';
 import { fetchProducts, type ApiProduct } from '../../../lib/api/products';
 import { useCartStore } from '../../cart/store/cart-store';
@@ -18,23 +21,32 @@ const statusClass = (status?: string) => {
     case 'Đang giao':
       return 'bg-amber-50 text-amber-700 border-amber-200/60';
     case 'completed':
-    case 'Hoàn thành':
+    case 'Đã giao':
       return 'bg-emerald-50 text-emerald-700 border-emerald-200/60';
     case 'cancelled':
     case 'Đã hủy':
       return 'bg-rose-50 text-rose-700 border-rose-200/60';
     default:
-      return 'bg-blue-50 text-blue-700 border-blue-200/60';
+      return 'bg-neutral-50 text-neutral-600 border-neutral-200';
   }
 };
 
 const statusLabel = (status?: string) => {
   switch (status) {
-    case 'shipping': return 'Đang giao';
-    case 'completed': return 'Hoàn thành';
-    case 'cancelled': return 'Đã hủy';
-    case 'pending': return 'Đang xử lý';
-    default: return status || 'Đang xử lý';
+    case 'pending':
+    case 'Chờ xử lý':
+      return 'Chờ xử lý';
+    case 'shipping':
+    case 'Đang giao':
+      return 'Đang giao';
+    case 'completed':
+    case 'Đã giao':
+      return 'Đã hoàn thành';
+    case 'cancelled':
+    case 'Đã hủy':
+      return 'Đã hủy';
+    default:
+      return status || 'Chờ xử lý';
   }
 };
 
@@ -44,19 +56,34 @@ const readCookie = (name: string) => {
   return match ? decodeURIComponent(match[1]) : null;
 };
 
+const orderAddressSchema = yup.object().shape({
+  name: yup.string().required('Vui lòng nhập tên người nhận.'),
+  phone: yup
+    .string()
+    .required('Vui lòng nhập số điện thoại.')
+    .matches(/^(0[3|5|7|8|9])+([0-9]{8})$/, 'Số điện thoại không đúng định dạng Việt Nam.'),
+  address: yup.string().required('Vui lòng nhập địa chỉ nhận hàng.'),
+});
+
 const OrderDetail = ({ orderId, onClose }: Props) => {
   const [order, setOrder] = useState<ApiOrder | null>(null);
   const [loading, setLoading] = useState(false);
   const [allProducts, setAllProducts] = useState<ApiProduct[]>([]);
   
-  // Edit Address Form States
+  // Edit Address Form Mode
   const [isEditingAddress, setIsEditingAddress] = useState(false);
-  const [editName, setEditName] = useState('');
-  const [editPhone, setEditPhone] = useState('');
-  const [editAddress, setEditAddress] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
   const addItem = useCartStore((state) => state.addItem);
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(orderAddressSchema),
+  });
 
   useEffect(() => {
     let active = true;
@@ -67,9 +94,11 @@ const OrderDetail = ({ orderId, onClose }: Props) => {
         if (!active) return;
         setOrder(data ?? null);
         if (data) {
-          setEditName(data.customer?.name || '');
-          setEditPhone(data.customer?.phone || '');
-          setEditAddress(data.address || '');
+          reset({
+            name: data.customer?.name || '',
+            phone: data.customer?.phone || '',
+            address: data.address || '',
+          });
         }
       } catch (err) {
         console.error('Failed loading order detail', err);
@@ -81,7 +110,7 @@ const OrderDetail = ({ orderId, onClose }: Props) => {
     return () => {
       active = false;
     };
-  }, [orderId]);
+  }, [orderId, reset]);
 
   useEffect(() => {
     let active = true;
@@ -141,28 +170,21 @@ const OrderDetail = ({ orderId, onClose }: Props) => {
           addedCount++;
         }
       });
-    }
-    if (addedCount > 0) {
-      toast.success(`Đã thêm ${addedCount} sản phẩm vào giỏ hàng!`);
-    } else {
-      toast.error("Không tìm thấy sản phẩm nào để mua lại.");
+      if (addedCount > 0) {
+        toast.success(`Đã thêm lại ${addedCount} sản phẩm vào giỏ hàng!`);
+      }
     }
   };
 
-  const handleUpdateAddress = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editName.trim() || !editPhone.trim() || !editAddress.trim()) {
-      toast.error("Vui lòng nhập đầy đủ thông tin giao hàng.");
-      return;
-    }
+  const onSubmit = async (data: any) => {
     setIsUpdating(true);
     try {
       const firebaseUid = readCookie('userId') ?? undefined;
       const updated = await updateOrder(orderId, {
-        address: editAddress,
+        address: data.address.trim(),
         customer: {
-          name: editName,
-          phone: editPhone
+          name: data.name.trim(),
+          phone: data.phone.trim()
         }
       }, firebaseUid);
 
@@ -308,36 +330,42 @@ const OrderDetail = ({ orderId, onClose }: Props) => {
                   </div>
 
                   {isEditingAddress ? (
-                    <form onSubmit={handleUpdateAddress} className="space-y-4">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                       <div>
                         <label className="block text-xs font-bold text-neutral-500 uppercase mb-1">Tên người nhận</label>
                         <input
                           type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white font-medium"
+                          {...register('name')}
+                          className={`w-full px-3 py-2 text-sm border rounded-xl outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white font-medium ${
+                            errors.name ? 'border-red-500' : 'border-neutral-200'
+                          }`}
                           placeholder="Nhập tên người nhận"
                         />
+                        {errors.name && <p className="text-xs text-red-500 font-medium mt-1">{errors.name.message as string}</p>}
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-neutral-500 uppercase mb-1">Số điện thoại</label>
                         <input
                           type="text"
-                          value={editPhone}
-                          onChange={(e) => setEditPhone(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white font-medium"
+                          {...register('phone')}
+                          className={`w-full px-3 py-2 text-sm border rounded-xl outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white font-medium ${
+                            errors.phone ? 'border-red-500' : 'border-neutral-200'
+                          }`}
                           placeholder="Nhập số điện thoại"
                         />
+                        {errors.phone && <p className="text-xs text-red-500 font-medium mt-1">{errors.phone.message as string}</p>}
                       </div>
                       <div>
                         <label className="block text-xs font-bold text-neutral-500 uppercase mb-1">Địa chỉ nhận hàng</label>
                         <textarea
                           rows={3}
-                          value={editAddress}
-                          onChange={(e) => setEditAddress(e.target.value)}
-                          className="w-full px-3 py-2 text-sm border border-neutral-200 rounded-xl focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white font-medium resize-none"
+                          {...register('address')}
+                          className={`w-full px-3 py-2 text-sm border rounded-xl outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 bg-white font-medium resize-none ${
+                            errors.address ? 'border-red-500' : 'border-neutral-200'
+                          }`}
                           placeholder="Nhập địa chỉ nhận hàng"
                         />
+                        {errors.address && <p className="text-xs text-red-500 font-medium mt-1">{errors.address.message as string}</p>}
                       </div>
                       <div className="flex gap-2 justify-end pt-1">
                         <button
@@ -345,9 +373,11 @@ const OrderDetail = ({ orderId, onClose }: Props) => {
                           onClick={() => {
                             setIsEditingAddress(false);
                             if (order) {
-                              setEditName(order.customer?.name || '');
-                              setEditPhone(order.customer?.phone || '');
-                              setEditAddress(order.address || '');
+                              reset({
+                                name: order.customer?.name || '',
+                                phone: order.customer?.phone || '',
+                                address: order.address || '',
+                              });
                             }
                           }}
                           className="px-3.5 py-1.5 rounded-lg border border-neutral-200 text-xs font-semibold text-neutral-500 hover:bg-neutral-50 transition-colors"
