@@ -27,7 +27,7 @@ const AdminLayout = () => {
 
       <div
         className={`min-h-screen flex flex-col transition-[padding-left] duration-300 ease-in-out ${
-          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-64'
+          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[280px]'
         }`}
       >
         <AdminHeader />

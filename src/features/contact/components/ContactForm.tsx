@@ -32,7 +32,7 @@ const ContactForm = () => {
     resolver: yupResolver(contactSchema),
   });
 
-  const onSubmit = async (data: any) => {
+  const onSubmit = async (_data: any) => {
     setLoading(true);
     await new Promise((resolve) => window.setTimeout(resolve, 1200));
     setLoading(false);
