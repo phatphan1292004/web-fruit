@@ -145,13 +145,13 @@ const AdminSidebar = () => {
     <>
       {/* Desktop Sidebar */}
       <motion.aside
-        animate={{ width: sidebarCollapsed ? 72 : 256 }}
+        animate={{ width: sidebarCollapsed ? 72 : 280 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         className="hidden lg:flex flex-col bg-white border-r border-slate-200 fixed left-0 top-0 bottom-0 overflow-hidden z-30"
       >
         {sidebarContent}
       </motion.aside>
-
+ 
       {/* Mobile Overlay */}
       <AnimatePresence>
         {sidebarMobileOpen && (
@@ -164,11 +164,11 @@ const AdminSidebar = () => {
               className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
             />
             <motion.aside
-              initial={{ x: -280 }}
+              initial={{ x: -300 }}
               animate={{ x: 0 }}
-              exit={{ x: -280 }}
+              exit={{ x: -300 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="fixed left-0 top-0 bottom-0 w-[256px] bg-white shadow-2xl z-50 lg:hidden"
+              className="fixed left-0 top-0 bottom-0 w-[280px] bg-white shadow-2xl z-50 lg:hidden"
             >
               {sidebarContent}
             </motion.aside>
