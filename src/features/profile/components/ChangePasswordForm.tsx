@@ -1,44 +1,44 @@
 import { useState } from 'react';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { FiLock, FiEye, FiEyeOff } from 'react-icons/fi';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { auth } from '../../../integrations/firebase';
 
-const ChangePasswordForm = () => {
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+const changePasswordSchema = yup.object().shape({
+  currentPassword: yup.string().required('Mật khẩu hiện tại là bắt buộc'),
+  newPassword: yup
+    .string()
+    .min(6, 'Mật khẩu mới phải chứa ít nhất 6 ký tự')
+    .required('Mật khẩu mới là bắt buộc')
+    .notOneOf([yup.ref('currentPassword')], 'Mật khẩu mới không được trùng mật khẩu cũ'),
+  confirmPassword: yup
+    .string()
+    .oneOf([yup.ref('newPassword')], 'Xác nhận mật khẩu mới không khớp')
+    .required('Xác nhận mật khẩu mới là bắt buộc'),
+});
 
+// Type ChangePasswordInput removed
+
+const ChangePasswordForm = () => {
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(changePasswordSchema),
+  });
 
-    if (!currentPassword.trim() || !newPassword.trim() || !confirmPassword.trim()) {
-      toast.error('Vui lòng điền đầy đủ thông tin!');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      toast.error('Mật khẩu mới phải chứa ít nhất 6 ký tự!');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error('Xác nhận mật khẩu mới không khớp!');
-      return;
-    }
-
-    if (currentPassword === newPassword) {
-      toast.error('Mật khẩu mới không được trùng mật khẩu cũ!');
-      return;
-    }
-
+  const onSubmit = async (data: any) => {
     setIsSubmitting(true);
 
     try {
@@ -50,16 +50,14 @@ const ChangePasswordForm = () => {
       }
 
       // Re-authenticate user before updating password
-      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      const credential = EmailAuthProvider.credential(user.email, data.currentPassword);
       await reauthenticateWithCredential(user, credential);
 
       // Update password
-      await updatePassword(user, newPassword);
+      await updatePassword(user, data.newPassword);
 
       toast.success('Đổi mật khẩu thành công!');
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      reset();
     } catch (error: any) {
       console.error('Failed to change password:', error);
       if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password') {
@@ -77,7 +75,7 @@ const ChangePasswordForm = () => {
       <h3 className="text-2xl font-bold text-foreground mb-2">Đổi mật khẩu</h3>
       <p className="text-sm text-foreground/50 mb-6">Cập nhật mật khẩu để bảo vệ tài khoản của bạn.</p>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         {/* Current Password */}
         <div className="space-y-1.5">
           <label className="text-sm font-semibold text-foreground">Mật khẩu hiện tại</label>
@@ -85,11 +83,11 @@ const ChangePasswordForm = () => {
             <input
               type={showCurrent ? 'text' : 'password'}
               placeholder="Nhập mật khẩu hiện tại"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
               disabled={isSubmitting}
-              className="w-full rounded-2xl border border-border bg-white pl-11 pr-11 py-3.5 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm"
+              {...register('currentPassword')}
+              className={`w-full rounded-2xl border bg-white pl-11 pr-11 py-3.5 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm ${
+                errors.currentPassword ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+              }`}
             />
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40">
               <FiLock className="w-5 h-5" />
@@ -103,6 +101,9 @@ const ChangePasswordForm = () => {
               {showCurrent ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
             </button>
           </div>
+          {errors.currentPassword && (
+            <p className="text-xs text-red-500 font-medium mt-1">{errors.currentPassword.message as string}</p>
+          )}
         </div>
 
         {/* New Password */}
@@ -112,11 +113,11 @@ const ChangePasswordForm = () => {
             <input
               type={showNew ? 'text' : 'password'}
               placeholder="Nhập mật khẩu mới (tối thiểu 6 ký tự)"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
               disabled={isSubmitting}
-              className="w-full rounded-2xl border border-border bg-white pl-11 pr-11 py-3.5 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm"
+              {...register('newPassword')}
+              className={`w-full rounded-2xl border bg-white pl-11 pr-11 py-3.5 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm ${
+                errors.newPassword ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+              }`}
             />
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40">
               <FiLock className="w-5 h-5" />
@@ -130,6 +131,9 @@ const ChangePasswordForm = () => {
               {showNew ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
             </button>
           </div>
+          {errors.newPassword && (
+            <p className="text-xs text-red-500 font-medium mt-1">{errors.newPassword.message as string}</p>
+          )}
         </div>
 
         {/* Confirm New Password */}
@@ -139,11 +143,11 @@ const ChangePasswordForm = () => {
             <input
               type={showConfirm ? 'text' : 'password'}
               placeholder="Nhập lại mật khẩu mới"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
               disabled={isSubmitting}
-              className="w-full rounded-2xl border border-border bg-white pl-11 pr-11 py-3.5 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm"
+              {...register('confirmPassword')}
+              className={`w-full rounded-2xl border bg-white pl-11 pr-11 py-3.5 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm ${
+                errors.confirmPassword ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+              }`}
             />
             <div className="absolute left-4 top-1/2 -translate-y-1/2 text-foreground/40">
               <FiLock className="w-5 h-5" />
@@ -157,6 +161,9 @@ const ChangePasswordForm = () => {
               {showConfirm ? <FiEyeOff className="w-5 h-5" /> : <FiEye className="w-5 h-5" />}
             </button>
           </div>
+          {errors.confirmPassword && (
+            <p className="text-xs text-red-500 font-medium mt-1">{errors.confirmPassword.message as string}</p>
+          )}
         </div>
 
         {/* Submit button */}

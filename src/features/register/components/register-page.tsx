@@ -1,33 +1,47 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { auth } from "../../../integrations/firebase";
 import Layout from "../../../components/layout/layout";
 import { createUser } from "../servers";
 import { toast } from "react-toastify";
 
+const registerSchema = yup.object().shape({
+  name: yup.string().required("Họ và tên là bắt buộc"),
+  email: yup.string().email("Email không đúng định dạng").required("Email là bắt buộc"),
+  password: yup.string().min(6, "Mật khẩu phải chứa ít nhất 6 ký tự").required("Mật khẩu là bắt buộc"),
+});
+
+// Type RegisterInput removed
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(registerSchema),
+  });
+
+  const onSubmit = async (data: any) => {
     setErrorMessage("");
     setIsSubmitting(true);
 
     try {
       const credential = await createUserWithEmailAndPassword(
         auth,
-        email,
-        password,
+        data.email,
+        data.password
       );
       if (credential.user) {
-        const displayName = name.trim();
+        const displayName = data.name.trim();
         if (displayName) {
           await updateProfile(credential.user, { displayName });
         }
@@ -36,16 +50,29 @@ const RegisterPage = () => {
           {
             firebaseUid: credential.user.uid,
             displayName: displayName || credential.user.displayName || "",
-            email: credential.user.email || email,
+            email: credential.user.email || data.email,
           },
-          token,
+          token
         );
       }
       toast.success("Đăng ký tài khoản thành công!");
       navigate("/login");
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Đăng ký thất bại.";
+    } catch (error: any) {
+      let message = "Đăng ký thất bại. Vui lòng thử lại!";
+      if (error && typeof error === "object" && "code" in error) {
+        const errCode = error.code;
+        if (errCode === "auth/email-already-in-use") {
+          message = "Email này đã được sử dụng bởi một tài khoản khác.";
+        } else if (errCode === "auth/invalid-email") {
+          message = "Địa chỉ email không đúng định dạng.";
+        } else if (errCode === "auth/weak-password") {
+          message = "Mật khẩu quá yếu. Vui lòng chọn mật khẩu mạnh hơn.";
+        } else {
+          message = error.message || message;
+        }
+      } else if (error instanceof Error) {
+        message = error.message;
+      }
       setErrorMessage(message);
       toast.error(message);
     } finally {
@@ -64,7 +91,7 @@ const RegisterPage = () => {
             Tạo tài khoản để bắt đầu mua sắm.
           </p>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <label
                 className="text-sm font-medium text-foreground"
@@ -76,12 +103,15 @@ const RegisterPage = () => {
                 id="name"
                 type="text"
                 autoComplete="name"
-                required
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                {...register("name")}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
+                  errors.name ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                }`}
                 placeholder="Tên của bạn"
               />
+              {errors.name && (
+                <p className="text-xs text-red-500 font-medium">{errors.name.message as string}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -95,12 +125,15 @@ const RegisterPage = () => {
                 id="email"
                 type="email"
                 autoComplete="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                {...register("email")}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
+                  errors.email ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                }`}
                 placeholder="you@example.com"
               />
+              {errors.email && (
+                <p className="text-xs text-red-500 font-medium">{errors.email.message as string}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -114,12 +147,15 @@ const RegisterPage = () => {
                 id="password"
                 type="password"
                 autoComplete="new-password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                {...register("password")}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
+                  errors.password ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                }`}
                 placeholder="Tạo mật khẩu"
               />
+              {errors.password && (
+                <p className="text-xs text-red-500 font-medium">{errors.password.message as string}</p>
+              )}
             </div>
 
             {errorMessage ? (

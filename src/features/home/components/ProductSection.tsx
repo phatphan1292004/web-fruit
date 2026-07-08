@@ -78,11 +78,46 @@ const ProductSection = () => {
 
         <div className="relative">
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
-            {loading
-              ? Array.from({ length: 12 }).map((_, index) => (
-                  <div key={index} className="rounded-2xl bg-white h-80 sm:h-105 animate-pulse" />
-                ))
-              : visibleProducts.map((product) => {
+              {loading
+                ? Array.from({ length: 8 }).map((_, index) => (
+                    <div
+                      key={index}
+                      className="rounded-3xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] overflow-hidden border border-border/50 animate-pulse"
+                    >
+                      {/* Image placeholder */}
+                      <div className="h-32 sm:h-56 w-full bg-slate-200/70" />
+
+                      {/* Content placeholder */}
+                      <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
+                        <div className="space-y-2">
+                          {/* Category */}
+                          <div className="h-3 w-1/3 bg-slate-200/70 rounded-full" />
+                          {/* Name - 2 lines */}
+                          <div className="h-4 sm:h-5 w-full bg-slate-200/70 rounded-full" />
+                          <div className="h-4 sm:h-5 w-2/3 bg-slate-200/70 rounded-full" />
+                        </div>
+
+                        {/* Rating */}
+                        <div className="flex items-center gap-1.5 pt-1">
+                          <div className="w-3.5 h-3.5 rounded-full bg-slate-200/70" />
+                          <div className="h-3 w-16 bg-slate-200/70 rounded-full" />
+                        </div>
+
+                        {/* Price */}
+                        <div className="flex items-end gap-2 pt-1">
+                          <div className="h-5 sm:h-7 w-24 bg-slate-200/70 rounded-full" />
+                          <div className="h-3.5 w-12 bg-slate-200/70 rounded-full" />
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 pt-2">
+                          <div className="flex-1 rounded-full bg-slate-200/70 h-8 sm:h-12" />
+                          <div className="w-7 h-7 sm:w-12 sm:h-12 rounded-full bg-slate-200/70 shrink-0" />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                : visibleProducts.map((product) => {
                   const originalPrice = product.originalPrice ?? product.price;
                   const discountPercent = originalPrice > product.price ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
                   return (

@@ -111,81 +111,116 @@ const RecommendationSection = () => {
           )}
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
-            {loading
-              ? Array.from({ length: visibleCount }).map((_, index) => (
-                  <div key={index} className="rounded-2xl bg-white h-80 sm:h-105 animate-pulse border border-border/50" />
-                ))
-              : visibleProducts.map((product) => {
-                  const originalPrice = product.originalPrice ?? product.price;
-                  const discountPercent = originalPrice > product.price ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
-                  return (
+              {loading
+                ? Array.from({ length: visibleCount }).map((_, index) => (
                     <div
-                      key={product.id}
-                      className="group rounded-3xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden border border-border/50 text-slate-700 transition-all duration-300 hover:shadow-[0_15px_35px_rgba(15,23,42,0.08)]"
+                      key={index}
+                      className="rounded-3xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.06)] overflow-hidden border border-border/50 animate-pulse"
                     >
-                      <Link to={`/product/${product.slug}`} className="relative overflow-hidden block">
-                        <img
-                          src={product.image ?? undefined}
-                          alt={product.name}
-                          className="h-32 sm:h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                        />
-                        <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex gap-1.5">
-                          {product.badge && (
-                            <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-white shadow-md">
-                              {product.badge}
-                            </span>
-                          )}
-                          {discountPercent > 0 && (
-                            <span className="rounded-full bg-white/90 px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-foreground shadow-md">
-                              -{discountPercent}%
-                            </span>
-                          )}
-                        </div>
-                      </Link>
+                      {/* Image placeholder */}
+                      <div className="h-32 sm:h-56 w-full bg-slate-200/70" />
 
+                      {/* Content placeholder */}
                       <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
-                        <div>
-                          <p className="text-[10px] sm:text-xs uppercase tracking-wider text-emerald-600 font-semibold mb-0.5">
-                            {product.category}
-                          </p>
-                          <Link to={`/product/${product.slug}`}>
-                            <h3 className="text-xs sm:text-lg font-bold text-slate-800 leading-snug group-hover:text-primary transition-colors line-clamp-2 min-h-[2rem] sm:min-h-0">
-                              {product.name}
-                            </h3>
-                          </Link>
+                        <div className="space-y-2">
+                          {/* Category */}
+                          <div className="h-3 w-1/3 bg-slate-200/70 rounded-full" />
+                          {/* Name - 2 lines */}
+                          <div className="h-4 sm:h-5 w-full bg-slate-200/70 rounded-full" />
+                          <div className="h-4 sm:h-5 w-2/3 bg-slate-200/70 rounded-full" />
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-xs text-foreground/70">
-                          <Star className="text-amber-500 w-3.5 h-3.5 fill-amber-500" />
-                          <span className="font-semibold text-foreground">
-                            {(product.rating ?? 0).toFixed(1)}
-                          </span>
-                          <span className="hidden sm:inline">đánh giá</span>
+                        {/* Rating */}
+                        <div className="flex items-center gap-1.5 pt-1">
+                          <div className="w-3.5 h-3.5 rounded-full bg-slate-200/70" />
+                          <div className="h-3 w-16 bg-slate-200/70 rounded-full" />
                         </div>
 
-                        <div className="flex items-end gap-2">
-                          <span className="text-sm sm:text-xl font-extrabold text-slate-800">
-                            {formatVND(product.price)}
-                          </span>
-                          {discountPercent > 0 && (
-                            <span className="text-[10px] sm:text-sm text-foreground/50 line-through">
-                              {formatVND(originalPrice)}
+                        {/* Price */}
+                        <div className="flex items-end gap-2 pt-1">
+                          <div className="h-5 sm:h-7 w-24 bg-slate-200/70 rounded-full" />
+                          <div className="h-3.5 w-12 bg-slate-200/70 rounded-full" />
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="flex items-center gap-2 pt-2">
+                          <div className="flex-1 rounded-full bg-slate-200/70 h-8 sm:h-12" />
+                          <div className="w-7 h-7 sm:w-12 sm:h-12 rounded-full bg-slate-200/70 shrink-0" />
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                : visibleProducts.map((product) => {
+                    const originalPrice = product.originalPrice ?? product.price;
+                    const discountPercent = originalPrice > product.price ? Math.round(((originalPrice - product.price) / originalPrice) * 100) : 0;
+                    return (
+                      <div
+                        key={product.id}
+                        className="group rounded-3xl bg-white shadow-[0_10px_30px_rgba(15,23,42,0.04)] overflow-hidden border border-border/50 text-slate-700 transition-all duration-300 hover:shadow-[0_15px_35px_rgba(15,23,42,0.08)]"
+                      >
+                        <Link to={`/product/${product.slug}`} className="relative overflow-hidden block">
+                          <img
+                            src={product.image ?? undefined}
+                            alt={product.name}
+                            className="h-32 sm:h-56 w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute top-2 left-2 sm:top-4 sm:left-4 flex gap-1.5">
+                            {product.badge && (
+                              <span className="rounded-full bg-emerald-500 px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-white shadow-md">
+                                {product.badge}
+                              </span>
+                            )}
+                            {discountPercent > 0 && (
+                              <span className="rounded-full bg-white/90 px-2 py-0.5 text-[9px] sm:text-xs font-semibold text-foreground shadow-md">
+                                -{discountPercent}%
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+
+                        <div className="p-3 sm:p-5 space-y-3 sm:space-y-4">
+                          <div>
+                            <p className="text-[10px] sm:text-xs uppercase tracking-wider text-emerald-600 font-semibold mb-0.5">
+                              {product.category}
+                            </p>
+                            <Link to={`/product/${product.slug}`}>
+                              <h3 className="text-xs sm:text-lg font-bold text-slate-800 leading-snug group-hover:text-primary transition-colors line-clamp-2 min-h-[2rem] sm:min-h-0">
+                                {product.name}
+                              </h3>
+                            </Link>
+                          </div>
+
+                          <div className="flex items-center gap-1.5 text-xs text-foreground/70">
+                            <Star className="text-amber-500 w-3.5 h-3.5 fill-amber-500" />
+                            <span className="font-semibold text-foreground">
+                              {(product.rating ?? 0).toFixed(1)}
                             </span>
-                          )}
-                        </div>
+                            <span className="hidden sm:inline">đánh giá</span>
+                          </div>
 
-                        <div className="flex items-center gap-2 pt-1 sm:pt-2">
-                          <Link
-                            to={`/product/${product.slug}`}
-                            className="flex-1 rounded-full bg-primary text-white py-1.5 sm:py-3 text-[10px] sm:text-sm font-semibold flex items-center justify-center gap-1 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg"
-                          >
-                            <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
-                            <span>Chi tiết</span>
-                          </Link>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              addItem({
+                          <div className="flex items-end gap-2">
+                            <span className="text-sm sm:text-xl font-extrabold text-slate-800">
+                              {formatVND(product.price)}
+                            </span>
+                            {discountPercent > 0 && (
+                              <span className="text-[10px] sm:text-sm text-foreground/50 line-through">
+                                {formatVND(originalPrice)}
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-2 pt-1 sm:pt-2">
+                            <Link
+                              to={`/product/${product.slug}`}
+                              className="flex-1 rounded-full bg-primary text-white py-1.5 sm:py-3 text-[10px] sm:text-sm font-semibold flex items-center justify-center gap-1 hover:bg-primary/90 transition-all duration-300 shadow-sm hover:shadow-lg"
+                            >
+                              <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4" />
+                              <span>Chi tiết</span>
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                addItem({
                                   id: product.id,
                                   productId: product._id ?? String(product.id),
                                   name: product.name,
@@ -193,17 +228,17 @@ const RecommendationSection = () => {
                                   price: product.price,
                                   image: product.image ?? '',
                                   badge: product.badge,
-                              })
-                            }
-                            className="w-7 h-7 sm:w-12 sm:h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300 shrink-0"
-                          >
-                            <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
-                          </button>
+                                })
+                              }
+                              className="w-7 h-7 sm:w-12 sm:h-12 rounded-full border border-border/70 bg-muted/40 flex items-center justify-center text-foreground/70 hover:text-primary hover:border-primary transition-all duration-300 shrink-0"
+                            >
+                              <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
           </div>
 
           {/* Next Button - shifted outside container to prevent overlap on larger screens */}

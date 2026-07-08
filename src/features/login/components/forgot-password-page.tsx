@@ -1,28 +1,44 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import { auth } from "../../../integrations/firebase";
 import Layout from "../../../components/layout/layout";
 import { toast } from "react-toastify";
 
+const forgotPasswordSchema = yup.object().shape({
+  email: yup.string().email("Email không đúng định dạng").required("Email là bắt buộc"),
+});
+
+// Type ForgotPasswordInput removed
+
 const ForgotPasswordPage = () => {
-  const [email, setEmail] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(forgotPasswordSchema),
+  });
+
+  const onSubmit = async (data: any) => {
     setErrorMessage("");
     setSuccessMessage("");
     setIsSubmitting(true);
 
     try {
-      await sendPasswordResetEmail(auth, email);
+      await sendPasswordResetEmail(auth, data.email);
       const msg = "Một liên kết đặt lại mật khẩu đã được gửi đến email của bạn. Vui lòng kiểm tra hộp thư.";
       setSuccessMessage(msg);
       toast.success(msg);
-      setEmail("");
+      setValue("email", "");
     } catch (error) {
       let message = "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu.";
       if (error && typeof error === "object" && "code" in error) {
@@ -53,7 +69,7 @@ const ForgotPasswordPage = () => {
             Nhập email của bạn để nhận liên kết đặt lại mật khẩu.
           </p>
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
+          <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-2">
               <label
                 className="text-sm font-medium text-foreground"
@@ -65,12 +81,15 @@ const ForgotPasswordPage = () => {
                 id="email"
                 type="email"
                 autoComplete="email"
-                required
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                {...register("email")}
+                className={`w-full rounded-lg border bg-background px-4 py-3 text-sm focus:outline-none focus:ring-2 ${
+                  errors.email ? "border-red-500 focus:ring-red-200" : "border-border focus:ring-primary"
+                }`}
                 placeholder="you@example.com"
               />
+              {errors.email && (
+                <p className="text-xs text-red-500 font-medium">{errors.email.message as string}</p>
+              )}
             </div>
 
             {errorMessage ? (

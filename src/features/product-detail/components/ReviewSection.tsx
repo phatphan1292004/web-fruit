@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FiStar } from 'react-icons/fi';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import type { ProductReview, ProductDetail } from './types';
 import { createReview } from '../servers';
 import { toast } from 'react-toastify';
-
 
 type ReviewSectionProps = {
   product: ProductDetail;
@@ -18,17 +20,53 @@ const readCookie = (name: string) => {
   return match ? decodeURIComponent(match[1]) : null;
 };
 
+const reviewSchema = yup.object().shape({
+  rating: yup
+    .number()
+    .min(1, 'Vui lòng chọn số sao từ 1 đến 5.')
+    .max(5, 'Vui lòng chọn số sao từ 1 đến 5.')
+    .required('Vui lòng chọn đánh giá.'),
+  comment: yup.string().required('Vui lòng nhập nội dung đánh giá.'),
+});
+
+// Type ReviewInput removed
+
 const ReviewSection = ({ product, reviews, onReviewSubmitted }: ReviewSectionProps) => {
   const navigate = useNavigate();
-  const [rating, setRating] = useState(5);
-  const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const userId = readCookie('userId');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(reviewSchema),
+    defaultValues: {
+      rating: 5,
+      comment: '',
+    },
+  });
+
+  const watchedRating = watch('rating');
+
+  // Sync validation error messages to the local error state if yup errors exist
+  useEffect(() => {
+    if (errors.comment) {
+      setError((errors.comment.message as string) || 'Nội dung đánh giá không hợp lệ.');
+    } else if (errors.rating) {
+      setError((errors.rating.message as string) || 'Đánh giá không hợp lệ.');
+    } else {
+      setError(null);
+    }
+  }, [errors.comment, errors.rating]);
+
+  const onSubmit = async (data: any) => {
     if (!userId) {
       navigate('/login');
       return;
@@ -39,11 +77,6 @@ const ReviewSection = ({ product, reviews, onReviewSubmitted }: ReviewSectionPro
       return;
     }
 
-    if (!comment.trim()) {
-      setError('Vui lòng nhập nội dung đánh giá.');
-      return;
-    }
-
     setIsSubmitting(true);
     setError(null);
 
@@ -51,12 +84,14 @@ const ReviewSection = ({ product, reviews, onReviewSubmitted }: ReviewSectionPro
       await createReview({
         productId: product._id,
         firebaseUid: userId,
-        rating,
-        comment: comment.trim(),
+        rating: data.rating,
+        comment: data.comment.trim(),
       });
       toast.success('Gửi đánh giá thành công!');
-      setComment('');
-      setRating(5);
+      reset({
+        rating: 5,
+        comment: '',
+      });
       onReviewSubmitted();
     } catch (err: any) {
       console.error(err);
@@ -156,12 +191,12 @@ const ReviewSection = ({ product, reviews, onReviewSubmitted }: ReviewSectionPro
           </button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="rounded-[1.5rem] bg-muted/20 p-6 border border-border/60 space-y-4">
+        <form onSubmit={handleSubmit(onSubmit)} className="rounded-[1.5rem] bg-muted/20 p-6 border border-border/60 space-y-4">
           <h3 className="text-xl font-bold text-foreground">Viết đánh giá của bạn</h3>
           <div className="flex items-center gap-2 text-amber-500 text-lg">
             {Array.from({ length: 5 }).map((_, idx) => (
-              <button key={idx} type="button" onClick={() => setRating(idx + 1)}>
-                <FiStar className={idx < rating ? 'fill-current' : ''} />
+              <button key={idx} type="button" onClick={() => setValue('rating', idx + 1)}>
+                <FiStar className={idx < watchedRating ? 'fill-current' : ''} />
               </button>
             ))}
           </div>
@@ -171,10 +206,9 @@ const ReviewSection = ({ product, reviews, onReviewSubmitted }: ReviewSectionPro
           )}
 
           <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
             rows={4}
             placeholder="Chia sẻ cảm nhận của bạn về chất lượng sản phẩm..."
+            {...register('comment')}
             className="w-full rounded-[1.5rem] border border-border bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-primary/30 text-sm"
             disabled={isSubmitting}
           />

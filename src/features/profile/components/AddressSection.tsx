@@ -2,9 +2,27 @@ import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { FiEdit3, FiTrash2, FiPlus, FiMapPin, FiCheck, FiUser, FiPhone } from 'react-icons/fi';
 import { Loader2, ChevronDown } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 import { store } from '../../../integrations';
 import { addUserAddress, updateUserAddress, deleteUserAddress } from '../servers';
 import type { AddressItem } from './types';
+
+const addressSchema = yup.object().shape({
+  label: yup.string().required('Tên nhãn là bắt buộc'),
+  receiverName: yup.string().required('Tên người nhận là bắt buộc'),
+  phone: yup
+    .string()
+    .required('Số điện thoại là bắt buộc')
+    .matches(/^(0[3|5|7|8|9])+([0-9]{8})$/, 'Số điện thoại không đúng định dạng Việt Nam'),
+  provinceId: yup.string().required('Vui lòng chọn Tỉnh / Thành phố'),
+  wardId: yup.string().required('Vui lòng chọn Xã / Phường'),
+  detailedAddress: yup.string().required('Địa chỉ chi tiết là bắt buộc'),
+  isDefault: yup.boolean(),
+});
+
+// Type AddressInput removed as any generic is used for useForm
 
 type Props = {
   addresses: AddressItem[];
@@ -31,24 +49,26 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
   const [isAdding, setIsAdding] = useState(false);
   const [editingItem, setEditingItem] = useState<AddressItem | null>(null);
 
-  // Form states
-  const [label, setLabel] = useState('');
-  const [receiverName, setReceiverName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [detailedAddress, setDetailedAddress] = useState('');
-  const [isDefault, setIsDefault] = useState(false);
-
   // Provinces/Wards states
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [wards, setWards] = useState<Ward[]>([]);
-  const [selectedProvinceId, setSelectedProvinceId] = useState<string | number | ''>('');
-  const [selectedWardId, setSelectedWardId] = useState<string | number | ''>('');
   
   // Loaders
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [loadingWards, setLoadingWards] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
+
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<any>({
+    resolver: yupResolver(addressSchema),
+  });
 
   // Fetch Provinces on mount
   useEffect(() => {
@@ -71,19 +91,20 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
     };
   }, []);
 
-  // Fetch Wards when selectedProvinceId changes
+  // Fetch Wards when provinceId changes
+  const watchedProvinceId = watch('provinceId');
   useEffect(() => {
     let isActive = true;
 
-    if (!selectedProvinceId) {
+    if (!watchedProvinceId) {
       setWards([]);
-      setSelectedWardId('');
+      setValue('wardId', '');
       return;
     }
 
     setLoadingWards(true);
     store
-      .get<Ward[]>(`/locations/provinces/${selectedProvinceId}/wards`, undefined, [])
+      .get<Ward[]>(`/locations/provinces/${watchedProvinceId}/wards`, undefined, [])
       .then((data) => {
         if (!isActive) return;
         setWards(Array.isArray(data) ? data : []);
@@ -97,26 +118,23 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
     return () => {
       isActive = false;
     };
-  }, [selectedProvinceId]);
+  }, [watchedProvinceId, setValue]);
 
   const handleOpenAdd = () => {
-    setLabel('');
-    setReceiverName('');
-    setPhone('');
-    setSelectedProvinceId('');
-    setSelectedWardId('');
-    setDetailedAddress('');
-    setIsDefault(false);
+    reset({
+      label: '',
+      receiverName: '',
+      phone: '',
+      provinceId: '',
+      wardId: '',
+      detailedAddress: '',
+      isDefault: false,
+    });
     setEditingItem(null);
     setIsAdding(true);
   };
 
   const handleOpenEdit = async (item: AddressItem) => {
-    setLabel(item.label);
-    setReceiverName(item.receiverName ?? '');
-    setPhone(item.phone ?? '');
-    setDetailedAddress(item.detailedAddress ?? '');
-    setIsDefault(!!item.isDefault);
     setIsAdding(false);
     setEditingItem(item);
 
@@ -126,7 +144,7 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
     );
 
     if (matchedProvince) {
-      setSelectedProvinceId(matchedProvince.provinceId);
+      setValue('provinceId', String(matchedProvince.provinceId));
       
       // Load wards and match wardId
       setLoadingWards(true);
@@ -139,9 +157,9 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
           (w) => w.name.toLowerCase() === item.ward?.toLowerCase()
         );
         if (matchedWard) {
-          setSelectedWardId(matchedWard.wardId);
+          setValue('wardId', String(matchedWard.wardId));
         } else {
-          setSelectedWardId('');
+          setValue('wardId', '');
         }
       } catch (err) {
         console.error('Failed to load wards for editing', err);
@@ -149,9 +167,15 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
         setLoadingWards(false);
       }
     } else {
-      setSelectedProvinceId('');
-      setSelectedWardId('');
+      setValue('provinceId', '');
+      setValue('wardId', '');
     }
+
+    setValue('label', item.label);
+    setValue('receiverName', item.receiverName ?? '');
+    setValue('phone', item.phone ?? '');
+    setValue('detailedAddress', item.detailedAddress ?? '');
+    setValue('isDefault', !!item.isDefault);
   };
 
   const handleCancel = () => {
@@ -159,22 +183,14 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
     setEditingItem(null);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onSubmit = async (data: any) => {
     if (!firebaseUid || isSaving) return;
 
-    const matchedProvince = provinces.find((p) => String(p.provinceId) === String(selectedProvinceId));
-    const matchedWard = wards.find((w) => String(w.wardId) === String(selectedWardId));
+    const matchedProvince = provinces.find((p) => String(p.provinceId) === String(data.provinceId));
+    const matchedWard = wards.find((w) => String(w.wardId) === String(data.wardId));
 
-    if (
-      !label.trim() ||
-      !receiverName.trim() ||
-      !phone.trim() ||
-      !matchedProvince ||
-      !matchedWard ||
-      !detailedAddress.trim()
-    ) {
-      toast.error('Vui lòng chọn đầy đủ Tỉnh/Xã và điền chính xác thông tin!');
+    if (!matchedProvince || !matchedWard) {
+      toast.error('Vui lòng chọn đầy đủ Tỉnh/Xã!');
       return;
     }
 
@@ -182,7 +198,7 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
     const wardName = matchedWard.name;
 
     const computedAddress = [
-      detailedAddress.trim(),
+      data.detailedAddress.trim(),
       wardName,
       provinceName,
     ]
@@ -194,16 +210,16 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
     try {
       if (isAdding) {
         const newItemPayload: Partial<AddressItem> = {
-          label: label.trim(),
-          receiverName: receiverName.trim(),
-          phone: phone.trim(),
+          label: data.label.trim(),
+          receiverName: data.receiverName.trim(),
+          phone: data.phone.trim(),
           province: provinceName,
           provinceId: matchedProvince.provinceId,
           ward: wardName,
           wardId: matchedWard.wardId,
-          detailedAddress: detailedAddress.trim(),
+          detailedAddress: data.detailedAddress.trim(),
           address: computedAddress,
-          isDefault: isDefault || addresses.length === 0,
+          isDefault: data.isDefault || addresses.length === 0,
         };
 
         const createdAddress = await addUserAddress(firebaseUid, newItemPayload);
@@ -217,16 +233,16 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
         toast.success('Thêm địa chỉ mới thành công!');
       } else if (editingItem) {
         const updatedItemPayload: Partial<AddressItem> = {
-          label: label.trim(),
-          receiverName: receiverName.trim(),
-          phone: phone.trim(),
+          label: data.label.trim(),
+          receiverName: data.receiverName.trim(),
+          phone: data.phone.trim(),
           province: provinceName,
           provinceId: matchedProvince.provinceId,
           ward: wardName,
           wardId: matchedWard.wardId,
-          detailedAddress: detailedAddress.trim(),
+          detailedAddress: data.detailedAddress.trim(),
           address: computedAddress,
-          isDefault: isDefault || editingItem.isDefault,
+          isDefault: data.isDefault || editingItem.isDefault,
         };
 
         const addressId = editingItem._id || editingItem.id;
@@ -320,7 +336,7 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
 
       {/* Form Section */}
       {(isAdding || editingItem) && (
-        <form onSubmit={handleSubmit} className="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50/30 p-6 space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="mb-6 rounded-2xl border border-emerald-100 bg-emerald-50/30 p-6 space-y-5">
           <h4 className="font-bold text-lg text-foreground">
             {isAdding ? 'Thêm địa chỉ giao hàng mới' : 'Cập nhật địa chỉ giao hàng'}
           </h4>
@@ -332,24 +348,30 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
                 <input
                   type="text"
                   placeholder="Nhập họ và tên người nhận"
-                  value={receiverName}
-                  onChange={(e) => setReceiverName(e.target.value)}
-                  required
                   disabled={isSaving}
-                  className="w-full rounded-2xl border border-border bg-white px-4 py-3 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm"
+                  {...register('receiverName')}
+                  className={`w-full rounded-2xl border bg-white px-4 py-3 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm ${
+                    errors.receiverName ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+                  }`}
                 />
+                {errors.receiverName && (
+                  <p className="text-xs text-red-500 font-medium mt-1">{errors.receiverName.message as string}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-foreground">Số điện thoại</label>
                 <input
                   type="tel"
                   placeholder="Nhập số điện thoại liên hệ"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  required
                   disabled={isSaving}
-                  className="w-full rounded-2xl border border-border bg-white px-4 py-3 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm"
+                  {...register('phone')}
+                  className={`w-full rounded-2xl border bg-white px-4 py-3 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm ${
+                    errors.phone ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+                  }`}
                 />
+                {errors.phone && (
+                  <p className="text-xs text-red-500 font-medium mt-1">{errors.phone.message as string}</p>
+                )}
               </div>
             </div>
 
@@ -360,14 +382,11 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
                 <label className="text-sm font-semibold text-foreground">Tỉnh / Thành phố</label>
                 <div className="relative">
                   <select
-                    value={selectedProvinceId}
-                    onChange={(e) => {
-                      setSelectedProvinceId(e.target.value || '');
-                      setSelectedWardId('');
-                    }}
-                    required
                     disabled={loadingProvinces || isSaving}
-                    className="w-full rounded-2xl border border-border bg-white px-4 py-3 pr-10 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm appearance-none"
+                    {...register('provinceId')}
+                    className={`w-full rounded-2xl border bg-white px-4 py-3 pr-10 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm appearance-none ${
+                      errors.provinceId ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+                    }`}
                   >
                     <option value="">Chọn Tỉnh / Thành phố</option>
                     {provinces.map((prov) => (
@@ -386,6 +405,9 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
                     </div>
                   )}
                 </div>
+                {errors.provinceId && (
+                  <p className="text-xs text-red-500 font-medium mt-1">{errors.provinceId.message as string}</p>
+                )}
               </div>
 
               {/* Ward dropdown */}
@@ -393,11 +415,11 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
                 <label className="text-sm font-semibold text-foreground">Xã / Phường</label>
                 <div className="relative">
                   <select
-                    value={selectedWardId}
-                    onChange={(e) => setSelectedWardId(e.target.value || '')}
-                    required
-                    disabled={!selectedProvinceId || loadingWards || isSaving}
-                    className="w-full rounded-2xl border border-border bg-white px-4 py-3 pr-10 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm appearance-none disabled:bg-neutral-50 disabled:text-neutral-400"
+                    disabled={!watchedProvinceId || loadingWards || isSaving}
+                    {...register('wardId')}
+                    className={`w-full rounded-2xl border bg-white px-4 py-3 pr-10 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm appearance-none disabled:bg-neutral-50 disabled:text-neutral-400 ${
+                      errors.wardId ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+                    }`}
                   >
                     <option value="">Chọn Xã / Phường</option>
                     {wards.map((w) => (
@@ -416,6 +438,9 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
                     </div>
                   )}
                 </div>
+                {errors.wardId && (
+                  <p className="text-xs text-red-500 font-medium mt-1">{errors.wardId.message as string}</p>
+                )}
               </div>
             </div>
 
@@ -425,12 +450,15 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
               <input
                 type="text"
                 placeholder="Ví dụ: 123 Lê Lợi"
-                value={detailedAddress}
-                onChange={(e) => setDetailedAddress(e.target.value)}
-                required
                 disabled={isSaving}
-                className="w-full rounded-2xl border border-border bg-white px-4 py-3 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm"
+                {...register('detailedAddress')}
+                className={`w-full rounded-2xl border bg-white px-4 py-3 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm ${
+                  errors.detailedAddress ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+                }`}
               />
+              {errors.detailedAddress && (
+                <p className="text-xs text-red-500 font-medium mt-1">{errors.detailedAddress.message as string}</p>
+              )}
             </div>
 
             {/* Label name */}
@@ -438,11 +466,11 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
               <label className="text-sm font-semibold text-foreground">Tên nhãn (Ví dụ: Nhà riêng, Cơ quan)</label>
               <div className="relative">
                 <select
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                  required
                   disabled={isSaving}
-                  className="w-full rounded-2xl border border-border bg-white px-4 py-3 pr-10 text-[15px] outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all shadow-sm appearance-none"
+                  {...register('label')}
+                  className={`w-full rounded-2xl border bg-white px-4 py-3 pr-10 text-[15px] outline-none focus:ring-1 focus:ring-primary transition-all shadow-sm appearance-none ${
+                    errors.label ? 'border-red-500 focus:border-red-500' : 'border-border focus:border-primary'
+                  }`}
                 >
                   <option value="">Chọn Tên nhãn / Loại địa chỉ</option>
                   <option value="Nhà riêng">Nhà riêng</option>
@@ -455,6 +483,9 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
                   <ChevronDown className="w-4 h-4" />
                 </div>
               </div>
+              {errors.label && (
+                <p className="text-xs text-red-500 font-medium mt-1">{errors.label.message as string}</p>
+              )}
             </div>
 
             {/* Default Address Checkbox */}
@@ -462,9 +493,8 @@ const AddressSection = ({ addresses, isLoading, onAddressesChange, firebaseUid }
               <label className="flex items-center gap-3 cursor-pointer group text-[15px] pt-1">
                 <input
                   type="checkbox"
-                  checked={isDefault}
-                  onChange={(e) => setIsDefault(e.target.checked)}
                   disabled={isSaving}
+                  {...register('isDefault')}
                   className="w-4 h-4 accent-primary"
                 />
                 <span className="font-semibold text-foreground/80 group-hover:text-foreground transition-colors">
