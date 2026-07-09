@@ -18,6 +18,7 @@ import {
   createAdminProduct,
   updateAdminProduct,
   deleteAdminProduct,
+  uploadProductImage,
   type BackendProduct,
   type BackendCategory
 } from '../servers/products';
@@ -178,12 +179,46 @@ const ProductManagementPage = () => {
       storage: product?.storage || 'Ngăn mát tủ lạnh',
       shortDescription: product?.shortDescription || '',
       description: product?.description || '',
-      gallery: product?.gallery?.join('\n') || '',
       nutrition: product?.nutrition?.join(', ') || '',
       storageTips: product?.storageTips?.join('\n') || '',
       rating: product?.rating || 5,
       reviewsCount: product?.reviewsCount || 0
     });
+
+    const [galleryUrls, setGalleryUrls] = useState<string[]>(product?.gallery || []);
+    const [uploading, setUploading] = useState(false);
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!e.target.files) return;
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+
+      setUploading(true);
+      try {
+        const uploaded: string[] = [];
+        for (const file of files) {
+          const res = await uploadProductImage(file);
+          if (res?.url) {
+            uploaded.push(res.url);
+          }
+        }
+        if (uploaded.length > 0) {
+          setGalleryUrls(prev => [...prev, ...uploaded]);
+          toast.success(`Đã tải lên ${uploaded.length} hình ảnh thành công!`);
+        }
+      } catch (err: any) {
+        console.error(err);
+        const errMsg = err.response?.data?.message || err.message || 'Tải hình ảnh lên thất bại.';
+        toast.error(`Lỗi tải ảnh: ${errMsg}`);
+      } finally {
+        setUploading(false);
+        if (e.target) e.target.value = '';
+      }
+    };
+
+    const handleRemoveImage = (index: number) => {
+      setGalleryUrls(prev => prev.filter((_, idx) => idx !== index));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
@@ -193,6 +228,10 @@ const ProductManagementPage = () => {
       }
       if (!formData.categoryId) {
         toast.error('Vui lòng chọn danh mục.');
+        return;
+      }
+      if (galleryUrls.length === 0) {
+        toast.error('Vui lòng tải lên ít nhất một hình ảnh.');
         return;
       }
 
@@ -210,7 +249,7 @@ const ProductManagementPage = () => {
         storage: formData.storage.trim(),
         shortDescription: formData.shortDescription.trim(),
         description: formData.description.trim(),
-        gallery: formData.gallery.split('\n').map(s => s.trim()).filter(Boolean),
+        gallery: galleryUrls,
         nutrition: formData.nutrition.split(',').map(s => s.trim()).filter(Boolean),
         storageTips: formData.storageTips.split('\n').map(s => s.trim()).filter(Boolean),
         rating: Number(formData.rating) || 5,
@@ -436,15 +475,55 @@ const ProductManagementPage = () => {
         </div>
 
         <div>
-          <label className="text-xs font-semibold text-slate-500 mb-1 block">Danh sách URL hình ảnh (mỗi ảnh một dòng) *</label>
-          <textarea
-            value={formData.gallery}
-            onChange={(e) => setFormData(prev => ({ ...prev, gallery: e.target.value }))}
-            placeholder="https://example.com/image1.jpg&#10;https://example.com/image2.jpg"
-            rows={3}
-            className="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm outline-none focus:border-emerald-300 focus:ring-2 focus:ring-emerald-100 font-mono"
-            required
-          />
+          <label className="text-xs font-semibold text-slate-500 mb-2 block">Hình ảnh sản phẩm (Tải ảnh từ máy lên Cloudinary) *</label>
+          
+          {/* Upload Dropzone */}
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-2xl p-6 bg-slate-50 hover:bg-slate-100/50 hover:border-emerald-300 transition-colors cursor-pointer relative group">
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={handleFileChange}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              disabled={uploading}
+            />
+            {uploading ? (
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-8 h-8 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin" />
+                <p className="text-xs font-semibold text-slate-500">Đang tải ảnh lên Cloudinary...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1.5 text-center">
+                <span className="p-3 bg-white shadow-sm border border-slate-100 rounded-xl text-slate-400 group-hover:text-emerald-500 group-hover:scale-105 transition-all">
+                  <FiPlus className="text-xl" />
+                </span>
+                <p className="text-sm font-semibold text-slate-600">Bấm hoặc kéo thả ảnh vào đây để tải lên</p>
+                <p className="text-xs text-slate-400">Hỗ trợ JPG, PNG, WEBP (Tải ảnh lên máy chủ Cloudinary)</p>
+              </div>
+            )}
+          </div>
+
+          {/* Previews */}
+          {galleryUrls.length > 0 && (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 mt-4">
+              {galleryUrls.map((url, idx) => (
+                <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-100 group shadow-sm">
+                  <img src={url} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(idx)}
+                    className="absolute top-1.5 right-1.5 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                    title="Xóa hình ảnh này"
+                  >
+                    <FiTrash2 className="text-xs" />
+                  </button>
+                  <span className="absolute bottom-1.5 left-1.5 px-1.5 py-0.5 bg-black/60 text-[9px] text-white rounded font-medium">
+                    Ảnh {idx + 1}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div>
