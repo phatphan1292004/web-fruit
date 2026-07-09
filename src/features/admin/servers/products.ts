@@ -74,3 +74,16 @@ export async function deleteAdminProduct(productId: string): Promise<any> {
   setupAuth();
   return store.del(`/products/${productId}`);
 }
+
+export async function uploadProductImage(file: File): Promise<{ url: string } | null> {
+  setupAuth();
+  const formData = new FormData();
+  formData.append('image', file);
+  
+  const res = await storeClient.post<{ url: string }>('/uploads/image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+  return res.data;
+}
