@@ -146,6 +146,12 @@ const PaymentPage = () => {
     } catch (err) {
       console.error(err);
       toast.error('Lỗi khi áp dụng khuyến mãi.');
+      // Reset overrides on error
+      setDiscountOverride(null);
+      setTotalOverride(null);
+      setDiscountBreakdown(null);
+      setEngineAppliedVoucherId(null);
+      setSelectedWalletVoucherId(null);
     }
   };
 
