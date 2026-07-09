@@ -216,7 +216,7 @@ const OrderSummary = ({
               );
               // Or custom code applied by typing
               const codeName = appliedWalletV?.code || voucherCodeInput || 'Mã giảm giá';
-              const discountValueStr = totals.discount > 0 ? `-${formatCurrency(totals.discount)}` : 'Đang tính...';
+              const discountValueStr = `-${formatCurrency(totals.discount)}`;
 
               return (
                 <div className="flex items-center justify-between bg-primary/10 border border-dashed border-primary/40 rounded-2xl px-4 py-3 text-xs text-primary font-bold my-3">
